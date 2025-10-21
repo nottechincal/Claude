@@ -88,34 +88,37 @@ def call_tool(tool_name: str, parameters: Optional[Dict] = None, expect_fail: bo
         return {"_test_meta": {"status": "exception", "error": str(e)}}
 
 def clear_session():
-    """Clear session by calling getCallerInfo (resets session)"""
-    # In a real implementation, you might need a clearSession tool
-    # For now, we'll just note that sessions are per-caller
-    pass
+    """Clear session using clearSession tool"""
+    try:
+        call_tool("clearSession", {})
+    except Exception as e:
+        print(f"Warning: Could not clear session: {e}")
 
-def test_case(name: str, func):
+def test_case(name: str):
     """Decorator for test cases"""
-    def wrapper():
-        stats.total += 1
-        print(f"\n{Colors.CYAN}{'='*80}{Colors.RESET}")
-        print(f"{Colors.BOLD}TEST {stats.total}: {name}{Colors.RESET}")
-        print(f"{Colors.CYAN}{'='*80}{Colors.RESET}")
+    def decorator(func):
+        def wrapper():
+            stats.total += 1
+            print(f"\n{Colors.CYAN}{'='*80}{Colors.RESET}")
+            print(f"{Colors.BOLD}TEST {stats.total}: {name}{Colors.RESET}")
+            print(f"{Colors.CYAN}{'='*80}{Colors.RESET}")
 
-        try:
-            result = func()
-            if result:
-                stats.passed += 1
-                print(f"{Colors.GREEN}✓ PASSED{Colors.RESET}")
-            else:
+            try:
+                result = func()
+                if result:
+                    stats.passed += 1
+                    print(f"{Colors.GREEN}✓ PASSED{Colors.RESET}")
+                else:
+                    stats.failed += 1
+                    print(f"{Colors.RED}✗ FAILED{Colors.RESET}")
+                return result
+            except Exception as e:
                 stats.failed += 1
-                print(f"{Colors.RED}✗ FAILED{Colors.RESET}")
-            return result
-        except Exception as e:
-            stats.failed += 1
-            print(f"{Colors.RED}✗ EXCEPTION: {str(e)}{Colors.RESET}")
-            return False
+                print(f"{Colors.RED}✗ EXCEPTION: {str(e)}{Colors.RESET}")
+                return False
 
-    return wrapper
+        return wrapper
+    return decorator
 
 def assert_equal(actual, expected, message=""):
     """Assert two values are equal"""

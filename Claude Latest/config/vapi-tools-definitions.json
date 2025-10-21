@@ -193,6 +193,23 @@
     {
       "type": "function",
       "function": {
+        "name": "clearSession",
+        "description": "Reset entire session (cart, config, state). Use for testing or complete restart.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "priceCart",
         "description": "Calculate total price for all items in cart with detailed breakdown.",
         "strict": true,

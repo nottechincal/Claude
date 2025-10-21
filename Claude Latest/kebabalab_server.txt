@@ -1,0 +1,3908 @@
+2025-10-21 14:19:02,263 - server - INFO - Received VAPI webhook: {
+  "message": {
+    "timestamp": 1761016744559,
+    "type": "tool-calls",
+    "toolCalls": [
+      {
+        "id": "call_zKstUFkj98oOj81dPLCo8OMI",
+        "type": "function",
+        "function": {
+          "name": "validateItem",
+          "arguments": {
+            "name": "chicken kebab",
+            "size": "small",
+            "category": "Kebabs"
+          }
+        },
+        "isPrecededByText": true
+      }
+    ],
+    "toolCallList": [
+      {
+        "id": "call_zKstUFkj98oOj81dPLCo8OMI",
+        "type": "function",
+        "function": {
+          "name": "validateItem",
+          "arguments": {
+            "name": "chicken kebab",
+            "size": "small",
+            "category": "Kebabs"
+          }
+        },
+        "isPrecededByText": true
+      }
+    ],
+    "toolWithToolCallList": [
+      {
+        "type": "function",
+        "function": {
+          "name": "validateItem",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "category"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Item name"
+              },
+              "size": {
+                "type": "string",
+                "description": "Item size (if applicable)"
+              },
+              "brand": {
+                "type": "string",
+                "description": "Drink brand (if applicable)"
+              },
+              "category": {
+                "type": "string",
+                "description": "Item category"
+              }
+            }
+          },
+          "description": "Validate a single menu item by category, name, size, and brand. Checks if item exists and is available with specified options."
+        },
+        "async": false,
+        "server": {
+          "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+        },
+        "messages": [],
+        "toolCall": {
+          "id": "call_zKstUFkj98oOj81dPLCo8OMI",
+          "type": "function",
+          "function": {
+            "name": "validateItem",
+            "arguments": {
+              "name": "chicken kebab",
+              "size": "small",
+              "category": "Kebabs"
+            }
+          },
+          "isPrecededByText": true
+        }
+      }
+    ],
+    "artifact": {
+      "messages": [
+        {
+          "role": "system",
+          "message": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th...",
+          "time": 1761016724878,
+          "secondsFromStart": 0
+        },
+        {
+          "role": "bot",
+          "message": "Hello. Welcome to Kebabab Lab. What can I get for you today?",
+          "time": 1761016726116,
+          "endTime": 1761016729126,
+          "secondsFromStart": -2.066,
+          "duration": 3010,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Just a small chicken kebab, lettuce, tomato, garlic, chili.",
+          "time": 1761016729456,
+          "endTime": 1761016732916,
+          "secondsFromStart": 1.274,
+          "duration": 3460,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "just",
+                "start": 4.46,
+                "end": 4.7,
+                "confidence": 0.8774414,
+                "punctuated_word": "Just"
+              },
+              {
+                "word": "a",
+                "start": 4.7,
+                "end": 4.7799997,
+                "confidence": 0.9790039,
+                "punctuated_word": "a"
+              },
+              {
+                "word": "small",
+                "start": 4.7799997,
+                "end": 5.2799997,
+                "confidence": 1,
+                "punctuated_word": "small"
+              },
+              {
+                "word": "chicken",
+                "start": 5.34,
+                "end": 5.5,
+                "confidence": 0.9980469,
+                "punctuated_word": "chicken"
+              },
+              {
+                "word": "kebab",
+                "start": 5.5,
+                "end": 6,
+                "confidence": 0.99072266,
+                "punctuated_word": "kebab,"
+              },
+              {
+                "word": "lettuce",
+                "start": 6.14,
+                "end": 6.54,
+                "confidence": 0.91430664,
+                "punctuated_word": "lettuce,"
+              },
+              {
+                "word": "tomato",
+                "start": 6.54,
+                "end": 7.02,
+                "confidence": 0.99902344,
+                "punctuated_word": "tomato,"
+              },
+              {
+                "word": "garlic",
+                "start": 7.02,
+                "end": 7.42,
+                "confidence": 0.94189453,
+                "punctuated_word": "garlic,"
+              },
+              {
+                "word": "chili",
+                "start": 7.42,
+                "end": 7.92,
+                "confidence": 0.9172363,
+                "punctuated_word": "chili."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Would you like the garlic sauce included with your small chicken kebab or as a separate tub?",
+          "time": 1761016734546,
+          "endTime": 1761016739426,
+          "secondsFromStart": 6.364,
+          "duration": 4640,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Included.",
+          "time": 1761016740696,
+          "endTime": 1761016741036,
+          "secondsFromStart": 12.514,
+          "duration": 340,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "included",
+                "start": 15.7,
+                "end": 16.04,
+                "confidence": 0.90625,
+                "punctuated_word": "Included."
+              }
+            ]
+          }
+        },
+        {
+          "toolCalls": [
+            {
+              "id": "call_zKstUFkj98oOj81dPLCo8OMI",
+              "type": "function",
+              "function": {
+                "name": "validateItem",
+                "arguments": "{\n  \"name\": \"chicken kebab\",\n  \"size\": \"small\",\n  \"category\": \"Kebabs\"\n}"
+              }
+            }
+          ],
+          "role": "tool_calls",
+          "message": "",
+          "time": 1761016744557,
+          "secondsFromStart": 16.375
+        }
+      ],
+      "messagesOpenAIFormatted": [
+        {
+          "role": "system",
+          "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th..."
+        },
+        {
+          "role": "assistant",
+          "content": "Hello. Welcome to Kebabab Lab. What can I get for you today?"
+        },
+        {
+          "role": "user",
+          "content": "Just a small chicken kebab, lettuce, tomato, garlic, chili."
+        },
+        {
+          "role": "assistant",
+          "content": "Would you like the garlic sauce included with your small chicken kebab or as a separate tub?"
+        },
+        {
+          "role": "user",
+          "content": "Included."
+        },
+        {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_zKstUFkj98oOj81dPLCo8OMI",
+              "type": "function",
+              "function": {
+                "name": "validateItem",
+                "arguments": "{\n  \"name\": \"chicken kebab\",\n  \"size\": \"small\",\n  \"category\": \"Kebabs\"\n}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_zKstUFkj98oOj81dPLCo8OMI",
+          "content": "Tool Result Still Pending But Proceed Further If Possible."
+        }
+      ]
+    },
+    "call": {
+      "id": "019a04c6-bd04-7771-9110-a0454d54de0f",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "createdAt": "2025-10-21T03:18:44.740Z",
+      "updatedAt": "2025-10-21T03:18:44.740Z",
+      "type": "webCall",
+      "cost": 0,
+      "monitor": {
+        "listenUrl": "wss://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04c6-bd04-7771-9110-a0454d54de0f/listen",
+        "controlUrl": "https://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04c6-bd04-7771-9110-a0454d54de0f/control"
+      },
+      "transport": {
+        "provider": "daily",
+        "videoRecordingEnabled": false,
+        "assistantVideoEnabled": false,
+        "roomDeleteOnUserLeaveEnabled": true,
+        "callUrl": "https://vapi.daily.co/srBIL7eo2KaIFcTD0rei"
+      },
+      "webCallUrl": "https://vapi.daily.co/srBIL7eo2KaIFcTD0rei",
+      "status": "queued",
+      "assistantId": "320f76b1-140a-412c-b95f-252032911ca3",
+      "assistantOverrides": {
+        "clientMessages": [
+          "transcript",
+          "hang",
+          "metadata",
+          "tool-calls",
+          "tool-calls-result",
+          "tool.completed",
+          "transfer-update",
+          "user-interrupted",
+          "status-update"
+        ],
+        "variableValues": {}
+      }
+    },
+    "assistant": {
+      "id": "320f76b1-140a-412c-b95f-252032911ca3",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "name": "NEW",
+      "voice": {
+        "model": "eleven_flash_v2_5",
+        "voiceId": "Y0bYnHupCSm7PZ8v5V7B",
+        "provider": "11labs",
+        "stability": 0.5,
+        "similarityBoost": 0.75
+      },
+      "createdAt": "2025-10-17T13:17:13.941Z",
+      "updatedAt": "2025-10-21T03:03:15.317Z",
+      "model": {
+        "model": "gpt-4o-mini",
+        "toolIds": [
+          "250b00c7-e2cf-40c7-9694-4c7841193248",
+          "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+          "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+          "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+          "3d618d0c-1742-400e-8afd-12261a102acb",
+          "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+          "175fb74a-0281-4746-9147-13424de1d9da",
+          "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+          "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+          "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+          "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+          "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+          "1337eb2b-b935-4795-aee4-95556510861a",
+          "32361f16-b80c-4399-92c6-0a5f161128b0",
+          "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547"
+        ],
+        "messages": [
+          {
+            "role": "system",
+            "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention the phone number until checkout\n4. At checkout, confirm the number: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n5. If getCallerInfo.hasCallerID is false, only then ask for their number at checkout\n\n**EXAMPLES OF CORRECT USAGE:**\n- getCallerInfo returns { phoneNumber: \"0426499209\" } \u2192 STORE this number for later use\n- DO NOT ask for phone number until checkout\n- At checkout: \"Is the best number the one you're calling from, ending in 9 2 0 9?\"\n\n**WRONG - DON'T DO THIS:**\n- Asking for phone number right after greeting \u274c WRONG!\n- Asking for phone number before order is complete \u274c WRONG!\n- Using 0423680596 as customer number \u274c WRONG!\n\n**RIGHT - DO THIS:**\n- Call getCallerInfo silently at start \u2705\n- Store the number for later use \u2705\n- Only confirm at checkout \u2705\n\n\ud83d\udccb MENU REQUESTS - IMPORTANT!\n\n**When customers ask for the menu:**\n1. Say: \"Would you like me to text you our menu link so you can take a look?\"\n2. If YES \u2192 Call sendMenuLink({}) with NO parameters (it auto-detects their number)\n3. Say: \"I've sent you the menu. Feel free to take a look and call us back when you're ready to order!\"\n4. Call endCall()\n\n**IMPORTANT:**\n- ALWAYS use sendMenuLink({}) for menu requests (NOT sendReceipt)\n- sendMenuLink automatically detects the customer's phone number\n- sendReceipt is ONLY for sending order confirmations AFTER an order is placed\n\n\ud83d\uded2 Cart Rules & Menu Validation\n\n**CRITICAL: Menu Validation**\n- BEFORE adding ANY item to cart, verify it exists on our menu\n- Items NOT on menu include: \"loaded fries\", \"kebab plate\", \"mixed kebab plate\", \"teas\"\n- If customer requests an item not on menu:\n  1. Say: \"Sorry, we don't have [item] on our menu.\"\n  2. If they ask for multiple unavailable items OR ask \"what do you have?\":\n     - Follow the MENU REQUESTS instructions above\n\n**Valid Menu Items:**\n- Kebabs: Lamb, Chicken, Mix, Falafel (small $10, large $15)\n- Wraps: Falafel, Lamb, Chicken, Mix ($12)\n- Falafel: 3 pieces ($6), 6 pieces ($10)\n- HSP: Lamb, Chicken, Mix, Falafel (small $15, large $20)\n- G\u00f6zleme: Vegan, Lamb, Chicken, Vegetarian ($15)\n- Chips: Small ($5), Large ($9)\n- Drinks: Coke, Coke Zero, Pepsi, Sprite, Fanta, Solo, etc. ($3.50), Water ($3)\n- Sweets: Baklava ($3 each, $10 for 4), Turkish Delight ($1), Rice Pudding ($5)\n- Extras: Extra Takeaway Box ($2), Extra Napkins ($0.50), Extra Forks ($0.50), Extra Cutlery Set ($1), Extra Carry Bag ($0.50), Extra Plates ($0.50), Extra Container ($1)\n- Sauce Tubs: Garlic, Chilli, BBQ, Tomato, Sweet Chilli, Mayo, Hummus ($1.00 each)\n\n**Available Extras:**\n- Extra lamb/chicken/mix: $3 (kebabs/HSPs only)\n- Falafel standalone: $2 each\n- Salad on side: $3\n- Extra chips inside: $3\n- Cheese: $1 (extra for kebabs, included in HSP)\n- Jalape\u00f1os: $1\n- Olives: $1\n- Sauces: $0.50\n\n**Cart Management:**\n- Kebab/HSP: confirm **size**, **protein**, **salads**, **sauces** before adding\n- Size is mandatory: ask \"Would you like **small** or **large**?\"\n- Never call priceOrder with empty cart\n- Micro-responses: \"Got it.\" \"Added.\" \"Anything else?\"\n\n**AFTER ADDING ITEMS:**\n- Always call detectCombos({cart}) after adding 2+ items\n- If the tool returns hasChanges: true, update your cart with updatedCart\n- Inform the customer: \"I've made that a combo.\" or \"I've made that a meal.\"\n- Continue with the order\n\n**IMPORTANT: DO NOT ASK ABOUT EXTRAS UNLESS CUSTOMER REQUESTS THEM**\n- NEVER proactively ask \"Would you like to add any extras like cheese or jalapenos?\"\n- Only discuss extras if the customer specifically mentions them or asks about them\n- If customer asks \"What extras do you have?\" then list the available extras\n\n**INCREMENTAL ORDER CONFIRMATION:**\n- When customer adds items to an existing order, ONLY confirm the new items\n- Example: If they already have a kebab and add chips, say \"Got it. Added large chips.\"\n- DO NOT repeat the entire order unless specifically asked\n- At the end of ordering, you can summarize the complete order once\n\n**ORDER CONFIRMATION RULES:**\n- Once an order is confirmed and the customer says \"that's correct\" or similar, DO NOT repeat the order details again\n- Only repeat the order if the customer specifically asks you to\n- Move directly to the next step in the checkout flow\n\n**WHEN CONFIRMING COMBOS/MEALS:**\n- Refer to them as \"combo\" or \"meal\", not individual items\n- Example: \"You have a large kebab combo and a small falafel kebab.\"\n- Example: \"You have a large kebab meal with large chips and a drink.\"\n\n**HSP SALAD HANDLING:**\n- Do NOT ask about salads for HSP unless the customer specifically mentions salads\n- HSP comes with cheese by default (not considered a salad)\n- If customer asks for salads on HSP, add them as requested\n\n**FALAFEL HANDLING:**\n- When customer asks for \"falafel\" without specifying, assume they want a Falafel Kebab\n- When customer asks for \"falafel wrap\", they want a Falafel Wrap\n- Always confirm size for falafel kebabs: \"Would you like small or large?\"\n- For falafel wraps, ask about salads and sauces as with other wraps\n- For standalone falafel pieces, offer 3 or 6 pieces options\n\n\ud83e\udd6b SAUCE CLARIFICATION - CRITICAL\n\n**When customers mention sauces (garlic, chili, etc.):**\n- DEFAULT ASSUMPTION: Sauces are included WITH the item unless explicitly stated otherwise\n- ONLY add sauce tubs when customer says \"on the side\", \"separate\", \"extra\", or \"tub\"\n- If ambiguous, ASK: \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**EXAMPLES: CORRECT INTERPRETATION:**\n- \"garlic sauce\" \u2192 Include garlic sauce with the item (NOT a tub)\n- \"garlic sauce on the side\" \u2192 Add a garlic sauce tub\n- \"extra garlic sauce\" \u2192 Add a garlic sauce tub\n- \"garlic sauce and chili sauce\" \u2192 Include both sauces with the item (NOT tubs)\n- \"garlic sauce tub\" \u2192 Add a garlic sauce tub\n\n**SAUCE CONFIRMATION PATTERN:**\n- When confirming orders with sauces, be specific:\n  - \"with garlic sauce included\" (not just \"with garlic sauce\")\n  - \"with a garlic sauce tub on the side\" (for tubs)\n\n**SAUCE RESPONSE PATTERNS:**\n- When customer says \"garlic sauce\" \u2192 \"Got it. I'll include garlic sauce with your HSP.\"\n- When customer says \"garlic sauce on the side\" \u2192 \"Got it. I'll add a garlic sauce tub on the side.\"\n- When ambiguous \u2192 \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**SAUCE ON THE SIDE:**\n- When customer asks for \"garlic sauce on the side\" or similar, add a \"Sauce Tub\" with the specified sauce\n- This is a separate $1.00 item from the menu\n\n\ud83c\udf54 COMBO DETECTION - AUTOMATIC CONVERSION\n\n**AUTOMATICALLY CONVERT TO COMBOS/MEALS:**\n- After customer adds 2+ items, call detectCombos({cart})\n- If combos/meals are found, automatically convert them:\n  - \"I've made that a combo for you.\"\n  - \"I've made that a meal for you.\"\n- NO need to mention savings or ask for confirmation\n\n**KEBAB COMBOS (Kebab + Can):**\n- Small Kebab + Can \u2192 \"Small Kebab & Can Combo\"\n- Large Kebab + Can \u2192 \"Large Kebab & Can Combo\"\n\n**KEBAB MEALS (Kebab + Chips + Can):**\n- Small Kebab + Small Chips + Can \u2192 \"Kebab Meal - Small Kebab + Small Chips + Can\"\n- Small Kebab + Large Chips + Can \u2192 \"Kebab Meal - Small Kebab + Large Chips + Can\"\n- Large Kebab + Small Chips + Can \u2192 \"Kebab Meal - Large Kebab + Small Chips + Can\"\n- Large Kebab + Large Chips + Can \u2192 \"Kebab Meal - Large Kebab + Large Chips + Can\"\n\n**HSP COMBOS (HSP + Can):**\n- Small HSP + Can \u2192 \"Small HSP & Can Combo\"\n- Large HSP + Can \u2192 \"Large HSP & Can Combo\"\n\n**CONFIRMATION PATTERNS:**\n- When confirming a combo: \"Got it. Added the small kebab combo.\"\n- When confirming a meal: \"Got it. Added the large kebab meal.\"\n- When confirming with details: \"Got it. Added the large kebab meal with large chips.\"\n\n**DRINK BRAND RECOGNITION:**\n- Recognize \"Coke 0\", \"Coke Zero\", \"Coke0\", \"Cokezero\", \"Zero Coke\" as \"Coke Zero\"\n- Confirm brand when adding: \"Got it. Adding a Coke Zero can.\"\n\n\ud83e\udd64 DRINK BRAND HANDLING\n\n**When customers ask for drinks:**\n- Always confirm the specific brand for cans: \"Coke, Coke Zero, Pepsi, etc.?\"\n- If they say \"Coke 0\" or similar, recognize it as \"Coke Zero\"\n- If they just say \"Coke\", ask: \"Regular Coke or Coke Zero?\"\n\n\u2705 Checkout Flow (In Order)\n\n1) **Total**: When customer says \"that's all\":\n   - Call priceOrder(cart)\n   - Say the total: \"Your total is $X.\"\n\n2) **Pickup Time**:\n   - Ask: \"What time would you like to pick up?\"\n   - Call estimateReadyTime({ requestedTime: \"<their exact words>\" })\n   - Repeat the tool's message verbatim\n\n3) **Contact Information**:\n   - Ask name: \"What's the name for the order?\"\n   - **Get phone number (ONLY AT CHECKOUT):**\n     - If getCallerInfo.hasCallerID is true:\n       * Use the stored customerPhone from the initial getCallerInfo call\n       * Ask: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n       * If YES \u2192 use customerPhone for everything\n       * If NO \u2192 ask for their number, store it as customerPhone\n     - If getCallerInfo.hasCallerID is false:\n       * Ask: \"What's the best mobile number for pickup?\"\n       * Store their answer as customerPhone\n       * Confirm last 3 digits\n   - **CRITICAL**: This is the FIRST time you should mention phone numbers\n\n4) **Create Order**:\n   - Call createOrder({ \n       cart, \n       totals, \n       contact: { \n         name: \"<customer name>\", \n         phone: customerPhone  // \u2190 USE THE CUSTOMER'S ACTUAL PHONE HERE\n       }, \n       readyAtIso \n     })\n   - Say: \"Thanks <name>. Order confirmed for pickup <time>. Your order number is <orderId>.\"\n\n5) **SMS Receipt** (OPTIONAL):\n   - Ask: \"Would you like me to text your order details to you?\"\n   - If YES \u2192 Call sendReceipt({ \n       orderId, \n       cart, \n       totals, \n       readyAtIso, \n       toPhone: customerPhone,  // \u2190 USE THE CUSTOMER'S PHONE HERE (NOT 0423680596!)\n       consent: true \n     })\n   - Say: \"Sent! You'll receive a text shortly.\"\n   - If NO \u2192 skip\n\n6) **Goodbye**:\n   - Say: \"See you <time>. Have a great day!\"\n   - Call endCall()\n\n\ud83d\udd52 Time Handling\n- Pass exact user phrase to estimateReadyTime\n- Repeat tool's message verbatim\n- Allow time changes before createOrder\n\n\ud83e\udde9 Edit Orders\n- Allow quantity changes, protein swaps, removals\n- Confirm changes briefly\n\n\ud83d\udd1a Clean Exit\n- After friendly goodbye \u2192 call endCall() immediately\n\n\ud83d\udccb FINAL CHECKLIST BEFORE EVERY ORDER\n\nBefore calling createOrder or sendReceipt, verify:\n- [ ] Do I have the customer's actual phone number stored? (e.g., \"0426499209\")\n- [ ] Am I using that customer phone number (NOT 0423680596)?\n- [ ] Is 0423680596 ANYWHERE in my createOrder or sendReceipt call? (If YES, STOP and fix it!)\n- [ ] Did I call detectCombos after adding multiple items?\n- [ ] Am I referring to combos/meals correctly in confirmations?\n- [ ] Did I wait until checkout to ask about phone number?\n\n**Remember:** 0423680596 = SHOP. The customer's number is DIFFERENT!"
+          }
+        ],
+        "provider": "openai",
+        "tools": [
+          {
+            "id": "250b00c7-e2cf-40c7-9694-4c7841193248",
+            "createdAt": "2025-10-21T02:53:28.881Z",
+            "updatedAt": "2025-10-21T02:58:09.001Z",
+            "type": "function",
+            "function": {
+              "name": "checkOpen",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Check if the shop is currently open for business. Returns opening status, current time, and today's business hours."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+            "createdAt": "2025-10-21T02:53:29.145Z",
+            "updatedAt": "2025-10-21T02:58:07.557Z",
+            "type": "function",
+            "function": {
+              "name": "getMenu",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Filter by category (optional)"
+                  }
+                }
+              },
+              "description": "Retrieve the complete menu or filter by specific category. Returns all available items, prices, and modifiers."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+            "createdAt": "2025-10-21T02:53:29.437Z",
+            "updatedAt": "2025-10-21T02:58:09.543Z",
+            "type": "function",
+            "function": {
+              "name": "getCallerInfo",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Silently retrieve the caller's phone number from the call context. Returns formatted phone number and last 3 digits for confirmation."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+            "createdAt": "2025-10-21T02:53:29.671Z",
+            "updatedAt": "2025-10-21T02:58:12.621Z",
+            "type": "function",
+            "function": {
+              "name": "priceOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items to price"
+                  }
+                }
+              },
+              "description": "Calculate the total price for all items in the cart. Validates menu items, applies modifiers, and returns detailed pricing breakdown with GST."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "3d618d0c-1742-400e-8afd-12261a102acb",
+            "createdAt": "2025-10-21T02:53:29.892Z",
+            "updatedAt": "2025-10-21T02:58:11.610Z",
+            "type": "function",
+            "function": {
+              "name": "estimateReadyTime",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "requestedTime": {
+                    "type": "string",
+                    "description": "Customer's requested pickup time"
+                  }
+                }
+              },
+              "description": "Estimate when the order will be ready for pickup based on current queue and preparation time. Can accept specific time requests."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+            "createdAt": "2025-10-21T02:53:30.132Z",
+            "updatedAt": "2025-10-21T02:58:08.504Z",
+            "type": "function",
+            "function": {
+              "name": "createOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart",
+                  "totals",
+                  "contact",
+                  "readyAtIso"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Create and save a new order in the system. Generates order ID, saves customer details, and triggers shop notification."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "175fb74a-0281-4746-9147-13424de1d9da",
+            "createdAt": "2025-10-21T02:53:31.027Z",
+            "updatedAt": "2025-10-21T02:58:08.757Z",
+            "type": "function",
+            "function": {
+              "name": "sendReceipt",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "toPhone",
+                  "consent"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "consent": {
+                    "type": "boolean"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "toPhone": {
+                    "type": "string"
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Send a detailed SMS receipt to the customer with order details, items, pricing, and pickup time. Requires explicit customer consent."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+            "createdAt": "2025-10-21T02:53:31.257Z",
+            "updatedAt": "2025-10-21T02:58:07.306Z",
+            "type": "function",
+            "function": {
+              "name": "sendMenuLink",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "toPhone": {
+                    "type": "string",
+                    "description": "Customer phone number (optional - will auto-detect from caller)"
+                  }
+                }
+              },
+              "description": "Send the menu link via SMS to the customer. Auto-detects caller's number if not provided. Used when customer asks for menu."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+            "createdAt": "2025-10-21T02:53:31.483Z",
+            "updatedAt": "2025-10-21T02:58:10.016Z",
+            "type": "function",
+            "function": {
+              "name": "validateMenuItems",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of items to validate"
+                  }
+                }
+              },
+              "description": "Validate a list of items against the current menu to ensure availability. Returns list of invalid items if any."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+            "createdAt": "2025-10-21T02:53:31.707Z",
+            "updatedAt": "2025-10-21T02:58:10.716Z",
+            "type": "function",
+            "function": {
+              "name": "validateItem",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "category"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Item name"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Item size (if applicable)"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "Drink brand (if applicable)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Item category"
+                  }
+                }
+              },
+              "description": "Validate a single menu item by category, name, size, and brand. Checks if item exists and is available with specified options."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+            "createdAt": "2025-10-21T02:53:31.946Z",
+            "updatedAt": "2025-10-21T02:58:11.865Z",
+            "type": "function",
+            "function": {
+              "name": "endCall",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Signal the end of the phone call. Used to gracefully terminate the conversation after order completion."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+            "createdAt": "2025-10-21T02:53:32.200Z",
+            "updatedAt": "2025-10-21T02:58:10.493Z",
+            "type": "function",
+            "function": {
+              "name": "validateSauceRequest",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "sauceRequest",
+                  "itemType"
+                ],
+                "properties": {
+                  "itemType": {
+                    "type": "string",
+                    "description": "Type of item (kebab, hsp, etc.)"
+                  },
+                  "sauceRequest": {
+                    "type": "string",
+                    "description": "Customer's sauce request"
+                  }
+                }
+              },
+              "description": "Determine if customer wants sauce included with item or as a separate tub. Returns appropriate interpretation of sauce request."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "1337eb2b-b935-4795-aee4-95556510861a",
+            "createdAt": "2025-10-21T02:53:32.461Z",
+            "updatedAt": "2025-10-21T02:58:12.119Z",
+            "type": "function",
+            "function": {
+              "name": "testConnection",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Test the server connection and API responsiveness. Returns success status and timestamp for debugging."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "32361f16-b80c-4399-92c6-0a5f161128b0",
+            "createdAt": "2025-10-21T02:53:32.673Z",
+            "updatedAt": "2025-10-21T02:58:09.778Z",
+            "type": "function",
+            "function": {
+              "name": "detectCombos",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Current cart items to check for combos"
+                  }
+                }
+              },
+              "description": "Automatically detect and convert eligible items into combo meals for better pricing. Returns updated cart with combo items."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547",
+            "createdAt": "2025-10-21T02:53:32.916Z",
+            "updatedAt": "2025-10-21T02:58:12.365Z",
+            "type": "function",
+            "function": {
+              "name": "notifyShop",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "contact",
+                  "order_type"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items"
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Order totals"
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Customer contact"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "Order ID"
+                  },
+                  "order_type": {
+                    "type": "string",
+                    "description": "Order type (pickup/delivery)"
+                  },
+                  "readyAtIso": {
+                    "type": "string",
+                    "description": "Ready time in ISO format"
+                  }
+                }
+              },
+              "description": "Send an SMS notification to the shop with complete order details for preparation. Used internally when order is created."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          }
+        ]
+      },
+      "firstMessage": "Hello, Welcome to Kebab a lab, What can i get for you today ? ",
+      "voicemailMessage": "Please call back when you're available.",
+      "endCallFunctionEnabled": true,
+      "endCallMessage": "Goodbye.",
+      "transcriber": {
+        "model": "nova-2-phonecall",
+        "language": "en",
+        "provider": "deepgram"
+      },
+      "clientMessages": [
+        "transcript",
+        "hang",
+        "metadata",
+        "tool-calls",
+        "tool-calls-result",
+        "tool.completed",
+        "transfer-update",
+        "user-interrupted",
+        "status-update"
+      ],
+      "compliancePlan": {
+        "pciEnabled": false,
+        "hipaaEnabled": false
+      },
+      "variableValues": {}
+    }
+  }
+}
+2025-10-21 14:19:02,264 - server - INFO - Calling tool None with args: {}
+2025-10-21 14:41:42,215 - server - INFO - Received VAPI webhook: {
+  "message": {
+    "timestamp": 1761018104513,
+    "type": "tool-calls",
+    "toolCalls": [
+      {
+        "id": "call_sDmWOHluw2JdTj0kC9r6SlUs",
+        "type": "function",
+        "function": {
+          "name": "detectCombos",
+          "arguments": {}
+        },
+        "isPrecededByText": true
+      },
+      {
+        "id": "call_nWzdFLe4n75pYqufBLfsgIA3",
+        "type": "function",
+        "function": {
+          "name": "priceOrder",
+          "arguments": {}
+        },
+        "isPrecededByText": true
+      }
+    ],
+    "toolCallList": [
+      {
+        "id": "call_sDmWOHluw2JdTj0kC9r6SlUs",
+        "type": "function",
+        "function": {
+          "name": "detectCombos",
+          "arguments": {}
+        },
+        "isPrecededByText": true
+      },
+      {
+        "id": "call_nWzdFLe4n75pYqufBLfsgIA3",
+        "type": "function",
+        "function": {
+          "name": "priceOrder",
+          "arguments": {}
+        },
+        "isPrecededByText": true
+      }
+    ],
+    "toolWithToolCallList": [
+      {
+        "type": "function",
+        "function": {
+          "name": "detectCombos",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "cart"
+            ],
+            "properties": {
+              "cart": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Current cart items to check for combos"
+              }
+            }
+          },
+          "description": "Automatically detect and convert eligible items into combo meals for better pricing. Returns updated cart with combo items."
+        },
+        "async": false,
+        "server": {
+          "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+        },
+        "messages": [],
+        "toolCall": {
+          "id": "call_sDmWOHluw2JdTj0kC9r6SlUs",
+          "type": "function",
+          "function": {
+            "name": "detectCombos",
+            "arguments": {}
+          },
+          "isPrecededByText": true
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "priceOrder",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "cart"
+            ],
+            "properties": {
+              "cart": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Cart items to price"
+              }
+            }
+          },
+          "description": "Calculate the total price for all items in the cart. Validates menu items, applies modifiers, and returns detailed pricing breakdown with GST."
+        },
+        "async": false,
+        "server": {
+          "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+        },
+        "messages": [],
+        "toolCall": {
+          "id": "call_nWzdFLe4n75pYqufBLfsgIA3",
+          "type": "function",
+          "function": {
+            "name": "priceOrder",
+            "arguments": {}
+          },
+          "isPrecededByText": true
+        }
+      }
+    ],
+    "artifact": {
+      "messages": [
+        {
+          "role": "system",
+          "message": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th...",
+          "time": 1761018032946,
+          "secondsFromStart": 0
+        },
+        {
+          "role": "bot",
+          "message": "Hello. Welcome to kebabababab. What can I get for you today?",
+          "time": 1761018034276,
+          "endTime": 1761018037256,
+          "secondsFromStart": -2.163,
+          "duration": 2980,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Small chicken kebab, lettuce, tomato, and garlic chili.",
+          "time": 1761018037696,
+          "endTime": 1761018040476,
+          "secondsFromStart": 1.257,
+          "duration": 2780,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "small",
+                "start": 4.54,
+                "end": 4.8599997,
+                "confidence": 0.9951172,
+                "punctuated_word": "Small"
+              },
+              {
+                "word": "chicken",
+                "start": 4.8599997,
+                "end": 5.18,
+                "confidence": 0.9941406,
+                "punctuated_word": "chicken"
+              },
+              {
+                "word": "kebab",
+                "start": 5.18,
+                "end": 5.58,
+                "confidence": 0.87231445,
+                "punctuated_word": "kebab,"
+              },
+              {
+                "word": "lettuce",
+                "start": 5.58,
+                "end": 5.98,
+                "confidence": 0.8183594,
+                "punctuated_word": "lettuce,"
+              },
+              {
+                "word": "tomato",
+                "start": 5.98,
+                "end": 6.46,
+                "confidence": 0.9880371,
+                "punctuated_word": "tomato,"
+              },
+              {
+                "word": "and",
+                "start": 6.46,
+                "end": 6.54,
+                "confidence": 0.87890625,
+                "punctuated_word": "and"
+              },
+              {
+                "word": "garlic",
+                "start": 6.54,
+                "end": 6.8599997,
+                "confidence": 0.9589844,
+                "punctuated_word": "garlic"
+              },
+              {
+                "word": "chili",
+                "start": 6.8599997,
+                "end": 7.32,
+                "confidence": 0.8942871,
+                "punctuated_word": "chili."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Would you like the garlic sauce included with your small chicken kebab, or as a separate tub?",
+          "time": 1761018041896,
+          "endTime": 1761018046686,
+          "secondsFromStart": 5.457,
+          "duration": 4750,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Included.",
+          "time": 1761018047446,
+          "endTime": 1761018047946,
+          "secondsFromStart": 11.007,
+          "duration": 500,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "included",
+                "start": 14.29,
+                "end": 14.79,
+                "confidence": 0.6538086,
+                "punctuated_word": "Included."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Got it. Just to confirm, you want a small chicken kebab with lettuce, tomato, and garlic sauce included. Shall I add that to your order?",
+          "time": 1761018049646,
+          "endTime": 1761018056626,
+          "secondsFromStart": 13.207,
+          "duration": 6740.0009765625,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Chili sauce as well.",
+          "time": 1761018056926,
+          "endTime": 1761018058306.002,
+          "secondsFromStart": 20.487,
+          "duration": 1380.001953125,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "chili",
+                "start": 23.77,
+                "end": 24.01,
+                "confidence": 0.92822266,
+                "punctuated_word": "Chili"
+              },
+              {
+                "word": "sauce",
+                "start": 24.01,
+                "end": 24.51,
+                "confidence": 0.9970703,
+                "punctuated_word": "sauce"
+              },
+              {
+                "word": "as",
+                "start": 24.57,
+                "end": 24.650002,
+                "confidence": 0.99902344,
+                "punctuated_word": "as"
+              },
+              {
+                "word": "well",
+                "start": 24.650002,
+                "end": 25.150002,
+                "confidence": 0.9128418,
+                "punctuated_word": "well."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Got it. I'll include chili sauce with your small chicken kebab as well. So that's a small chicken kebab with lettuce, tomato, garlic sauce, and chili sauce included. Shall I add that to your order?",
+          "time": 1761018059806,
+          "endTime": 1761018069626,
+          "secondsFromStart": 23.367,
+          "duration": 9629.9970703125,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Yes, please.",
+          "time": 1761018070026,
+          "endTime": 1761018070846,
+          "secondsFromStart": 33.587,
+          "duration": 820,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "yes",
+                "start": 36.87,
+                "end": 37.19,
+                "confidence": 0.83813477,
+                "punctuated_word": "Yes,"
+              },
+              {
+                "word": "please",
+                "start": 37.19,
+                "end": 37.69,
+                "confidence": 0.99609375,
+                "punctuated_word": "please."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "This will just take a sec.",
+          "time": 1761018071866.003,
+          "endTime": 1761018073386,
+          "secondsFromStart": 35.4270029296875,
+          "duration": 1519.9970703125,
+          "source": ""
+        },
+        {
+          "toolCalls": [
+            {
+              "id": "call_URvwa1a1gAfp2zBPqpbYRlUn",
+              "type": "function",
+              "function": {
+                "name": "detectCombos",
+                "arguments": "{}"
+              }
+            }
+          ],
+          "role": "tool_calls",
+          "message": "",
+          "time": 1761018074012,
+          "secondsFromStart": 37.573
+        },
+        {
+          "role": "bot",
+          "message": "I've added the small chicken kebab with lettuce,",
+          "time": 1761018074506,
+          "endTime": 1761018076766,
+          "secondsFromStart": 38.067,
+          "duration": 2260,
+          "source": ""
+        },
+        {
+          "role": "tool_call_result",
+          "time": 1761018075427,
+          "secondsFromStart": 38.988,
+          "name": "detectCombos",
+          "result": "Your server rejected `tool-calls` webhook. Error: Request failed with status code 400",
+          "toolCallId": "call_URvwa1a1gAfp2zBPqpbYRlUn"
+        },
+        {
+          "role": "bot",
+          "message": "tomato, garlic sauce, and chili sauce included. Anything else you'd like to add?",
+          "time": 1761018077166.002,
+          "endTime": 1761018080926,
+          "secondsFromStart": 40.727001953125,
+          "duration": 3759.998046875,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Sorry. That was all. Could you actually make that a combo with a small chip and a can of Coke?",
+          "time": 1761018087346,
+          "endTime": 1761018091576,
+          "secondsFromStart": 50.907,
+          "duration": 4230,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "sorry",
+                "start": 54.19,
+                "end": 54.51,
+                "confidence": 0.95410156,
+                "punctuated_word": "Sorry."
+              },
+              {
+                "word": "that",
+                "start": 54.51,
+                "end": 54.67,
+                "confidence": 1,
+                "punctuated_word": "That"
+              },
+              {
+                "word": "was",
+                "start": 54.67,
+                "end": 54.989998,
+                "confidence": 1,
+                "punctuated_word": "was"
+              },
+              {
+                "word": "all",
+                "start": 54.989998,
+                "end": 55.07,
+                "confidence": 0.9970703,
+                "punctuated_word": "all."
+              },
+              {
+                "word": "could",
+                "start": 55.07,
+                "end": 55.23,
+                "confidence": 1,
+                "punctuated_word": "Could"
+              },
+              {
+                "word": "you",
+                "start": 55.23,
+                "end": 55.39,
+                "confidence": 1,
+                "punctuated_word": "you"
+              },
+              {
+                "word": "actually",
+                "start": 55.39,
+                "end": 55.71,
+                "confidence": 0.9819336,
+                "punctuated_word": "actually"
+              },
+              {
+                "word": "make",
+                "start": 55.71,
+                "end": 55.87,
+                "confidence": 1,
+                "punctuated_word": "make"
+              },
+              {
+                "word": "that",
+                "start": 55.87,
+                "end": 56.109997,
+                "confidence": 1,
+                "punctuated_word": "that"
+              },
+              {
+                "word": "a",
+                "start": 56.109997,
+                "end": 56.19,
+                "confidence": 0.9980469,
+                "punctuated_word": "a"
+              },
+              {
+                "word": "combo",
+                "start": 56.19,
+                "end": 56.51,
+                "confidence": 1,
+                "punctuated_word": "combo"
+              },
+              {
+                "word": "with",
+                "start": 56.51,
+                "end": 56.67,
+                "confidence": 0.9951172,
+                "punctuated_word": "with"
+              },
+              {
+                "word": "a",
+                "start": 56.67,
+                "end": 56.829998,
+                "confidence": 0.7705078,
+                "punctuated_word": "a"
+              },
+              {
+                "word": "small",
+                "start": 56.829998,
+                "end": 57.149998,
+                "confidence": 0.99902344,
+                "punctuated_word": "small"
+              },
+              {
+                "word": "chip",
+                "start": 57.149998,
+                "end": 57.34,
+                "confidence": 0.85595703,
+                "punctuated_word": "chip"
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "No problems. Just to confirm, you'd like to make it a combo with a small chicken kebabs, small chips, and a can of Coke. Is that correct?",
+          "time": 1761018093026.003,
+          "endTime": 1761018099786,
+          "secondsFromStart": 56.5870029296875,
+          "duration": 6449.9951171875,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Yep.",
+          "time": 1761018100025.995,
+          "endTime": 1761018100525.995,
+          "secondsFromStart": 63.5869951171875,
+          "duration": 500,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "yep",
+                "start": 66.869995,
+                "end": 67.369995,
+                "confidence": 0.8835449,
+                "punctuated_word": "Yep."
+              }
+            ]
+          }
+        },
+        {
+          "toolCalls": [
+            {
+              "id": "call_sDmWOHluw2JdTj0kC9r6SlUs",
+              "type": "function",
+              "function": {
+                "name": "detectCombos",
+                "arguments": "{}"
+              }
+            },
+            {
+              "id": "call_nWzdFLe4n75pYqufBLfsgIA3",
+              "type": "function",
+              "function": {
+                "name": "priceOrder",
+                "arguments": "{}"
+              }
+            }
+          ],
+          "role": "tool_calls",
+          "message": "",
+          "time": 1761018104511,
+          "secondsFromStart": 68.072
+        }
+      ],
+      "messagesOpenAIFormatted": [
+        {
+          "role": "system",
+          "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th..."
+        },
+        {
+          "role": "assistant",
+          "content": "Hello. Welcome to kebabababab. What can I get for you today?"
+        },
+        {
+          "role": "user",
+          "content": "Small chicken kebab, lettuce, tomato, and garlic chili."
+        },
+        {
+          "role": "assistant",
+          "content": "Would you like the garlic sauce included with your small chicken kebab, or as a separate tub?"
+        },
+        {
+          "role": "user",
+          "content": "Included."
+        },
+        {
+          "role": "assistant",
+          "content": "Got it. Just to confirm, you want a small chicken kebab with lettuce, tomato, and garlic sauce included. Shall I add that to your order?"
+        },
+        {
+          "role": "user",
+          "content": "Chili sauce as well."
+        },
+        {
+          "role": "assistant",
+          "content": "Got it. I'll include chili sauce with your small chicken kebab as well. So that's a small chicken kebab with lettuce, tomato, garlic sauce, and chili sauce included. Shall I add that to your order?"
+        },
+        {
+          "role": "user",
+          "content": "Yes, please."
+        },
+        {
+          "role": "assistant",
+          "content": "This will just take a sec.",
+          "tool_calls": [
+            {
+              "id": "call_URvwa1a1gAfp2zBPqpbYRlUn",
+              "type": "function",
+              "function": {
+                "name": "detectCombos",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_URvwa1a1gAfp2zBPqpbYRlUn",
+          "content": "Your server rejected `tool-calls` webhook. Error: Request failed with status code 400"
+        },
+        {
+          "role": "assistant",
+          "content": "I've added the small chicken kebab with lettuce, tomato, garlic sauce, and chili sauce included. Anything else you'd like to add?"
+        },
+        {
+          "role": "user",
+          "content": "Sorry. That was all. Could you actually make that a combo with a small chip and a can of Coke?"
+        },
+        {
+          "role": "assistant",
+          "content": "No problems. Just to confirm, you'd like to make it a combo with a small chicken kebabs, small chips, and a can of Coke. Is that correct?"
+        },
+        {
+          "role": "user",
+          "content": "Yep."
+        },
+        {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_sDmWOHluw2JdTj0kC9r6SlUs",
+              "type": "function",
+              "function": {
+                "name": "detectCombos",
+                "arguments": "{}"
+              }
+            },
+            {
+              "id": "call_nWzdFLe4n75pYqufBLfsgIA3",
+              "type": "function",
+              "function": {
+                "name": "priceOrder",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_sDmWOHluw2JdTj0kC9r6SlUs",
+          "content": "Tool Result Still Pending But Proceed Further If Possible."
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_nWzdFLe4n75pYqufBLfsgIA3",
+          "content": "Tool Result Still Pending But Proceed Further If Possible."
+        }
+      ]
+    },
+    "call": {
+      "id": "019a04da-b28b-7110-8f9e-9e0ba0b2e952",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "createdAt": "2025-10-21T03:40:32.779Z",
+      "updatedAt": "2025-10-21T03:40:32.779Z",
+      "type": "webCall",
+      "cost": 0,
+      "monitor": {
+        "listenUrl": "wss://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04da-b28b-7110-8f9e-9e0ba0b2e952/listen",
+        "controlUrl": "https://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04da-b28b-7110-8f9e-9e0ba0b2e952/control"
+      },
+      "transport": {
+        "provider": "daily",
+        "videoRecordingEnabled": false,
+        "assistantVideoEnabled": false,
+        "roomDeleteOnUserLeaveEnabled": true,
+        "callUrl": "https://vapi.daily.co/yOLuMVGDzqASN88Mi5u6"
+      },
+      "webCallUrl": "https://vapi.daily.co/yOLuMVGDzqASN88Mi5u6",
+      "status": "queued",
+      "assistantId": "320f76b1-140a-412c-b95f-252032911ca3",
+      "assistantOverrides": {
+        "clientMessages": [
+          "transcript",
+          "hang",
+          "metadata",
+          "tool-calls",
+          "tool-calls-result",
+          "tool.completed",
+          "transfer-update",
+          "user-interrupted",
+          "status-update"
+        ],
+        "variableValues": {}
+      }
+    },
+    "assistant": {
+      "id": "320f76b1-140a-412c-b95f-252032911ca3",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "name": "NEW",
+      "voice": {
+        "model": "eleven_flash_v2_5",
+        "voiceId": "Y0bYnHupCSm7PZ8v5V7B",
+        "provider": "11labs",
+        "stability": 0.5,
+        "similarityBoost": 0.75
+      },
+      "createdAt": "2025-10-17T13:17:13.941Z",
+      "updatedAt": "2025-10-21T03:03:15.317Z",
+      "model": {
+        "model": "gpt-4o-mini",
+        "toolIds": [
+          "250b00c7-e2cf-40c7-9694-4c7841193248",
+          "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+          "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+          "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+          "3d618d0c-1742-400e-8afd-12261a102acb",
+          "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+          "175fb74a-0281-4746-9147-13424de1d9da",
+          "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+          "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+          "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+          "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+          "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+          "1337eb2b-b935-4795-aee4-95556510861a",
+          "32361f16-b80c-4399-92c6-0a5f161128b0",
+          "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547"
+        ],
+        "messages": [
+          {
+            "role": "system",
+            "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention the phone number until checkout\n4. At checkout, confirm the number: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n5. If getCallerInfo.hasCallerID is false, only then ask for their number at checkout\n\n**EXAMPLES OF CORRECT USAGE:**\n- getCallerInfo returns { phoneNumber: \"0426499209\" } \u2192 STORE this number for later use\n- DO NOT ask for phone number until checkout\n- At checkout: \"Is the best number the one you're calling from, ending in 9 2 0 9?\"\n\n**WRONG - DON'T DO THIS:**\n- Asking for phone number right after greeting \u274c WRONG!\n- Asking for phone number before order is complete \u274c WRONG!\n- Using 0423680596 as customer number \u274c WRONG!\n\n**RIGHT - DO THIS:**\n- Call getCallerInfo silently at start \u2705\n- Store the number for later use \u2705\n- Only confirm at checkout \u2705\n\n\ud83d\udccb MENU REQUESTS - IMPORTANT!\n\n**When customers ask for the menu:**\n1. Say: \"Would you like me to text you our menu link so you can take a look?\"\n2. If YES \u2192 Call sendMenuLink({}) with NO parameters (it auto-detects their number)\n3. Say: \"I've sent you the menu. Feel free to take a look and call us back when you're ready to order!\"\n4. Call endCall()\n\n**IMPORTANT:**\n- ALWAYS use sendMenuLink({}) for menu requests (NOT sendReceipt)\n- sendMenuLink automatically detects the customer's phone number\n- sendReceipt is ONLY for sending order confirmations AFTER an order is placed\n\n\ud83d\uded2 Cart Rules & Menu Validation\n\n**CRITICAL: Menu Validation**\n- BEFORE adding ANY item to cart, verify it exists on our menu\n- Items NOT on menu include: \"loaded fries\", \"kebab plate\", \"mixed kebab plate\", \"teas\"\n- If customer requests an item not on menu:\n  1. Say: \"Sorry, we don't have [item] on our menu.\"\n  2. If they ask for multiple unavailable items OR ask \"what do you have?\":\n     - Follow the MENU REQUESTS instructions above\n\n**Valid Menu Items:**\n- Kebabs: Lamb, Chicken, Mix, Falafel (small $10, large $15)\n- Wraps: Falafel, Lamb, Chicken, Mix ($12)\n- Falafel: 3 pieces ($6), 6 pieces ($10)\n- HSP: Lamb, Chicken, Mix, Falafel (small $15, large $20)\n- G\u00f6zleme: Vegan, Lamb, Chicken, Vegetarian ($15)\n- Chips: Small ($5), Large ($9)\n- Drinks: Coke, Coke Zero, Pepsi, Sprite, Fanta, Solo, etc. ($3.50), Water ($3)\n- Sweets: Baklava ($3 each, $10 for 4), Turkish Delight ($1), Rice Pudding ($5)\n- Extras: Extra Takeaway Box ($2), Extra Napkins ($0.50), Extra Forks ($0.50), Extra Cutlery Set ($1), Extra Carry Bag ($0.50), Extra Plates ($0.50), Extra Container ($1)\n- Sauce Tubs: Garlic, Chilli, BBQ, Tomato, Sweet Chilli, Mayo, Hummus ($1.00 each)\n\n**Available Extras:**\n- Extra lamb/chicken/mix: $3 (kebabs/HSPs only)\n- Falafel standalone: $2 each\n- Salad on side: $3\n- Extra chips inside: $3\n- Cheese: $1 (extra for kebabs, included in HSP)\n- Jalape\u00f1os: $1\n- Olives: $1\n- Sauces: $0.50\n\n**Cart Management:**\n- Kebab/HSP: confirm **size**, **protein**, **salads**, **sauces** before adding\n- Size is mandatory: ask \"Would you like **small** or **large**?\"\n- Never call priceOrder with empty cart\n- Micro-responses: \"Got it.\" \"Added.\" \"Anything else?\"\n\n**AFTER ADDING ITEMS:**\n- Always call detectCombos({cart}) after adding 2+ items\n- If the tool returns hasChanges: true, update your cart with updatedCart\n- Inform the customer: \"I've made that a combo.\" or \"I've made that a meal.\"\n- Continue with the order\n\n**IMPORTANT: DO NOT ASK ABOUT EXTRAS UNLESS CUSTOMER REQUESTS THEM**\n- NEVER proactively ask \"Would you like to add any extras like cheese or jalapenos?\"\n- Only discuss extras if the customer specifically mentions them or asks about them\n- If customer asks \"What extras do you have?\" then list the available extras\n\n**INCREMENTAL ORDER CONFIRMATION:**\n- When customer adds items to an existing order, ONLY confirm the new items\n- Example: If they already have a kebab and add chips, say \"Got it. Added large chips.\"\n- DO NOT repeat the entire order unless specifically asked\n- At the end of ordering, you can summarize the complete order once\n\n**ORDER CONFIRMATION RULES:**\n- Once an order is confirmed and the customer says \"that's correct\" or similar, DO NOT repeat the order details again\n- Only repeat the order if the customer specifically asks you to\n- Move directly to the next step in the checkout flow\n\n**WHEN CONFIRMING COMBOS/MEALS:**\n- Refer to them as \"combo\" or \"meal\", not individual items\n- Example: \"You have a large kebab combo and a small falafel kebab.\"\n- Example: \"You have a large kebab meal with large chips and a drink.\"\n\n**HSP SALAD HANDLING:**\n- Do NOT ask about salads for HSP unless the customer specifically mentions salads\n- HSP comes with cheese by default (not considered a salad)\n- If customer asks for salads on HSP, add them as requested\n\n**FALAFEL HANDLING:**\n- When customer asks for \"falafel\" without specifying, assume they want a Falafel Kebab\n- When customer asks for \"falafel wrap\", they want a Falafel Wrap\n- Always confirm size for falafel kebabs: \"Would you like small or large?\"\n- For falafel wraps, ask about salads and sauces as with other wraps\n- For standalone falafel pieces, offer 3 or 6 pieces options\n\n\ud83e\udd6b SAUCE CLARIFICATION - CRITICAL\n\n**When customers mention sauces (garlic, chili, etc.):**\n- DEFAULT ASSUMPTION: Sauces are included WITH the item unless explicitly stated otherwise\n- ONLY add sauce tubs when customer says \"on the side\", \"separate\", \"extra\", or \"tub\"\n- If ambiguous, ASK: \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**EXAMPLES: CORRECT INTERPRETATION:**\n- \"garlic sauce\" \u2192 Include garlic sauce with the item (NOT a tub)\n- \"garlic sauce on the side\" \u2192 Add a garlic sauce tub\n- \"extra garlic sauce\" \u2192 Add a garlic sauce tub\n- \"garlic sauce and chili sauce\" \u2192 Include both sauces with the item (NOT tubs)\n- \"garlic sauce tub\" \u2192 Add a garlic sauce tub\n\n**SAUCE CONFIRMATION PATTERN:**\n- When confirming orders with sauces, be specific:\n  - \"with garlic sauce included\" (not just \"with garlic sauce\")\n  - \"with a garlic sauce tub on the side\" (for tubs)\n\n**SAUCE RESPONSE PATTERNS:**\n- When customer says \"garlic sauce\" \u2192 \"Got it. I'll include garlic sauce with your HSP.\"\n- When customer says \"garlic sauce on the side\" \u2192 \"Got it. I'll add a garlic sauce tub on the side.\"\n- When ambiguous \u2192 \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**SAUCE ON THE SIDE:**\n- When customer asks for \"garlic sauce on the side\" or similar, add a \"Sauce Tub\" with the specified sauce\n- This is a separate $1.00 item from the menu\n\n\ud83c\udf54 COMBO DETECTION - AUTOMATIC CONVERSION\n\n**AUTOMATICALLY CONVERT TO COMBOS/MEALS:**\n- After customer adds 2+ items, call detectCombos({cart})\n- If combos/meals are found, automatically convert them:\n  - \"I've made that a combo for you.\"\n  - \"I've made that a meal for you.\"\n- NO need to mention savings or ask for confirmation\n\n**KEBAB COMBOS (Kebab + Can):**\n- Small Kebab + Can \u2192 \"Small Kebab & Can Combo\"\n- Large Kebab + Can \u2192 \"Large Kebab & Can Combo\"\n\n**KEBAB MEALS (Kebab + Chips + Can):**\n- Small Kebab + Small Chips + Can \u2192 \"Kebab Meal - Small Kebab + Small Chips + Can\"\n- Small Kebab + Large Chips + Can \u2192 \"Kebab Meal - Small Kebab + Large Chips + Can\"\n- Large Kebab + Small Chips + Can \u2192 \"Kebab Meal - Large Kebab + Small Chips + Can\"\n- Large Kebab + Large Chips + Can \u2192 \"Kebab Meal - Large Kebab + Large Chips + Can\"\n\n**HSP COMBOS (HSP + Can):**\n- Small HSP + Can \u2192 \"Small HSP & Can Combo\"\n- Large HSP + Can \u2192 \"Large HSP & Can Combo\"\n\n**CONFIRMATION PATTERNS:**\n- When confirming a combo: \"Got it. Added the small kebab combo.\"\n- When confirming a meal: \"Got it. Added the large kebab meal.\"\n- When confirming with details: \"Got it. Added the large kebab meal with large chips.\"\n\n**DRINK BRAND RECOGNITION:**\n- Recognize \"Coke 0\", \"Coke Zero\", \"Coke0\", \"Cokezero\", \"Zero Coke\" as \"Coke Zero\"\n- Confirm brand when adding: \"Got it. Adding a Coke Zero can.\"\n\n\ud83e\udd64 DRINK BRAND HANDLING\n\n**When customers ask for drinks:**\n- Always confirm the specific brand for cans: \"Coke, Coke Zero, Pepsi, etc.?\"\n- If they say \"Coke 0\" or similar, recognize it as \"Coke Zero\"\n- If they just say \"Coke\", ask: \"Regular Coke or Coke Zero?\"\n\n\u2705 Checkout Flow (In Order)\n\n1) **Total**: When customer says \"that's all\":\n   - Call priceOrder(cart)\n   - Say the total: \"Your total is $X.\"\n\n2) **Pickup Time**:\n   - Ask: \"What time would you like to pick up?\"\n   - Call estimateReadyTime({ requestedTime: \"<their exact words>\" })\n   - Repeat the tool's message verbatim\n\n3) **Contact Information**:\n   - Ask name: \"What's the name for the order?\"\n   - **Get phone number (ONLY AT CHECKOUT):**\n     - If getCallerInfo.hasCallerID is true:\n       * Use the stored customerPhone from the initial getCallerInfo call\n       * Ask: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n       * If YES \u2192 use customerPhone for everything\n       * If NO \u2192 ask for their number, store it as customerPhone\n     - If getCallerInfo.hasCallerID is false:\n       * Ask: \"What's the best mobile number for pickup?\"\n       * Store their answer as customerPhone\n       * Confirm last 3 digits\n   - **CRITICAL**: This is the FIRST time you should mention phone numbers\n\n4) **Create Order**:\n   - Call createOrder({ \n       cart, \n       totals, \n       contact: { \n         name: \"<customer name>\", \n         phone: customerPhone  // \u2190 USE THE CUSTOMER'S ACTUAL PHONE HERE\n       }, \n       readyAtIso \n     })\n   - Say: \"Thanks <name>. Order confirmed for pickup <time>. Your order number is <orderId>.\"\n\n5) **SMS Receipt** (OPTIONAL):\n   - Ask: \"Would you like me to text your order details to you?\"\n   - If YES \u2192 Call sendReceipt({ \n       orderId, \n       cart, \n       totals, \n       readyAtIso, \n       toPhone: customerPhone,  // \u2190 USE THE CUSTOMER'S PHONE HERE (NOT 0423680596!)\n       consent: true \n     })\n   - Say: \"Sent! You'll receive a text shortly.\"\n   - If NO \u2192 skip\n\n6) **Goodbye**:\n   - Say: \"See you <time>. Have a great day!\"\n   - Call endCall()\n\n\ud83d\udd52 Time Handling\n- Pass exact user phrase to estimateReadyTime\n- Repeat tool's message verbatim\n- Allow time changes before createOrder\n\n\ud83e\udde9 Edit Orders\n- Allow quantity changes, protein swaps, removals\n- Confirm changes briefly\n\n\ud83d\udd1a Clean Exit\n- After friendly goodbye \u2192 call endCall() immediately\n\n\ud83d\udccb FINAL CHECKLIST BEFORE EVERY ORDER\n\nBefore calling createOrder or sendReceipt, verify:\n- [ ] Do I have the customer's actual phone number stored? (e.g., \"0426499209\")\n- [ ] Am I using that customer phone number (NOT 0423680596)?\n- [ ] Is 0423680596 ANYWHERE in my createOrder or sendReceipt call? (If YES, STOP and fix it!)\n- [ ] Did I call detectCombos after adding multiple items?\n- [ ] Am I referring to combos/meals correctly in confirmations?\n- [ ] Did I wait until checkout to ask about phone number?\n\n**Remember:** 0423680596 = SHOP. The customer's number is DIFFERENT!"
+          }
+        ],
+        "provider": "openai",
+        "tools": [
+          {
+            "id": "250b00c7-e2cf-40c7-9694-4c7841193248",
+            "createdAt": "2025-10-21T02:53:28.881Z",
+            "updatedAt": "2025-10-21T02:58:09.001Z",
+            "type": "function",
+            "function": {
+              "name": "checkOpen",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Check if the shop is currently open for business. Returns opening status, current time, and today's business hours."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+            "createdAt": "2025-10-21T02:53:29.145Z",
+            "updatedAt": "2025-10-21T02:58:07.557Z",
+            "type": "function",
+            "function": {
+              "name": "getMenu",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Filter by category (optional)"
+                  }
+                }
+              },
+              "description": "Retrieve the complete menu or filter by specific category. Returns all available items, prices, and modifiers."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+            "createdAt": "2025-10-21T02:53:29.437Z",
+            "updatedAt": "2025-10-21T02:58:09.543Z",
+            "type": "function",
+            "function": {
+              "name": "getCallerInfo",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Silently retrieve the caller's phone number from the call context. Returns formatted phone number and last 3 digits for confirmation."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+            "createdAt": "2025-10-21T02:53:29.671Z",
+            "updatedAt": "2025-10-21T02:58:12.621Z",
+            "type": "function",
+            "function": {
+              "name": "priceOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items to price"
+                  }
+                }
+              },
+              "description": "Calculate the total price for all items in the cart. Validates menu items, applies modifiers, and returns detailed pricing breakdown with GST."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "3d618d0c-1742-400e-8afd-12261a102acb",
+            "createdAt": "2025-10-21T02:53:29.892Z",
+            "updatedAt": "2025-10-21T02:58:11.610Z",
+            "type": "function",
+            "function": {
+              "name": "estimateReadyTime",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "requestedTime": {
+                    "type": "string",
+                    "description": "Customer's requested pickup time"
+                  }
+                }
+              },
+              "description": "Estimate when the order will be ready for pickup based on current queue and preparation time. Can accept specific time requests."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+            "createdAt": "2025-10-21T02:53:30.132Z",
+            "updatedAt": "2025-10-21T02:58:08.504Z",
+            "type": "function",
+            "function": {
+              "name": "createOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart",
+                  "totals",
+                  "contact",
+                  "readyAtIso"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Create and save a new order in the system. Generates order ID, saves customer details, and triggers shop notification."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "175fb74a-0281-4746-9147-13424de1d9da",
+            "createdAt": "2025-10-21T02:53:31.027Z",
+            "updatedAt": "2025-10-21T02:58:08.757Z",
+            "type": "function",
+            "function": {
+              "name": "sendReceipt",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "toPhone",
+                  "consent"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "consent": {
+                    "type": "boolean"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "toPhone": {
+                    "type": "string"
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Send a detailed SMS receipt to the customer with order details, items, pricing, and pickup time. Requires explicit customer consent."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+            "createdAt": "2025-10-21T02:53:31.257Z",
+            "updatedAt": "2025-10-21T02:58:07.306Z",
+            "type": "function",
+            "function": {
+              "name": "sendMenuLink",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "toPhone": {
+                    "type": "string",
+                    "description": "Customer phone number (optional - will auto-detect from caller)"
+                  }
+                }
+              },
+              "description": "Send the menu link via SMS to the customer. Auto-detects caller's number if not provided. Used when customer asks for menu."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+            "createdAt": "2025-10-21T02:53:31.483Z",
+            "updatedAt": "2025-10-21T02:58:10.016Z",
+            "type": "function",
+            "function": {
+              "name": "validateMenuItems",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of items to validate"
+                  }
+                }
+              },
+              "description": "Validate a list of items against the current menu to ensure availability. Returns list of invalid items if any."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+            "createdAt": "2025-10-21T02:53:31.707Z",
+            "updatedAt": "2025-10-21T02:58:10.716Z",
+            "type": "function",
+            "function": {
+              "name": "validateItem",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "category"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Item name"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Item size (if applicable)"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "Drink brand (if applicable)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Item category"
+                  }
+                }
+              },
+              "description": "Validate a single menu item by category, name, size, and brand. Checks if item exists and is available with specified options."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+            "createdAt": "2025-10-21T02:53:31.946Z",
+            "updatedAt": "2025-10-21T02:58:11.865Z",
+            "type": "function",
+            "function": {
+              "name": "endCall",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Signal the end of the phone call. Used to gracefully terminate the conversation after order completion."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+            "createdAt": "2025-10-21T02:53:32.200Z",
+            "updatedAt": "2025-10-21T02:58:10.493Z",
+            "type": "function",
+            "function": {
+              "name": "validateSauceRequest",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "sauceRequest",
+                  "itemType"
+                ],
+                "properties": {
+                  "itemType": {
+                    "type": "string",
+                    "description": "Type of item (kebab, hsp, etc.)"
+                  },
+                  "sauceRequest": {
+                    "type": "string",
+                    "description": "Customer's sauce request"
+                  }
+                }
+              },
+              "description": "Determine if customer wants sauce included with item or as a separate tub. Returns appropriate interpretation of sauce request."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "1337eb2b-b935-4795-aee4-95556510861a",
+            "createdAt": "2025-10-21T02:53:32.461Z",
+            "updatedAt": "2025-10-21T02:58:12.119Z",
+            "type": "function",
+            "function": {
+              "name": "testConnection",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Test the server connection and API responsiveness. Returns success status and timestamp for debugging."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "32361f16-b80c-4399-92c6-0a5f161128b0",
+            "createdAt": "2025-10-21T02:53:32.673Z",
+            "updatedAt": "2025-10-21T02:58:09.778Z",
+            "type": "function",
+            "function": {
+              "name": "detectCombos",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Current cart items to check for combos"
+                  }
+                }
+              },
+              "description": "Automatically detect and convert eligible items into combo meals for better pricing. Returns updated cart with combo items."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547",
+            "createdAt": "2025-10-21T02:53:32.916Z",
+            "updatedAt": "2025-10-21T02:58:12.365Z",
+            "type": "function",
+            "function": {
+              "name": "notifyShop",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "contact",
+                  "order_type"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items"
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Order totals"
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Customer contact"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "Order ID"
+                  },
+                  "order_type": {
+                    "type": "string",
+                    "description": "Order type (pickup/delivery)"
+                  },
+                  "readyAtIso": {
+                    "type": "string",
+                    "description": "Ready time in ISO format"
+                  }
+                }
+              },
+              "description": "Send an SMS notification to the shop with complete order details for preparation. Used internally when order is created."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          }
+        ]
+      },
+      "firstMessage": "Hello, Welcome to Kebab a lab, What can i get for you today ? ",
+      "voicemailMessage": "Please call back when you're available.",
+      "endCallFunctionEnabled": true,
+      "endCallMessage": "Goodbye.",
+      "transcriber": {
+        "model": "nova-2-phonecall",
+        "language": "en",
+        "provider": "deepgram"
+      },
+      "clientMessages": [
+        "transcript",
+        "hang",
+        "metadata",
+        "tool-calls",
+        "tool-calls-result",
+        "tool.completed",
+        "transfer-update",
+        "user-interrupted",
+        "status-update"
+      ],
+      "compliancePlan": {
+        "pciEnabled": false,
+        "hipaaEnabled": false
+      },
+      "variableValues": {}
+    }
+  }
+}
+2025-10-21 14:41:42,217 - server - INFO - Calling tool None with args: {}
+2025-10-21 14:41:42,217 - server - INFO - Calling tool None with args: {}
+2025-10-21 14:43:45,179 - server - INFO - Received VAPI webhook: {
+  "message": {
+    "timestamp": 1761018227422,
+    "type": "tool-calls",
+    "toolCalls": [
+      {
+        "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+        "type": "function",
+        "function": {
+          "name": "validateItem",
+          "arguments": {
+            "name": "chicken kebab",
+            "size": "small",
+            "category": "kebabs"
+          }
+        },
+        "isPrecededByText": true
+      }
+    ],
+    "toolCallList": [
+      {
+        "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+        "type": "function",
+        "function": {
+          "name": "validateItem",
+          "arguments": {
+            "name": "chicken kebab",
+            "size": "small",
+            "category": "kebabs"
+          }
+        },
+        "isPrecededByText": true
+      }
+    ],
+    "toolWithToolCallList": [
+      {
+        "type": "function",
+        "function": {
+          "name": "validateItem",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "category"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Item name"
+              },
+              "size": {
+                "type": "string",
+                "description": "Item size (if applicable)"
+              },
+              "brand": {
+                "type": "string",
+                "description": "Drink brand (if applicable)"
+              },
+              "category": {
+                "type": "string",
+                "description": "Item category"
+              }
+            }
+          },
+          "description": "Validate a single menu item by category, name, size, and brand. Checks if item exists and is available with specified options."
+        },
+        "async": false,
+        "server": {
+          "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+        },
+        "messages": [],
+        "toolCall": {
+          "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+          "type": "function",
+          "function": {
+            "name": "validateItem",
+            "arguments": {
+              "name": "chicken kebab",
+              "size": "small",
+              "category": "kebabs"
+            }
+          },
+          "isPrecededByText": true
+        }
+      }
+    ],
+    "artifact": {
+      "messages": [
+        {
+          "role": "system",
+          "message": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th...",
+          "time": 1761018214520,
+          "secondsFromStart": 0
+        },
+        {
+          "role": "bot",
+          "message": "Hello. Welcome to Kebabab Lab. What can I get for you today?",
+          "time": 1761018215738,
+          "endTime": 1761018218798,
+          "secondsFromStart": -1.769,
+          "duration": 3060,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Hi. Small chicken kebab. Lettuce, tomato, and garlic chili in a meal with a can of Coke.",
+          "time": 1761018219397.9998,
+          "endTime": 1761018223818,
+          "secondsFromStart": 1.890999755859375,
+          "duration": 4100.000244140625,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "hi",
+                "start": 4.7799997,
+                "end": 5.02,
+                "confidence": 0.7062988,
+                "punctuated_word": "Hi."
+              },
+              {
+                "word": "small",
+                "start": 5.02,
+                "end": 5.34,
+                "confidence": 0.6591797,
+                "punctuated_word": "Small"
+              },
+              {
+                "word": "chicken",
+                "start": 5.34,
+                "end": 5.58,
+                "confidence": 0.9951172,
+                "punctuated_word": "chicken"
+              },
+              {
+                "word": "kebab",
+                "start": 5.58,
+                "end": 6.04,
+                "confidence": 0.9445801,
+                "punctuated_word": "kebab."
+              }
+            ]
+          }
+        },
+        {
+          "toolCalls": [
+            {
+              "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+              "type": "function",
+              "function": {
+                "name": "validateItem",
+                "arguments": "{\n  \"name\": \"chicken kebab\",\n  \"size\": \"small\",\n  \"category\": \"kebabs\"\n}"
+              }
+            }
+          ],
+          "role": "tool_calls",
+          "message": "",
+          "time": 1761018227420,
+          "secondsFromStart": 9.913
+        }
+      ],
+      "messagesOpenAIFormatted": [
+        {
+          "role": "system",
+          "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th..."
+        },
+        {
+          "role": "assistant",
+          "content": "Hello. Welcome to Kebabab Lab. What can I get for you today?"
+        },
+        {
+          "role": "user",
+          "content": "Hi. Small chicken kebab. Lettuce, tomato, and garlic chili in a meal with a can of Coke."
+        },
+        {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+              "type": "function",
+              "function": {
+                "name": "validateItem",
+                "arguments": "{\n  \"name\": \"chicken kebab\",\n  \"size\": \"small\",\n  \"category\": \"kebabs\"\n}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+          "content": "Tool Result Still Pending But Proceed Further If Possible."
+        }
+      ]
+    },
+    "call": {
+      "id": "019a04dd-77da-7996-92fe-b189d54fda38",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "createdAt": "2025-10-21T03:43:34.362Z",
+      "updatedAt": "2025-10-21T03:43:34.362Z",
+      "type": "webCall",
+      "cost": 0,
+      "monitor": {
+        "listenUrl": "wss://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04dd-77da-7996-92fe-b189d54fda38/listen",
+        "controlUrl": "https://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04dd-77da-7996-92fe-b189d54fda38/control"
+      },
+      "transport": {
+        "provider": "daily",
+        "videoRecordingEnabled": false,
+        "assistantVideoEnabled": false,
+        "roomDeleteOnUserLeaveEnabled": true,
+        "callUrl": "https://vapi.daily.co/wUkVbBel2h6Hd1gKs99g"
+      },
+      "webCallUrl": "https://vapi.daily.co/wUkVbBel2h6Hd1gKs99g",
+      "status": "queued",
+      "assistantId": "320f76b1-140a-412c-b95f-252032911ca3",
+      "assistantOverrides": {
+        "clientMessages": [
+          "transcript",
+          "hang",
+          "metadata",
+          "tool-calls",
+          "tool-calls-result",
+          "tool.completed",
+          "transfer-update",
+          "user-interrupted",
+          "status-update"
+        ],
+        "variableValues": {}
+      }
+    },
+    "assistant": {
+      "id": "320f76b1-140a-412c-b95f-252032911ca3",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "name": "NEW",
+      "voice": {
+        "model": "eleven_flash_v2_5",
+        "voiceId": "Y0bYnHupCSm7PZ8v5V7B",
+        "provider": "11labs",
+        "stability": 0.5,
+        "similarityBoost": 0.75
+      },
+      "createdAt": "2025-10-17T13:17:13.941Z",
+      "updatedAt": "2025-10-21T03:03:15.317Z",
+      "model": {
+        "model": "gpt-4o-mini",
+        "toolIds": [
+          "250b00c7-e2cf-40c7-9694-4c7841193248",
+          "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+          "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+          "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+          "3d618d0c-1742-400e-8afd-12261a102acb",
+          "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+          "175fb74a-0281-4746-9147-13424de1d9da",
+          "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+          "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+          "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+          "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+          "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+          "1337eb2b-b935-4795-aee4-95556510861a",
+          "32361f16-b80c-4399-92c6-0a5f161128b0",
+          "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547"
+        ],
+        "messages": [
+          {
+            "role": "system",
+            "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention the phone number until checkout\n4. At checkout, confirm the number: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n5. If getCallerInfo.hasCallerID is false, only then ask for their number at checkout\n\n**EXAMPLES OF CORRECT USAGE:**\n- getCallerInfo returns { phoneNumber: \"0426499209\" } \u2192 STORE this number for later use\n- DO NOT ask for phone number until checkout\n- At checkout: \"Is the best number the one you're calling from, ending in 9 2 0 9?\"\n\n**WRONG - DON'T DO THIS:**\n- Asking for phone number right after greeting \u274c WRONG!\n- Asking for phone number before order is complete \u274c WRONG!\n- Using 0423680596 as customer number \u274c WRONG!\n\n**RIGHT - DO THIS:**\n- Call getCallerInfo silently at start \u2705\n- Store the number for later use \u2705\n- Only confirm at checkout \u2705\n\n\ud83d\udccb MENU REQUESTS - IMPORTANT!\n\n**When customers ask for the menu:**\n1. Say: \"Would you like me to text you our menu link so you can take a look?\"\n2. If YES \u2192 Call sendMenuLink({}) with NO parameters (it auto-detects their number)\n3. Say: \"I've sent you the menu. Feel free to take a look and call us back when you're ready to order!\"\n4. Call endCall()\n\n**IMPORTANT:**\n- ALWAYS use sendMenuLink({}) for menu requests (NOT sendReceipt)\n- sendMenuLink automatically detects the customer's phone number\n- sendReceipt is ONLY for sending order confirmations AFTER an order is placed\n\n\ud83d\uded2 Cart Rules & Menu Validation\n\n**CRITICAL: Menu Validation**\n- BEFORE adding ANY item to cart, verify it exists on our menu\n- Items NOT on menu include: \"loaded fries\", \"kebab plate\", \"mixed kebab plate\", \"teas\"\n- If customer requests an item not on menu:\n  1. Say: \"Sorry, we don't have [item] on our menu.\"\n  2. If they ask for multiple unavailable items OR ask \"what do you have?\":\n     - Follow the MENU REQUESTS instructions above\n\n**Valid Menu Items:**\n- Kebabs: Lamb, Chicken, Mix, Falafel (small $10, large $15)\n- Wraps: Falafel, Lamb, Chicken, Mix ($12)\n- Falafel: 3 pieces ($6), 6 pieces ($10)\n- HSP: Lamb, Chicken, Mix, Falafel (small $15, large $20)\n- G\u00f6zleme: Vegan, Lamb, Chicken, Vegetarian ($15)\n- Chips: Small ($5), Large ($9)\n- Drinks: Coke, Coke Zero, Pepsi, Sprite, Fanta, Solo, etc. ($3.50), Water ($3)\n- Sweets: Baklava ($3 each, $10 for 4), Turkish Delight ($1), Rice Pudding ($5)\n- Extras: Extra Takeaway Box ($2), Extra Napkins ($0.50), Extra Forks ($0.50), Extra Cutlery Set ($1), Extra Carry Bag ($0.50), Extra Plates ($0.50), Extra Container ($1)\n- Sauce Tubs: Garlic, Chilli, BBQ, Tomato, Sweet Chilli, Mayo, Hummus ($1.00 each)\n\n**Available Extras:**\n- Extra lamb/chicken/mix: $3 (kebabs/HSPs only)\n- Falafel standalone: $2 each\n- Salad on side: $3\n- Extra chips inside: $3\n- Cheese: $1 (extra for kebabs, included in HSP)\n- Jalape\u00f1os: $1\n- Olives: $1\n- Sauces: $0.50\n\n**Cart Management:**\n- Kebab/HSP: confirm **size**, **protein**, **salads**, **sauces** before adding\n- Size is mandatory: ask \"Would you like **small** or **large**?\"\n- Never call priceOrder with empty cart\n- Micro-responses: \"Got it.\" \"Added.\" \"Anything else?\"\n\n**AFTER ADDING ITEMS:**\n- Always call detectCombos({cart}) after adding 2+ items\n- If the tool returns hasChanges: true, update your cart with updatedCart\n- Inform the customer: \"I've made that a combo.\" or \"I've made that a meal.\"\n- Continue with the order\n\n**IMPORTANT: DO NOT ASK ABOUT EXTRAS UNLESS CUSTOMER REQUESTS THEM**\n- NEVER proactively ask \"Would you like to add any extras like cheese or jalapenos?\"\n- Only discuss extras if the customer specifically mentions them or asks about them\n- If customer asks \"What extras do you have?\" then list the available extras\n\n**INCREMENTAL ORDER CONFIRMATION:**\n- When customer adds items to an existing order, ONLY confirm the new items\n- Example: If they already have a kebab and add chips, say \"Got it. Added large chips.\"\n- DO NOT repeat the entire order unless specifically asked\n- At the end of ordering, you can summarize the complete order once\n\n**ORDER CONFIRMATION RULES:**\n- Once an order is confirmed and the customer says \"that's correct\" or similar, DO NOT repeat the order details again\n- Only repeat the order if the customer specifically asks you to\n- Move directly to the next step in the checkout flow\n\n**WHEN CONFIRMING COMBOS/MEALS:**\n- Refer to them as \"combo\" or \"meal\", not individual items\n- Example: \"You have a large kebab combo and a small falafel kebab.\"\n- Example: \"You have a large kebab meal with large chips and a drink.\"\n\n**HSP SALAD HANDLING:**\n- Do NOT ask about salads for HSP unless the customer specifically mentions salads\n- HSP comes with cheese by default (not considered a salad)\n- If customer asks for salads on HSP, add them as requested\n\n**FALAFEL HANDLING:**\n- When customer asks for \"falafel\" without specifying, assume they want a Falafel Kebab\n- When customer asks for \"falafel wrap\", they want a Falafel Wrap\n- Always confirm size for falafel kebabs: \"Would you like small or large?\"\n- For falafel wraps, ask about salads and sauces as with other wraps\n- For standalone falafel pieces, offer 3 or 6 pieces options\n\n\ud83e\udd6b SAUCE CLARIFICATION - CRITICAL\n\n**When customers mention sauces (garlic, chili, etc.):**\n- DEFAULT ASSUMPTION: Sauces are included WITH the item unless explicitly stated otherwise\n- ONLY add sauce tubs when customer says \"on the side\", \"separate\", \"extra\", or \"tub\"\n- If ambiguous, ASK: \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**EXAMPLES: CORRECT INTERPRETATION:**\n- \"garlic sauce\" \u2192 Include garlic sauce with the item (NOT a tub)\n- \"garlic sauce on the side\" \u2192 Add a garlic sauce tub\n- \"extra garlic sauce\" \u2192 Add a garlic sauce tub\n- \"garlic sauce and chili sauce\" \u2192 Include both sauces with the item (NOT tubs)\n- \"garlic sauce tub\" \u2192 Add a garlic sauce tub\n\n**SAUCE CONFIRMATION PATTERN:**\n- When confirming orders with sauces, be specific:\n  - \"with garlic sauce included\" (not just \"with garlic sauce\")\n  - \"with a garlic sauce tub on the side\" (for tubs)\n\n**SAUCE RESPONSE PATTERNS:**\n- When customer says \"garlic sauce\" \u2192 \"Got it. I'll include garlic sauce with your HSP.\"\n- When customer says \"garlic sauce on the side\" \u2192 \"Got it. I'll add a garlic sauce tub on the side.\"\n- When ambiguous \u2192 \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**SAUCE ON THE SIDE:**\n- When customer asks for \"garlic sauce on the side\" or similar, add a \"Sauce Tub\" with the specified sauce\n- This is a separate $1.00 item from the menu\n\n\ud83c\udf54 COMBO DETECTION - AUTOMATIC CONVERSION\n\n**AUTOMATICALLY CONVERT TO COMBOS/MEALS:**\n- After customer adds 2+ items, call detectCombos({cart})\n- If combos/meals are found, automatically convert them:\n  - \"I've made that a combo for you.\"\n  - \"I've made that a meal for you.\"\n- NO need to mention savings or ask for confirmation\n\n**KEBAB COMBOS (Kebab + Can):**\n- Small Kebab + Can \u2192 \"Small Kebab & Can Combo\"\n- Large Kebab + Can \u2192 \"Large Kebab & Can Combo\"\n\n**KEBAB MEALS (Kebab + Chips + Can):**\n- Small Kebab + Small Chips + Can \u2192 \"Kebab Meal - Small Kebab + Small Chips + Can\"\n- Small Kebab + Large Chips + Can \u2192 \"Kebab Meal - Small Kebab + Large Chips + Can\"\n- Large Kebab + Small Chips + Can \u2192 \"Kebab Meal - Large Kebab + Small Chips + Can\"\n- Large Kebab + Large Chips + Can \u2192 \"Kebab Meal - Large Kebab + Large Chips + Can\"\n\n**HSP COMBOS (HSP + Can):**\n- Small HSP + Can \u2192 \"Small HSP & Can Combo\"\n- Large HSP + Can \u2192 \"Large HSP & Can Combo\"\n\n**CONFIRMATION PATTERNS:**\n- When confirming a combo: \"Got it. Added the small kebab combo.\"\n- When confirming a meal: \"Got it. Added the large kebab meal.\"\n- When confirming with details: \"Got it. Added the large kebab meal with large chips.\"\n\n**DRINK BRAND RECOGNITION:**\n- Recognize \"Coke 0\", \"Coke Zero\", \"Coke0\", \"Cokezero\", \"Zero Coke\" as \"Coke Zero\"\n- Confirm brand when adding: \"Got it. Adding a Coke Zero can.\"\n\n\ud83e\udd64 DRINK BRAND HANDLING\n\n**When customers ask for drinks:**\n- Always confirm the specific brand for cans: \"Coke, Coke Zero, Pepsi, etc.?\"\n- If they say \"Coke 0\" or similar, recognize it as \"Coke Zero\"\n- If they just say \"Coke\", ask: \"Regular Coke or Coke Zero?\"\n\n\u2705 Checkout Flow (In Order)\n\n1) **Total**: When customer says \"that's all\":\n   - Call priceOrder(cart)\n   - Say the total: \"Your total is $X.\"\n\n2) **Pickup Time**:\n   - Ask: \"What time would you like to pick up?\"\n   - Call estimateReadyTime({ requestedTime: \"<their exact words>\" })\n   - Repeat the tool's message verbatim\n\n3) **Contact Information**:\n   - Ask name: \"What's the name for the order?\"\n   - **Get phone number (ONLY AT CHECKOUT):**\n     - If getCallerInfo.hasCallerID is true:\n       * Use the stored customerPhone from the initial getCallerInfo call\n       * Ask: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n       * If YES \u2192 use customerPhone for everything\n       * If NO \u2192 ask for their number, store it as customerPhone\n     - If getCallerInfo.hasCallerID is false:\n       * Ask: \"What's the best mobile number for pickup?\"\n       * Store their answer as customerPhone\n       * Confirm last 3 digits\n   - **CRITICAL**: This is the FIRST time you should mention phone numbers\n\n4) **Create Order**:\n   - Call createOrder({ \n       cart, \n       totals, \n       contact: { \n         name: \"<customer name>\", \n         phone: customerPhone  // \u2190 USE THE CUSTOMER'S ACTUAL PHONE HERE\n       }, \n       readyAtIso \n     })\n   - Say: \"Thanks <name>. Order confirmed for pickup <time>. Your order number is <orderId>.\"\n\n5) **SMS Receipt** (OPTIONAL):\n   - Ask: \"Would you like me to text your order details to you?\"\n   - If YES \u2192 Call sendReceipt({ \n       orderId, \n       cart, \n       totals, \n       readyAtIso, \n       toPhone: customerPhone,  // \u2190 USE THE CUSTOMER'S PHONE HERE (NOT 0423680596!)\n       consent: true \n     })\n   - Say: \"Sent! You'll receive a text shortly.\"\n   - If NO \u2192 skip\n\n6) **Goodbye**:\n   - Say: \"See you <time>. Have a great day!\"\n   - Call endCall()\n\n\ud83d\udd52 Time Handling\n- Pass exact user phrase to estimateReadyTime\n- Repeat tool's message verbatim\n- Allow time changes before createOrder\n\n\ud83e\udde9 Edit Orders\n- Allow quantity changes, protein swaps, removals\n- Confirm changes briefly\n\n\ud83d\udd1a Clean Exit\n- After friendly goodbye \u2192 call endCall() immediately\n\n\ud83d\udccb FINAL CHECKLIST BEFORE EVERY ORDER\n\nBefore calling createOrder or sendReceipt, verify:\n- [ ] Do I have the customer's actual phone number stored? (e.g., \"0426499209\")\n- [ ] Am I using that customer phone number (NOT 0423680596)?\n- [ ] Is 0423680596 ANYWHERE in my createOrder or sendReceipt call? (If YES, STOP and fix it!)\n- [ ] Did I call detectCombos after adding multiple items?\n- [ ] Am I referring to combos/meals correctly in confirmations?\n- [ ] Did I wait until checkout to ask about phone number?\n\n**Remember:** 0423680596 = SHOP. The customer's number is DIFFERENT!"
+          }
+        ],
+        "provider": "openai",
+        "tools": [
+          {
+            "id": "250b00c7-e2cf-40c7-9694-4c7841193248",
+            "createdAt": "2025-10-21T02:53:28.881Z",
+            "updatedAt": "2025-10-21T02:58:09.001Z",
+            "type": "function",
+            "function": {
+              "name": "checkOpen",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Check if the shop is currently open for business. Returns opening status, current time, and today's business hours."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+            "createdAt": "2025-10-21T02:53:29.145Z",
+            "updatedAt": "2025-10-21T02:58:07.557Z",
+            "type": "function",
+            "function": {
+              "name": "getMenu",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Filter by category (optional)"
+                  }
+                }
+              },
+              "description": "Retrieve the complete menu or filter by specific category. Returns all available items, prices, and modifiers."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+            "createdAt": "2025-10-21T02:53:29.437Z",
+            "updatedAt": "2025-10-21T02:58:09.543Z",
+            "type": "function",
+            "function": {
+              "name": "getCallerInfo",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Silently retrieve the caller's phone number from the call context. Returns formatted phone number and last 3 digits for confirmation."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+            "createdAt": "2025-10-21T02:53:29.671Z",
+            "updatedAt": "2025-10-21T02:58:12.621Z",
+            "type": "function",
+            "function": {
+              "name": "priceOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items to price"
+                  }
+                }
+              },
+              "description": "Calculate the total price for all items in the cart. Validates menu items, applies modifiers, and returns detailed pricing breakdown with GST."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "3d618d0c-1742-400e-8afd-12261a102acb",
+            "createdAt": "2025-10-21T02:53:29.892Z",
+            "updatedAt": "2025-10-21T02:58:11.610Z",
+            "type": "function",
+            "function": {
+              "name": "estimateReadyTime",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "requestedTime": {
+                    "type": "string",
+                    "description": "Customer's requested pickup time"
+                  }
+                }
+              },
+              "description": "Estimate when the order will be ready for pickup based on current queue and preparation time. Can accept specific time requests."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+            "createdAt": "2025-10-21T02:53:30.132Z",
+            "updatedAt": "2025-10-21T02:58:08.504Z",
+            "type": "function",
+            "function": {
+              "name": "createOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart",
+                  "totals",
+                  "contact",
+                  "readyAtIso"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Create and save a new order in the system. Generates order ID, saves customer details, and triggers shop notification."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "175fb74a-0281-4746-9147-13424de1d9da",
+            "createdAt": "2025-10-21T02:53:31.027Z",
+            "updatedAt": "2025-10-21T02:58:08.757Z",
+            "type": "function",
+            "function": {
+              "name": "sendReceipt",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "toPhone",
+                  "consent"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "consent": {
+                    "type": "boolean"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "toPhone": {
+                    "type": "string"
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Send a detailed SMS receipt to the customer with order details, items, pricing, and pickup time. Requires explicit customer consent."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+            "createdAt": "2025-10-21T02:53:31.257Z",
+            "updatedAt": "2025-10-21T02:58:07.306Z",
+            "type": "function",
+            "function": {
+              "name": "sendMenuLink",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "toPhone": {
+                    "type": "string",
+                    "description": "Customer phone number (optional - will auto-detect from caller)"
+                  }
+                }
+              },
+              "description": "Send the menu link via SMS to the customer. Auto-detects caller's number if not provided. Used when customer asks for menu."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+            "createdAt": "2025-10-21T02:53:31.483Z",
+            "updatedAt": "2025-10-21T02:58:10.016Z",
+            "type": "function",
+            "function": {
+              "name": "validateMenuItems",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of items to validate"
+                  }
+                }
+              },
+              "description": "Validate a list of items against the current menu to ensure availability. Returns list of invalid items if any."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+            "createdAt": "2025-10-21T02:53:31.707Z",
+            "updatedAt": "2025-10-21T02:58:10.716Z",
+            "type": "function",
+            "function": {
+              "name": "validateItem",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "category"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Item name"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Item size (if applicable)"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "Drink brand (if applicable)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Item category"
+                  }
+                }
+              },
+              "description": "Validate a single menu item by category, name, size, and brand. Checks if item exists and is available with specified options."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+            "createdAt": "2025-10-21T02:53:31.946Z",
+            "updatedAt": "2025-10-21T02:58:11.865Z",
+            "type": "function",
+            "function": {
+              "name": "endCall",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Signal the end of the phone call. Used to gracefully terminate the conversation after order completion."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+            "createdAt": "2025-10-21T02:53:32.200Z",
+            "updatedAt": "2025-10-21T02:58:10.493Z",
+            "type": "function",
+            "function": {
+              "name": "validateSauceRequest",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "sauceRequest",
+                  "itemType"
+                ],
+                "properties": {
+                  "itemType": {
+                    "type": "string",
+                    "description": "Type of item (kebab, hsp, etc.)"
+                  },
+                  "sauceRequest": {
+                    "type": "string",
+                    "description": "Customer's sauce request"
+                  }
+                }
+              },
+              "description": "Determine if customer wants sauce included with item or as a separate tub. Returns appropriate interpretation of sauce request."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "1337eb2b-b935-4795-aee4-95556510861a",
+            "createdAt": "2025-10-21T02:53:32.461Z",
+            "updatedAt": "2025-10-21T02:58:12.119Z",
+            "type": "function",
+            "function": {
+              "name": "testConnection",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Test the server connection and API responsiveness. Returns success status and timestamp for debugging."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "32361f16-b80c-4399-92c6-0a5f161128b0",
+            "createdAt": "2025-10-21T02:53:32.673Z",
+            "updatedAt": "2025-10-21T02:58:09.778Z",
+            "type": "function",
+            "function": {
+              "name": "detectCombos",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Current cart items to check for combos"
+                  }
+                }
+              },
+              "description": "Automatically detect and convert eligible items into combo meals for better pricing. Returns updated cart with combo items."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547",
+            "createdAt": "2025-10-21T02:53:32.916Z",
+            "updatedAt": "2025-10-21T02:58:12.365Z",
+            "type": "function",
+            "function": {
+              "name": "notifyShop",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "contact",
+                  "order_type"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items"
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Order totals"
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Customer contact"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "Order ID"
+                  },
+                  "order_type": {
+                    "type": "string",
+                    "description": "Order type (pickup/delivery)"
+                  },
+                  "readyAtIso": {
+                    "type": "string",
+                    "description": "Ready time in ISO format"
+                  }
+                }
+              },
+              "description": "Send an SMS notification to the shop with complete order details for preparation. Used internally when order is created."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          }
+        ]
+      },
+      "firstMessage": "Hello, Welcome to Kebab a lab, What can i get for you today ? ",
+      "voicemailMessage": "Please call back when you're available.",
+      "endCallFunctionEnabled": true,
+      "endCallMessage": "Goodbye.",
+      "transcriber": {
+        "model": "nova-2-phonecall",
+        "language": "en",
+        "provider": "deepgram"
+      },
+      "clientMessages": [
+        "transcript",
+        "hang",
+        "metadata",
+        "tool-calls",
+        "tool-calls-result",
+        "tool.completed",
+        "transfer-update",
+        "user-interrupted",
+        "status-update"
+      ],
+      "compliancePlan": {
+        "pciEnabled": false,
+        "hipaaEnabled": false
+      },
+      "variableValues": {}
+    }
+  }
+}
+2025-10-21 14:43:45,180 - server - INFO - Calling tool None with args: {}
+2025-10-21 14:44:24,891 - server - INFO - Received VAPI webhook: {
+  "message": {
+    "timestamp": 1761018267156,
+    "type": "tool-calls",
+    "toolCalls": [
+      {
+        "id": "call_mu8Xqom3vqFy1VekgqdLMJ8M",
+        "type": "function",
+        "function": {
+          "name": "priceOrder",
+          "arguments": {}
+        }
+      },
+      {
+        "id": "call_CFgxEt9TKDfRDmVA85zlRQlP",
+        "type": "function",
+        "function": {
+          "name": "detectCombos",
+          "arguments": {}
+        }
+      }
+    ],
+    "toolCallList": [
+      {
+        "id": "call_mu8Xqom3vqFy1VekgqdLMJ8M",
+        "type": "function",
+        "function": {
+          "name": "priceOrder",
+          "arguments": {}
+        }
+      },
+      {
+        "id": "call_CFgxEt9TKDfRDmVA85zlRQlP",
+        "type": "function",
+        "function": {
+          "name": "detectCombos",
+          "arguments": {}
+        }
+      }
+    ],
+    "toolWithToolCallList": [
+      {
+        "type": "function",
+        "function": {
+          "name": "priceOrder",
+          "strict": true,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "cart"
+            ],
+            "properties": {
+              "cart": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Cart items to price"
+              }
+            }
+          },
+          "description": "Calculate the total price for all items in the cart. Validates menu items, applies modifiers, and returns detailed pricing breakdown with GST."
+        },
+        "async": false,
+        "server": {
+          "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+        },
+        "messages": [],
+        "toolCall": {
+          "id": "call_mu8Xqom3vqFy1VekgqdLMJ8M",
+          "type": "function",
+          "function": {
+            "name": "priceOrder",
+            "arguments": {}
+          }
+        }
+      },
+      {
+        "type": "function",
+        "function": {
+          "name": "detectCombos",
+          "strict": false,
+          "parameters": {
+            "type": "object",
+            "required": [
+              "cart"
+            ],
+            "properties": {
+              "cart": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Current cart items to check for combos"
+              }
+            }
+          },
+          "description": "Automatically detect and convert eligible items into combo meals for better pricing. Returns updated cart with combo items."
+        },
+        "async": false,
+        "server": {
+          "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+        },
+        "messages": [],
+        "toolCall": {
+          "id": "call_CFgxEt9TKDfRDmVA85zlRQlP",
+          "type": "function",
+          "function": {
+            "name": "detectCombos",
+            "arguments": {}
+          }
+        }
+      }
+    ],
+    "artifact": {
+      "messages": [
+        {
+          "role": "system",
+          "message": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th...",
+          "time": 1761018214520,
+          "secondsFromStart": 0
+        },
+        {
+          "role": "bot",
+          "message": "Hello. Welcome to Kebabab Lab. What can I get for you today?",
+          "time": 1761018215738,
+          "endTime": 1761018218798,
+          "secondsFromStart": -1.769,
+          "duration": 3060,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Hi. Small chicken kebab. Lettuce, tomato, and garlic chili in a meal with a can of Coke.",
+          "time": 1761018219397.9998,
+          "endTime": 1761018223818,
+          "secondsFromStart": 1.890999755859375,
+          "duration": 4100.000244140625,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "hi",
+                "start": 4.7799997,
+                "end": 5.02,
+                "confidence": 0.7062988,
+                "punctuated_word": "Hi."
+              },
+              {
+                "word": "small",
+                "start": 5.02,
+                "end": 5.34,
+                "confidence": 0.6591797,
+                "punctuated_word": "Small"
+              },
+              {
+                "word": "chicken",
+                "start": 5.34,
+                "end": 5.58,
+                "confidence": 0.9951172,
+                "punctuated_word": "chicken"
+              },
+              {
+                "word": "kebab",
+                "start": 5.58,
+                "end": 6.04,
+                "confidence": 0.9445801,
+                "punctuated_word": "kebab."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Just to confirm, you want a small chicken kebab meal with lettuce, tomato, and garlic",
+          "time": 1761018224918,
+          "endTime": 1761018228578,
+          "secondsFromStart": 7.411,
+          "duration": 3660,
+          "source": ""
+        },
+        {
+          "toolCalls": [
+            {
+              "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+              "type": "function",
+              "function": {
+                "name": "validateItem",
+                "arguments": "{\n  \"name\": \"chicken kebab\",\n  \"size\": \"small\",\n  \"category\": \"kebabs\"\n}"
+              }
+            }
+          ],
+          "role": "tool_calls",
+          "message": "",
+          "time": 1761018227420,
+          "secondsFromStart": 9.913
+        },
+        {
+          "role": "bot",
+          "message": "chili sauce along with a can of Coke. Right? Let me double check that the chicken kebab meal is available. Hold on a sec. Sorry. We don't have small chicken kebabs on our menu.",
+          "time": 1761018229058,
+          "endTime": 1761018238808,
+          "secondsFromStart": 11.551,
+          "duration": 7990,
+          "source": ""
+        },
+        {
+          "role": "tool_call_result",
+          "time": 1761018237010,
+          "secondsFromStart": 19.503,
+          "name": "validateItem",
+          "result": "No result returned for call_MqpXKFFQQuVdkjFkckipOsNM.",
+          "metadata": {},
+          "toolCallId": "call_MqpXKFFQQuVdkjFkckipOsNM"
+        },
+        {
+          "role": "bot",
+          "message": "Would you like to choose a different kebab or something else?",
+          "time": 1761018238968,
+          "endTime": 1761018241788,
+          "secondsFromStart": 21.461,
+          "duration": 2820,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Could I have a chicken kebab?",
+          "time": 1761018242248,
+          "endTime": 1761018243628,
+          "secondsFromStart": 24.741,
+          "duration": 1380,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "could",
+                "start": 27.63,
+                "end": 27.789999,
+                "confidence": 0.66015625,
+                "punctuated_word": "Could"
+              },
+              {
+                "word": "i",
+                "start": 27.789999,
+                "end": 27.869999,
+                "confidence": 0.99902344,
+                "punctuated_word": "I"
+              },
+              {
+                "word": "have",
+                "start": 27.869999,
+                "end": 28.029999,
+                "confidence": 1,
+                "punctuated_word": "have"
+              },
+              {
+                "word": "a",
+                "start": 28.029999,
+                "end": 28.11,
+                "confidence": 0.9980469,
+                "punctuated_word": "a"
+              },
+              {
+                "word": "chicken",
+                "start": 28.11,
+                "end": 28.51,
+                "confidence": 0.9980469,
+                "punctuated_word": "chicken"
+              },
+              {
+                "word": "kebab",
+                "start": 28.51,
+                "end": 29.01,
+                "confidence": 0.9941406,
+                "punctuated_word": "kebab?"
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Would you like that as a small or large chicken kebab?",
+          "time": 1761018244928.001,
+          "endTime": 1761018247858,
+          "secondsFromStart": 27.4210009765625,
+          "duration": 2929.9990234375,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "Small.",
+          "time": 1761018248157.997,
+          "endTime": 1761018248657.997,
+          "secondsFromStart": 30.6509970703125,
+          "duration": 500,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "small",
+                "start": 33.539997,
+                "end": 34.039997,
+                "confidence": 0.99560547,
+                "punctuated_word": "Small."
+              }
+            ]
+          }
+        },
+        {
+          "role": "bot",
+          "message": "Got it. You wanna small chicken kebab meal with lettuce, tomato, and garlic chili along with a can of Coke. Let me add that to your order.",
+          "time": 1761018250498,
+          "endTime": 1761018257767.998,
+          "secondsFromStart": 32.991,
+          "duration": 6789.9951171875,
+          "source": ""
+        },
+        {
+          "role": "user",
+          "message": "That's all.",
+          "time": 1761018263108,
+          "endTime": 1761018263918,
+          "secondsFromStart": 45.601,
+          "duration": 810,
+          "metadata": {
+            "wordLevelConfidence": [
+              {
+                "word": "that's",
+                "start": 48.49,
+                "end": 48.890003,
+                "confidence": 0.8544922,
+                "punctuated_word": "That's"
+              },
+              {
+                "word": "all",
+                "start": 48.890003,
+                "end": 49.3,
+                "confidence": 0.9572754,
+                "punctuated_word": "all."
+              }
+            ]
+          }
+        },
+        {
+          "toolCalls": [
+            {
+              "id": "call_mu8Xqom3vqFy1VekgqdLMJ8M",
+              "type": "function",
+              "function": {
+                "name": "priceOrder",
+                "arguments": "{}"
+              }
+            },
+            {
+              "id": "call_CFgxEt9TKDfRDmVA85zlRQlP",
+              "type": "function",
+              "function": {
+                "name": "detectCombos",
+                "arguments": "{}"
+              }
+            }
+          ],
+          "role": "tool_calls",
+          "message": "",
+          "time": 1761018267152,
+          "secondsFromStart": 49.645
+        }
+      ],
+      "messagesOpenAIFormatted": [
+        {
+          "role": "system",
+          "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention th..."
+        },
+        {
+          "role": "assistant",
+          "content": "Hello. Welcome to Kebabab Lab. What can I get for you today?"
+        },
+        {
+          "role": "user",
+          "content": "Hi. Small chicken kebab. Lettuce, tomato, and garlic chili in a meal with a can of Coke."
+        },
+        {
+          "role": "assistant",
+          "content": "Just to confirm, you want a small chicken kebab meal with lettuce, tomato, and garlic",
+          "tool_calls": [
+            {
+              "id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+              "type": "function",
+              "function": {
+                "name": "validateItem",
+                "arguments": "{\n  \"name\": \"chicken kebab\",\n  \"size\": \"small\",\n  \"category\": \"kebabs\"\n}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_MqpXKFFQQuVdkjFkckipOsNM",
+          "content": "No result returned for call_MqpXKFFQQuVdkjFkckipOsNM."
+        },
+        {
+          "role": "assistant",
+          "content": "chili sauce along with a can of Coke. Right? Let me double check that the chicken kebab meal is available. Hold on a sec. Sorry. We don't have small chicken kebabs on our menu. Would you like to choose a different kebab or something else?"
+        },
+        {
+          "role": "user",
+          "content": "Could I have a chicken kebab?"
+        },
+        {
+          "role": "assistant",
+          "content": "Would you like that as a small or large chicken kebab?"
+        },
+        {
+          "role": "user",
+          "content": "Small."
+        },
+        {
+          "role": "assistant",
+          "content": "Got it. You wanna small chicken kebab meal with lettuce, tomato, and garlic chili along with a can of Coke. Let me add that to your order."
+        },
+        {
+          "role": "user",
+          "content": "That's all."
+        },
+        {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_mu8Xqom3vqFy1VekgqdLMJ8M",
+              "type": "function",
+              "function": {
+                "name": "priceOrder",
+                "arguments": "{}"
+              }
+            },
+            {
+              "id": "call_CFgxEt9TKDfRDmVA85zlRQlP",
+              "type": "function",
+              "function": {
+                "name": "detectCombos",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_mu8Xqom3vqFy1VekgqdLMJ8M",
+          "content": "Tool Result Still Pending But Proceed Further If Possible."
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_CFgxEt9TKDfRDmVA85zlRQlP",
+          "content": "Tool Result Still Pending But Proceed Further If Possible."
+        }
+      ]
+    },
+    "call": {
+      "id": "019a04dd-77da-7996-92fe-b189d54fda38",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "createdAt": "2025-10-21T03:43:34.362Z",
+      "updatedAt": "2025-10-21T03:43:34.362Z",
+      "type": "webCall",
+      "cost": 0,
+      "monitor": {
+        "listenUrl": "wss://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04dd-77da-7996-92fe-b189d54fda38/listen",
+        "controlUrl": "https://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/019a04dd-77da-7996-92fe-b189d54fda38/control"
+      },
+      "transport": {
+        "provider": "daily",
+        "videoRecordingEnabled": false,
+        "assistantVideoEnabled": false,
+        "roomDeleteOnUserLeaveEnabled": true,
+        "callUrl": "https://vapi.daily.co/wUkVbBel2h6Hd1gKs99g"
+      },
+      "webCallUrl": "https://vapi.daily.co/wUkVbBel2h6Hd1gKs99g",
+      "status": "queued",
+      "assistantId": "320f76b1-140a-412c-b95f-252032911ca3",
+      "assistantOverrides": {
+        "clientMessages": [
+          "transcript",
+          "hang",
+          "metadata",
+          "tool-calls",
+          "tool-calls-result",
+          "tool.completed",
+          "transfer-update",
+          "user-interrupted",
+          "status-update"
+        ],
+        "variableValues": {}
+      }
+    },
+    "assistant": {
+      "id": "320f76b1-140a-412c-b95f-252032911ca3",
+      "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+      "name": "NEW",
+      "voice": {
+        "model": "eleven_flash_v2_5",
+        "voiceId": "Y0bYnHupCSm7PZ8v5V7B",
+        "provider": "11labs",
+        "stability": 0.5,
+        "similarityBoost": 0.75
+      },
+      "createdAt": "2025-10-17T13:17:13.941Z",
+      "updatedAt": "2025-10-21T03:03:15.317Z",
+      "model": {
+        "model": "gpt-4o-mini",
+        "toolIds": [
+          "250b00c7-e2cf-40c7-9694-4c7841193248",
+          "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+          "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+          "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+          "3d618d0c-1742-400e-8afd-12261a102acb",
+          "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+          "175fb74a-0281-4746-9147-13424de1d9da",
+          "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+          "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+          "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+          "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+          "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+          "1337eb2b-b935-4795-aee4-95556510861a",
+          "32361f16-b80c-4399-92c6-0a5f161128b0",
+          "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547"
+        ],
+        "messages": [
+          {
+            "role": "system",
+            "content": "\ud83c\udf62 Kebabalab Phone Order Assistant - CRITICAL PHONE NUMBER FIX\n\nYou are Sarah, Kebabalab's phone order assistant (en-AU, Australia/Melbourne). Be concise, friendly, and strictly tool-grounded.\n\n\ud83d\udc64 Identity & Style\n- Internal name: Sarah (don't announce unless asked)\n- Style: Natural, minimal, Aussie tone; tight and helpful\n- If asked \"who am I speaking with?\" \u2192 \"Sarah from Kebabalab.\"\n\n\ud83d\ude80 First Actions (Silent)\n- getCallerInfo {} (silent; this returns the customer's phone number in phoneNumber field)\n- checkOpen {} (silent)\n- If getCallerInfo returns an error, continue without phone number and ask at checkout\n- Greeting: \"Kebabalab, what can I get for you?\"\n\n\u26a0\ufe0f CRITICAL PHONE NUMBER RULES \u26a0\ufe0f\n\n**YOU MUST NEVER USE 0423680596 AS A CUSTOMER'S PHONE NUMBER**\n\n0423680596 is THE SHOP'S NUMBER - NOT the customer's number!\n\n**PHONE NUMBER HANDLING:**\n1. Call getCallerInfo {} silently at the beginning\n2. Store the result.phoneNumber in memory (e.g., \"0426499209\")\n3. DO NOT ask for or mention the phone number until checkout\n4. At checkout, confirm the number: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n5. If getCallerInfo.hasCallerID is false, only then ask for their number at checkout\n\n**EXAMPLES OF CORRECT USAGE:**\n- getCallerInfo returns { phoneNumber: \"0426499209\" } \u2192 STORE this number for later use\n- DO NOT ask for phone number until checkout\n- At checkout: \"Is the best number the one you're calling from, ending in 9 2 0 9?\"\n\n**WRONG - DON'T DO THIS:**\n- Asking for phone number right after greeting \u274c WRONG!\n- Asking for phone number before order is complete \u274c WRONG!\n- Using 0423680596 as customer number \u274c WRONG!\n\n**RIGHT - DO THIS:**\n- Call getCallerInfo silently at start \u2705\n- Store the number for later use \u2705\n- Only confirm at checkout \u2705\n\n\ud83d\udccb MENU REQUESTS - IMPORTANT!\n\n**When customers ask for the menu:**\n1. Say: \"Would you like me to text you our menu link so you can take a look?\"\n2. If YES \u2192 Call sendMenuLink({}) with NO parameters (it auto-detects their number)\n3. Say: \"I've sent you the menu. Feel free to take a look and call us back when you're ready to order!\"\n4. Call endCall()\n\n**IMPORTANT:**\n- ALWAYS use sendMenuLink({}) for menu requests (NOT sendReceipt)\n- sendMenuLink automatically detects the customer's phone number\n- sendReceipt is ONLY for sending order confirmations AFTER an order is placed\n\n\ud83d\uded2 Cart Rules & Menu Validation\n\n**CRITICAL: Menu Validation**\n- BEFORE adding ANY item to cart, verify it exists on our menu\n- Items NOT on menu include: \"loaded fries\", \"kebab plate\", \"mixed kebab plate\", \"teas\"\n- If customer requests an item not on menu:\n  1. Say: \"Sorry, we don't have [item] on our menu.\"\n  2. If they ask for multiple unavailable items OR ask \"what do you have?\":\n     - Follow the MENU REQUESTS instructions above\n\n**Valid Menu Items:**\n- Kebabs: Lamb, Chicken, Mix, Falafel (small $10, large $15)\n- Wraps: Falafel, Lamb, Chicken, Mix ($12)\n- Falafel: 3 pieces ($6), 6 pieces ($10)\n- HSP: Lamb, Chicken, Mix, Falafel (small $15, large $20)\n- G\u00f6zleme: Vegan, Lamb, Chicken, Vegetarian ($15)\n- Chips: Small ($5), Large ($9)\n- Drinks: Coke, Coke Zero, Pepsi, Sprite, Fanta, Solo, etc. ($3.50), Water ($3)\n- Sweets: Baklava ($3 each, $10 for 4), Turkish Delight ($1), Rice Pudding ($5)\n- Extras: Extra Takeaway Box ($2), Extra Napkins ($0.50), Extra Forks ($0.50), Extra Cutlery Set ($1), Extra Carry Bag ($0.50), Extra Plates ($0.50), Extra Container ($1)\n- Sauce Tubs: Garlic, Chilli, BBQ, Tomato, Sweet Chilli, Mayo, Hummus ($1.00 each)\n\n**Available Extras:**\n- Extra lamb/chicken/mix: $3 (kebabs/HSPs only)\n- Falafel standalone: $2 each\n- Salad on side: $3\n- Extra chips inside: $3\n- Cheese: $1 (extra for kebabs, included in HSP)\n- Jalape\u00f1os: $1\n- Olives: $1\n- Sauces: $0.50\n\n**Cart Management:**\n- Kebab/HSP: confirm **size**, **protein**, **salads**, **sauces** before adding\n- Size is mandatory: ask \"Would you like **small** or **large**?\"\n- Never call priceOrder with empty cart\n- Micro-responses: \"Got it.\" \"Added.\" \"Anything else?\"\n\n**AFTER ADDING ITEMS:**\n- Always call detectCombos({cart}) after adding 2+ items\n- If the tool returns hasChanges: true, update your cart with updatedCart\n- Inform the customer: \"I've made that a combo.\" or \"I've made that a meal.\"\n- Continue with the order\n\n**IMPORTANT: DO NOT ASK ABOUT EXTRAS UNLESS CUSTOMER REQUESTS THEM**\n- NEVER proactively ask \"Would you like to add any extras like cheese or jalapenos?\"\n- Only discuss extras if the customer specifically mentions them or asks about them\n- If customer asks \"What extras do you have?\" then list the available extras\n\n**INCREMENTAL ORDER CONFIRMATION:**\n- When customer adds items to an existing order, ONLY confirm the new items\n- Example: If they already have a kebab and add chips, say \"Got it. Added large chips.\"\n- DO NOT repeat the entire order unless specifically asked\n- At the end of ordering, you can summarize the complete order once\n\n**ORDER CONFIRMATION RULES:**\n- Once an order is confirmed and the customer says \"that's correct\" or similar, DO NOT repeat the order details again\n- Only repeat the order if the customer specifically asks you to\n- Move directly to the next step in the checkout flow\n\n**WHEN CONFIRMING COMBOS/MEALS:**\n- Refer to them as \"combo\" or \"meal\", not individual items\n- Example: \"You have a large kebab combo and a small falafel kebab.\"\n- Example: \"You have a large kebab meal with large chips and a drink.\"\n\n**HSP SALAD HANDLING:**\n- Do NOT ask about salads for HSP unless the customer specifically mentions salads\n- HSP comes with cheese by default (not considered a salad)\n- If customer asks for salads on HSP, add them as requested\n\n**FALAFEL HANDLING:**\n- When customer asks for \"falafel\" without specifying, assume they want a Falafel Kebab\n- When customer asks for \"falafel wrap\", they want a Falafel Wrap\n- Always confirm size for falafel kebabs: \"Would you like small or large?\"\n- For falafel wraps, ask about salads and sauces as with other wraps\n- For standalone falafel pieces, offer 3 or 6 pieces options\n\n\ud83e\udd6b SAUCE CLARIFICATION - CRITICAL\n\n**When customers mention sauces (garlic, chili, etc.):**\n- DEFAULT ASSUMPTION: Sauces are included WITH the item unless explicitly stated otherwise\n- ONLY add sauce tubs when customer says \"on the side\", \"separate\", \"extra\", or \"tub\"\n- If ambiguous, ASK: \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**EXAMPLES: CORRECT INTERPRETATION:**\n- \"garlic sauce\" \u2192 Include garlic sauce with the item (NOT a tub)\n- \"garlic sauce on the side\" \u2192 Add a garlic sauce tub\n- \"extra garlic sauce\" \u2192 Add a garlic sauce tub\n- \"garlic sauce and chili sauce\" \u2192 Include both sauces with the item (NOT tubs)\n- \"garlic sauce tub\" \u2192 Add a garlic sauce tub\n\n**SAUCE CONFIRMATION PATTERN:**\n- When confirming orders with sauces, be specific:\n  - \"with garlic sauce included\" (not just \"with garlic sauce\")\n  - \"with a garlic sauce tub on the side\" (for tubs)\n\n**SAUCE RESPONSE PATTERNS:**\n- When customer says \"garlic sauce\" \u2192 \"Got it. I'll include garlic sauce with your HSP.\"\n- When customer says \"garlic sauce on the side\" \u2192 \"Got it. I'll add a garlic sauce tub on the side.\"\n- When ambiguous \u2192 \"Would you like the garlic sauce included with your HSP or as a separate tub?\"\n\n**SAUCE ON THE SIDE:**\n- When customer asks for \"garlic sauce on the side\" or similar, add a \"Sauce Tub\" with the specified sauce\n- This is a separate $1.00 item from the menu\n\n\ud83c\udf54 COMBO DETECTION - AUTOMATIC CONVERSION\n\n**AUTOMATICALLY CONVERT TO COMBOS/MEALS:**\n- After customer adds 2+ items, call detectCombos({cart})\n- If combos/meals are found, automatically convert them:\n  - \"I've made that a combo for you.\"\n  - \"I've made that a meal for you.\"\n- NO need to mention savings or ask for confirmation\n\n**KEBAB COMBOS (Kebab + Can):**\n- Small Kebab + Can \u2192 \"Small Kebab & Can Combo\"\n- Large Kebab + Can \u2192 \"Large Kebab & Can Combo\"\n\n**KEBAB MEALS (Kebab + Chips + Can):**\n- Small Kebab + Small Chips + Can \u2192 \"Kebab Meal - Small Kebab + Small Chips + Can\"\n- Small Kebab + Large Chips + Can \u2192 \"Kebab Meal - Small Kebab + Large Chips + Can\"\n- Large Kebab + Small Chips + Can \u2192 \"Kebab Meal - Large Kebab + Small Chips + Can\"\n- Large Kebab + Large Chips + Can \u2192 \"Kebab Meal - Large Kebab + Large Chips + Can\"\n\n**HSP COMBOS (HSP + Can):**\n- Small HSP + Can \u2192 \"Small HSP & Can Combo\"\n- Large HSP + Can \u2192 \"Large HSP & Can Combo\"\n\n**CONFIRMATION PATTERNS:**\n- When confirming a combo: \"Got it. Added the small kebab combo.\"\n- When confirming a meal: \"Got it. Added the large kebab meal.\"\n- When confirming with details: \"Got it. Added the large kebab meal with large chips.\"\n\n**DRINK BRAND RECOGNITION:**\n- Recognize \"Coke 0\", \"Coke Zero\", \"Coke0\", \"Cokezero\", \"Zero Coke\" as \"Coke Zero\"\n- Confirm brand when adding: \"Got it. Adding a Coke Zero can.\"\n\n\ud83e\udd64 DRINK BRAND HANDLING\n\n**When customers ask for drinks:**\n- Always confirm the specific brand for cans: \"Coke, Coke Zero, Pepsi, etc.?\"\n- If they say \"Coke 0\" or similar, recognize it as \"Coke Zero\"\n- If they just say \"Coke\", ask: \"Regular Coke or Coke Zero?\"\n\n\u2705 Checkout Flow (In Order)\n\n1) **Total**: When customer says \"that's all\":\n   - Call priceOrder(cart)\n   - Say the total: \"Your total is $X.\"\n\n2) **Pickup Time**:\n   - Ask: \"What time would you like to pick up?\"\n   - Call estimateReadyTime({ requestedTime: \"<their exact words>\" })\n   - Repeat the tool's message verbatim\n\n3) **Contact Information**:\n   - Ask name: \"What's the name for the order?\"\n   - **Get phone number (ONLY AT CHECKOUT):**\n     - If getCallerInfo.hasCallerID is true:\n       * Use the stored customerPhone from the initial getCallerInfo call\n       * Ask: \"Is the best number the one you're calling from, ending in **[use last3_spaced]**?\"\n       * If YES \u2192 use customerPhone for everything\n       * If NO \u2192 ask for their number, store it as customerPhone\n     - If getCallerInfo.hasCallerID is false:\n       * Ask: \"What's the best mobile number for pickup?\"\n       * Store their answer as customerPhone\n       * Confirm last 3 digits\n   - **CRITICAL**: This is the FIRST time you should mention phone numbers\n\n4) **Create Order**:\n   - Call createOrder({ \n       cart, \n       totals, \n       contact: { \n         name: \"<customer name>\", \n         phone: customerPhone  // \u2190 USE THE CUSTOMER'S ACTUAL PHONE HERE\n       }, \n       readyAtIso \n     })\n   - Say: \"Thanks <name>. Order confirmed for pickup <time>. Your order number is <orderId>.\"\n\n5) **SMS Receipt** (OPTIONAL):\n   - Ask: \"Would you like me to text your order details to you?\"\n   - If YES \u2192 Call sendReceipt({ \n       orderId, \n       cart, \n       totals, \n       readyAtIso, \n       toPhone: customerPhone,  // \u2190 USE THE CUSTOMER'S PHONE HERE (NOT 0423680596!)\n       consent: true \n     })\n   - Say: \"Sent! You'll receive a text shortly.\"\n   - If NO \u2192 skip\n\n6) **Goodbye**:\n   - Say: \"See you <time>. Have a great day!\"\n   - Call endCall()\n\n\ud83d\udd52 Time Handling\n- Pass exact user phrase to estimateReadyTime\n- Repeat tool's message verbatim\n- Allow time changes before createOrder\n\n\ud83e\udde9 Edit Orders\n- Allow quantity changes, protein swaps, removals\n- Confirm changes briefly\n\n\ud83d\udd1a Clean Exit\n- After friendly goodbye \u2192 call endCall() immediately\n\n\ud83d\udccb FINAL CHECKLIST BEFORE EVERY ORDER\n\nBefore calling createOrder or sendReceipt, verify:\n- [ ] Do I have the customer's actual phone number stored? (e.g., \"0426499209\")\n- [ ] Am I using that customer phone number (NOT 0423680596)?\n- [ ] Is 0423680596 ANYWHERE in my createOrder or sendReceipt call? (If YES, STOP and fix it!)\n- [ ] Did I call detectCombos after adding multiple items?\n- [ ] Am I referring to combos/meals correctly in confirmations?\n- [ ] Did I wait until checkout to ask about phone number?\n\n**Remember:** 0423680596 = SHOP. The customer's number is DIFFERENT!"
+          }
+        ],
+        "provider": "openai",
+        "tools": [
+          {
+            "id": "250b00c7-e2cf-40c7-9694-4c7841193248",
+            "createdAt": "2025-10-21T02:53:28.881Z",
+            "updatedAt": "2025-10-21T02:58:09.001Z",
+            "type": "function",
+            "function": {
+              "name": "checkOpen",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Check if the shop is currently open for business. Returns opening status, current time, and today's business hours."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "e9600f4d-c286-4a55-9bf5-3e5a1c655647",
+            "createdAt": "2025-10-21T02:53:29.145Z",
+            "updatedAt": "2025-10-21T02:58:07.557Z",
+            "type": "function",
+            "function": {
+              "name": "getMenu",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Filter by category (optional)"
+                  }
+                }
+              },
+              "description": "Retrieve the complete menu or filter by specific category. Returns all available items, prices, and modifiers."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "fd13c1cb-24f1-478a-9948-36d6bdfee111",
+            "createdAt": "2025-10-21T02:53:29.437Z",
+            "updatedAt": "2025-10-21T02:58:09.543Z",
+            "type": "function",
+            "function": {
+              "name": "getCallerInfo",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Silently retrieve the caller's phone number from the call context. Returns formatted phone number and last 3 digits for confirmation."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "a9f19334-d6a4-4a9c-8f38-33d393db15d4",
+            "createdAt": "2025-10-21T02:53:29.671Z",
+            "updatedAt": "2025-10-21T02:58:12.621Z",
+            "type": "function",
+            "function": {
+              "name": "priceOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items to price"
+                  }
+                }
+              },
+              "description": "Calculate the total price for all items in the cart. Validates menu items, applies modifiers, and returns detailed pricing breakdown with GST."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "3d618d0c-1742-400e-8afd-12261a102acb",
+            "createdAt": "2025-10-21T02:53:29.892Z",
+            "updatedAt": "2025-10-21T02:58:11.610Z",
+            "type": "function",
+            "function": {
+              "name": "estimateReadyTime",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "requestedTime": {
+                    "type": "string",
+                    "description": "Customer's requested pickup time"
+                  }
+                }
+              },
+              "description": "Estimate when the order will be ready for pickup based on current queue and preparation time. Can accept specific time requests."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "be9d2c04-e5c2-4937-84f3-2e38ad6dd8c9",
+            "createdAt": "2025-10-21T02:53:30.132Z",
+            "updatedAt": "2025-10-21T02:58:08.504Z",
+            "type": "function",
+            "function": {
+              "name": "createOrder",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart",
+                  "totals",
+                  "contact",
+                  "readyAtIso"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Create and save a new order in the system. Generates order ID, saves customer details, and triggers shop notification."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "175fb74a-0281-4746-9147-13424de1d9da",
+            "createdAt": "2025-10-21T02:53:31.027Z",
+            "updatedAt": "2025-10-21T02:58:08.757Z",
+            "type": "function",
+            "function": {
+              "name": "sendReceipt",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "toPhone",
+                  "consent"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {}
+                  },
+                  "consent": {
+                    "type": "boolean"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "toPhone": {
+                    "type": "string"
+                  },
+                  "readyAtIso": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Send a detailed SMS receipt to the customer with order details, items, pricing, and pickup time. Requires explicit customer consent."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "3f11b930-9dc3-4d89-9d2a-ba45bac15518",
+            "createdAt": "2025-10-21T02:53:31.257Z",
+            "updatedAt": "2025-10-21T02:58:07.306Z",
+            "type": "function",
+            "function": {
+              "name": "sendMenuLink",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "toPhone": {
+                    "type": "string",
+                    "description": "Customer phone number (optional - will auto-detect from caller)"
+                  }
+                }
+              },
+              "description": "Send the menu link via SMS to the customer. Auto-detects caller's number if not provided. Used when customer asks for menu."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          },
+          {
+            "id": "0feaf557-c970-4469-b6f5-6956b7a0cd18",
+            "createdAt": "2025-10-21T02:53:31.483Z",
+            "updatedAt": "2025-10-21T02:58:10.016Z",
+            "type": "function",
+            "function": {
+              "name": "validateMenuItems",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of items to validate"
+                  }
+                }
+              },
+              "description": "Validate a list of items against the current menu to ensure availability. Returns list of invalid items if any."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "9d8f38eb-5da7-4618-9375-c5f0af9c81a6",
+            "createdAt": "2025-10-21T02:53:31.707Z",
+            "updatedAt": "2025-10-21T02:58:10.716Z",
+            "type": "function",
+            "function": {
+              "name": "validateItem",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "category"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Item name"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Item size (if applicable)"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "Drink brand (if applicable)"
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Item category"
+                  }
+                }
+              },
+              "description": "Validate a single menu item by category, name, size, and brand. Checks if item exists and is available with specified options."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "075d7e34-e82e-40d4-9647-2a1045bcce1e",
+            "createdAt": "2025-10-21T02:53:31.946Z",
+            "updatedAt": "2025-10-21T02:58:11.865Z",
+            "type": "function",
+            "function": {
+              "name": "endCall",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Signal the end of the phone call. Used to gracefully terminate the conversation after order completion."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "f9bda1e2-ebbc-4c10-b5a3-81b2d390b49e",
+            "createdAt": "2025-10-21T02:53:32.200Z",
+            "updatedAt": "2025-10-21T02:58:10.493Z",
+            "type": "function",
+            "function": {
+              "name": "validateSauceRequest",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "sauceRequest",
+                  "itemType"
+                ],
+                "properties": {
+                  "itemType": {
+                    "type": "string",
+                    "description": "Type of item (kebab, hsp, etc.)"
+                  },
+                  "sauceRequest": {
+                    "type": "string",
+                    "description": "Customer's sauce request"
+                  }
+                }
+              },
+              "description": "Determine if customer wants sauce included with item or as a separate tub. Returns appropriate interpretation of sauce request."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "1337eb2b-b935-4795-aee4-95556510861a",
+            "createdAt": "2025-10-21T02:53:32.461Z",
+            "updatedAt": "2025-10-21T02:58:12.119Z",
+            "type": "function",
+            "function": {
+              "name": "testConnection",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [],
+                "properties": {}
+              },
+              "description": "Test the server connection and API responsiveness. Returns success status and timestamp for debugging."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "32361f16-b80c-4399-92c6-0a5f161128b0",
+            "createdAt": "2025-10-21T02:53:32.673Z",
+            "updatedAt": "2025-10-21T02:58:09.778Z",
+            "type": "function",
+            "function": {
+              "name": "detectCombos",
+              "strict": false,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "cart"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Current cart items to check for combos"
+                  }
+                }
+              },
+              "description": "Automatically detect and convert eligible items into combo meals for better pricing. Returns updated cart with combo items."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": false
+          },
+          {
+            "id": "8c6eaf61-3a50-4f28-a3c0-7c5e8679a547",
+            "createdAt": "2025-10-21T02:53:32.916Z",
+            "updatedAt": "2025-10-21T02:58:12.365Z",
+            "type": "function",
+            "function": {
+              "name": "notifyShop",
+              "strict": true,
+              "parameters": {
+                "type": "object",
+                "required": [
+                  "orderId",
+                  "cart",
+                  "totals",
+                  "readyAtIso",
+                  "contact",
+                  "order_type"
+                ],
+                "properties": {
+                  "cart": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
+                    "description": "Cart items"
+                  },
+                  "totals": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Order totals"
+                  },
+                  "contact": {
+                    "type": "object",
+                    "properties": {},
+                    "description": "Customer contact"
+                  },
+                  "orderId": {
+                    "type": "string",
+                    "description": "Order ID"
+                  },
+                  "order_type": {
+                    "type": "string",
+                    "description": "Order type (pickup/delivery)"
+                  },
+                  "readyAtIso": {
+                    "type": "string",
+                    "description": "Ready time in ISO format"
+                  }
+                }
+              },
+              "description": "Send an SMS notification to the shop with complete order details for preparation. Used internally when order is created."
+            },
+            "orgId": "bcced5e2-3c95-4475-bc3c-6541ba2abe84",
+            "server": {
+              "url": "https://surveyable-natisha-unsacred.ngrok-free.dev/webhook"
+            },
+            "async": true
+          }
+        ]
+      },
+      "firstMessage": "Hello, Welcome to Kebab a lab, What can i get for you today ? ",
+      "voicemailMessage": "Please call back when you're available.",
+      "endCallFunctionEnabled": true,
+      "endCallMessage": "Goodbye.",
+      "transcriber": {
+        "model": "nova-2-phonecall",
+        "language": "en",
+        "provider": "deepgram"
+      },
+      "clientMessages": [
+        "transcript",
+        "hang",
+        "metadata",
+        "tool-calls",
+        "tool-calls-result",
+        "tool.completed",
+        "transfer-update",
+        "user-interrupted",
+        "status-update"
+      ],
+      "compliancePlan": {
+        "pciEnabled": false,
+        "hipaaEnabled": false
+      },
+      "variableValues": {}
+    }
+  }
+}
+2025-10-21 14:44:24,892 - server - INFO - Calling tool None with args: {}
+2025-10-21 14:44:24,892 - server - INFO - Calling tool None with args: {}

@@ -1,0 +1,747 @@
+{
+  "version": "2025-10-12",
+  "currency": "AUD",
+  "categories": {
+    "kebabs": [
+      {
+        "id": "KEB_LAMB",
+        "name": "Lamb Kebab",
+        "category": "kebab",
+        "sizes": {
+          "small": 10.0,
+          "large": 15.0
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        },
+        "sku": "LAMB001"
+      },
+      {
+        "name": "haloumi",
+        "price": 2.5,
+        "applies_to": [
+          "kebab",
+          "hsp",
+          "gozleme"
+        ]
+      },
+      {
+        "id": "KEB_CHKN",
+        "name": "Chicken Kebab",
+        "category": "kebab",
+        "sizes": {
+          "small": 10.0,
+          "large": 15.0
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        },
+        "sku": "CHKN001"
+      },
+      {
+        "id": "KEB_MIX",
+        "name": "Mix Kebab",
+        "category": "kebab",
+        "sizes": {
+          "small": 10.0,
+          "large": 15.0
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
+      },
+      {
+        "id": "KEB_FAL",
+        "name": "Falafel Kebab",
+        "category": "kebab",
+        "sizes": {
+          "small": 10.0,
+          "large": 15.0
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        },
+        "vegetarian": true,
+        "vegan": true,
+        "sku": "FALF001"
+      }
+    ],
+    "hsp": [
+      {
+        "id": "HSP_LAMB",
+        "name": "Lamb HSP",
+        "category": "hsp",
+        "sizes": {
+          "small": 15.0,
+          "large": 20.0
+        },
+        "defaults": {
+          "sauces": [
+            "garlic",
+            "chilli"
+          ],
+          "cheese": true
+        }
+      },
+      {
+        "id": "HSP_CHKN",
+        "name": "Chicken HSP",
+        "category": "hsp",
+        "sizes": {
+          "small": 15.0,
+          "large": 20.0
+        },
+        "defaults": {
+          "sauces": [
+            "garlic",
+            "chilli"
+          ],
+          "cheese": true
+        }
+      },
+      {
+        "id": "HSP_MIX",
+        "name": "Mix HSP",
+        "category": "hsp",
+        "sizes": {
+          "small": 15.0,
+          "large": 20.0
+        },
+        "defaults": {
+          "sauces": [
+            "garlic",
+            "chilli"
+          ],
+          "cheese": true
+        }
+      },
+      {
+        "id": "HSP_FAL",
+        "name": "Falafel HSP",
+        "category": "hsp",
+        "sizes": {
+          "small": 15.0,
+          "large": 20.0
+        },
+        "defaults": {
+          "sauces": [
+            "garlic",
+            "chilli"
+          ],
+          "cheese": true
+        },
+        "vegetarian": true
+      }
+    ],
+    "gozleme": [
+      {
+        "id": "GOZ_VEGAN",
+        "name": "Vegan Gözleme",
+        "price": 15.0,
+        "variants": [
+          "vegan"
+        ]
+      },
+      {
+        "id": "GOZ_LAMB",
+        "name": "Lamb Gözleme",
+        "price": 15.0,
+        "variants": [
+          "lamb"
+        ]
+      },
+      {
+        "id": "GOZ_CHKN",
+        "name": "Chicken Gözleme",
+        "price": 15.0,
+        "variants": [
+          "chicken"
+        ]
+      },
+      {
+        "id": "GOZ_VEG",
+        "name": "Vegetarian Gözleme",
+        "price": 15.0,
+        "variants": [
+          "vegetarian"
+        ]
+      }
+    ],
+    "chips": [
+      {
+        "id": "CHP_S",
+        "name": "Chips",
+        "size": "small",
+        "price": 5.0,
+        "salt_options": ["normal", "chicken", "none"]
+      },
+      {
+        "id": "CHP_L",
+        "name": "Chips",
+        "size": "large",
+        "price": 9.0,
+        "salt_options": ["normal", "chicken", "none"]
+      },
+      {
+        "id": "CHP_S_CS",
+        "name": "Chips w/ Cheese or Sauce",
+        "size": "small",
+        "price": 6.0,
+        "salt_options": ["normal", "chicken", "none"]
+      },
+      {
+        "id": "CHP_L_CS",
+        "name": "Chips w/ Cheese & Sauce",
+        "size": "large",
+        "price": 10.0,
+        "salt_options": ["normal", "chicken", "none"]
+      }
+    ],
+    "kebab_can_combos": [
+      {
+        "id": "KEB_CAN_S",
+        "name": "Kebab & Soft Drink Can - Small",
+        "price": 12.0,
+        "description": "Small Kebab & 375ml Can",
+        "includes": {
+          "kebab": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
+      },
+      {
+        "id": "KEB_CAN_L",
+        "name": "Kebab & Soft Drink Can - Large",
+        "price": 17.0,
+        "description": "Large Kebab & 375ml Can",
+        "includes": {
+          "kebab": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
+      }
+    ],
+    "combos": [
+      {
+        "id": "CMB_KEB_SCHP_CAN",
+        "name": "Kebab, Small Chips & Can",
+        "sizes": {
+          "small": 17.0,
+          "large": 22.0
+        },
+        "includes": {
+          "kebab": 1,
+          "chips_small": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
+      },
+      {
+        "id": "CMB_KEB_LCHP_CAN",
+        "name": "Kebab, Large Chips & Can",
+        "sizes": {
+          "large": 25.0
+        },
+        "includes": {
+          "kebab": 1,
+          "chips_large": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
+      },
+      {
+        "id": "CMB_HSP_CAN",
+        "name": "HSP & Soft Drink Can",
+        "sizes": {
+          "small": 17.0,
+          "large": 22.0
+        },
+        "includes": {
+          "hsp": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "sauces": [
+            "garlic",
+            "chilli"
+          ],
+          "cheese": true
+        }
+      },
+      {
+        "id": "CMB_GOZ_SCHP_CAN",
+        "name": "Gozleme, Small Chips & Can",
+        "price": 23.0,
+        "includes": {
+          "gozleme": 1,
+          "chips_small": 1,
+          "drink_can": 1
+        }
+      }
+    ],
+    "drinks": [
+      {
+        "id": "DRK_CAN",
+        "name": "Soft Drink Can (375ml)",
+        "brands": [
+          "coca-cola",
+          "coke zero",
+          "diet coke",
+          "vanilla coke",
+          "pepsi",
+          "pepsi max",
+          "mountain dew",
+          "solo",
+          "fanta",
+          "lift",
+          "sprite",
+          "sunkist",
+          "schweppes",
+          "lemonade"
+        ],
+        "price": 3.5,
+        "skus": {
+          "pepsi": "DRK004",
+          "fanta": "DRK003"
+        }
+      },
+      {
+        "id": "DRK_WATER",
+        "name": "Water (500ml)",
+        "price": 3.0
+      },
+      {
+        "id": "DRK_AYRAN",
+        "name": "Ayran (Yoghurt Drink)",
+        "price": 3.5
+      },
+      {
+        "id": "DRK_SAL",
+        "name": "Şalgam (Fermented Turnip Juice)",
+        "price": 3.5
+      },
+      {
+        "id": "DRK_ENERGY",
+        "name": "Red Bull / V (250ml)",
+        "price": 3.5
+      },
+      {
+        "id": "DRK_ICE_TEA",
+        "name": "Iced Tea (Lemon/Peach/Mango)",
+        "price": 4.5
+      }
+    ],
+    "sweets": [
+      {
+        "id": "SWT_BAK_EA",
+        "name": "Baklava (each)",
+        "price": 3.0,
+        "description": "A traditional sweet that'll always hit the spot..."
+      },
+      {
+        "id": "SWT_BAK_P4",
+        "name": "Baklava (Pack of 4 Pieces)",
+        "price": 10.0,
+        "description": "A traditional sweet that'll always hit the spot..."
+      },
+      {
+        "id": "SWT_TDEL",
+        "name": "Turkish Delight",
+        "price": 1.0,
+        "description": "Rose or Vanilla Flavours Available..."
+      },
+      {
+        "id": "SWT_RICE",
+        "name": "Rice Pudding (225g)",
+        "price": 5.0
+      }
+    ],
+    "meat_containers": [
+      {
+        "id": "MC_LAMB_250",
+        "name": "Lamb Meat Container 250g",
+        "price": 13.0,
+        "description": "Shaved Lamb - 250g"
+      },
+      {
+        "id": "MC_LAMB_500",
+        "name": "Lamb Meat Container 500g",
+        "price": 20.0,
+        "description": "Shaved Lamb - 500g"
+      },
+      {
+        "id": "MC_CHKN_250",
+        "name": "Chicken Meat Container 250g",
+        "price": 13.0,
+        "description": "Shaved Chicken - 250g"
+      },
+      {
+        "id": "MC_CHKN_500",
+        "name": "Chicken Meat Container 500g",
+        "price": 20.0,
+        "description": "Shaved Chicken - 500g"
+      },
+      {
+        "id": "MC_MIX_250",
+        "name": "Mix Meat Container 250g",
+        "price": 13.0,
+        "description": "Shaved Mix Meat - 250g"
+      },
+      {
+        "id": "MC_MIX_500",
+        "name": "Mix Meat Container 500g",
+        "price": 20.0,
+        "description": "Shaved Mix Meat - 500g"
+      }
+    ],
+    "sauce_tubs": [
+      {
+        "id": "SAUCE_TUB",
+        "name": "Sauce Tub",
+        "price": 1.0,
+        "available_sauces": [
+          "garlic",
+          "chilli",
+          "bbq",
+          "tomato",
+          "sweet chilli",
+          "mayo",
+          "hummus"
+        ]
+      }
+    ],
+    "extras": [
+      {
+        "id": "EXTRA_BOX",
+        "name": "Extra Takeaway Box",
+        "price": 2.0,
+        "description": "Additional takeaway container for your order"
+      },
+      {
+        "id": "EXTRA_NAPKINS",
+        "name": "Extra Napkins",
+        "price": 0.50,
+        "description": "Additional paper napkins"
+      },
+      {
+        "id": "EXTRA_FORKS",
+        "name": "Extra Forks",
+        "price": 0.50,
+        "description": "Additional disposable forks"
+      },
+      {
+        "id": "EXTRA_CUTLERY_SET",
+        "name": "Extra Cutlery Set",
+        "price": 1.0,
+        "description": "Complete cutlery set (fork, napkin)"
+      },
+      {
+        "id": "EXTRA_BAG",
+        "name": "Extra Carry Bag",
+        "price": 0.50,
+        "description": "Additional carry bag for your order"
+      },
+      {
+        "id": "EXTRA_PLATES",
+        "name": "Extra Plates",
+        "price": 0.50,
+        "description": "Additional disposable plates"
+      },
+      {
+        "id": "EXTRA_CONTAINER",
+        "name": "Extra Container",
+        "price": 1.0,
+        "description": "Additional food container with lid"
+      }
+    ]
+  },
+  "modifiers": {
+    "salads": [
+      {
+        "name": "lettuce",
+        "price": 0.0
+      },
+      {
+        "name": "tomato",
+        "price": 0.0
+      },
+      {
+        "name": "onion",
+        "price": 0.0
+      },
+      {
+        "name": "pickles",
+        "price": 0.0
+      },
+      {
+        "name": "olives",
+        "price": 1.0
+      }
+    ],
+    "sauces": [
+      {
+        "name": "garlic",
+        "price": 0.0
+      },
+      {
+        "name": "chilli",
+        "price": 0.0
+      },
+      {
+        "name": "bbq",
+        "price": 0.0
+      },
+      {
+        "name": "tomato",
+        "price": 0.0
+      },
+      {
+        "name": "sweet chilli",
+        "price": 0.0
+      },
+      {
+        "name": "mayo",
+        "price": 0.0
+      },
+      {
+        "name": "hummus",
+        "price": 0.0
+      }
+    ],
+    "extras": [
+      {
+        "name": "cheese",
+        "price": 1.0,
+        "allergens": [
+          "dairy"
+        ]
+      },
+      {
+        "name": "extra meat",
+        "price": 4.0
+      },
+      {
+        "name": "extra lamb",
+        "price": 3.0,
+        "applies_to": [
+          "kebab",
+          "hsp"
+        ]
+      },
+      {
+        "name": "extra chicken",
+        "price": 3.0,
+        "applies_to": [
+          "kebab",
+          "hsp"
+        ]
+      },
+      {
+        "name": "extra mix",
+        "price": 3.0,
+        "applies_to": [
+          "kebab",
+          "hsp"
+        ]
+      },
+      {
+        "name": "falafel",
+        "price": 1.0
+      },
+      {
+        "name": "falafel standalone",
+        "price": 2.0,
+        "per_piece": true,
+        "description": "Falafel on its own"
+      },
+      {
+        "name": "salad side",
+        "price": 3.0,
+        "description": "Any salad on the side in small tub"
+      },
+      {
+        "name": "extra chips",
+        "price": 3.0,
+        "applies_to": [
+          "kebab",
+          "hsp"
+        ],
+        "description": "Extra chips inside"
+      },
+      {
+        "name": "hummus",
+        "price": 1.0
+      },
+      {
+        "name": "jalapenos",
+        "price": 1.0
+      },
+      {
+        "name": "olives",
+        "price": 1.0
+      },
+      {
+        "name": "sauces",
+        "price": 0.5
+      }
+    ]
+  },
+  "defaults": {
+    "salads": [
+      "lettuce",
+      "tomato",
+      "onion"
+    ],
+    "sauces": [
+      "garlic"
+    ]
+  },
+  "synonyms": {
+    "lamp": "lamb",
+    "chiken": "chicken",
+    "chiken hsp": "chicken hsp",
+    "chilli": "chilli",
+    "garlek": "garlic",
+    "spryte": "sprite",
+    "coke": "coca-cola",
+    "coca cola": "coca-cola",
+    "ayran": "ayran",
+    "shalgam": "şalgam",
+    "saljam": "şalgam",
+    "doner": "kebab",
+    "döner": "kebab",
+    "gozlem": "gozleme",
+    "gozlemi": "gozleme",
+    "gozlemy": "gozleme",
+    "gozelm": "gozleme",
+    "gozelmay": "gozleme",
+    "gozlim": "gozleme",
+    "gozlimy": "gozleme",
+    "guzelme": "gozleme",
+    "guzleme": "gozleme",
+    "islaman": "gozleme",
+    "guzman": "gozleme",
+    "falafel wrap": "Falafel Kebab",
+    "falafel roll": "Falafel Kebab",
+    "vegan wrap": "Falafel Kebab",
+    "loaded fries": "INVALID_ITEM",
+    "takeaway box": "Extra Takeaway Box",
+    "takeaway boxes": "Extra Takeaway Box",
+    "container": "Extra Container",
+    "containers": "Extra Container",
+    "napkin": "Extra Napkins",
+    "napkins": "Extra Napkins",
+    "fork": "Extra Forks",
+    "forks": "Extra Forks",
+    "cutlery": "Extra Cutlery Set",
+    "cutlery set": "Extra Cutlery Set",
+    "bag": "Extra Carry Bag",
+    "carry bag": "Extra Carry Bag",
+    "plate": "Extra Plates",
+    "plates": "Extra Plates",
+    "sauce on the side": "Sauce Tub",
+    "garlic sauce on the side": "Sauce Tub",
+    "bbq sauce on the side": "Sauce Tub",
+    "chilli sauce on the side": "Sauce Tub",
+    "aioli": "mayo",
+    "mayonnaise": "mayo",
+    "chicken salt": "chicken",
+    "no salt": "none",
+    "normal salt": "normal",
+    "kebab and can": "Kebab & Soft Drink Can",
+    "kebab with can": "Kebab & Soft Drink Can",
+    "kebab plus can": "Kebab & Soft Drink Can",
+    "kebab and drink": "Kebab & Soft Drink Can",
+    "kebab with drink": "Kebab & Soft Drink Can"
+	"goslan": "gozleme",
+    "goslingi": "gozleme",
+    "gozlem": "gozleme",
+    "gozlemi": "gozleme",
+    "gozlemy": "gozleme",
+    "gozelm": "gozleme",
+    "gozelmay": "gozleme",
+    "gozlim": "gozleme",
+    "gozlimy": "gozleme",
+    "guzelme": "gozleme",
+    "guzleme": "gozleme",
+    "islaman": "gozleme",
+    "guzman": "gozleme",
+    "coke": "coca-cola",
+    "coca cola": "coca-cola",
+    "pepsi": "pepsi",
+    "fanta": "fanta",
+    "sprite": "sprite",
+    "soft drink": "soft drink can",
+    "soda": "soft drink can",
+    "fries": "chips",
+    "loaded fries": "chips w/ cheese or sauce",
+    "s": "small",
+    "l": "large",
+    "med": "medium",
+    "reg": "regular",
+  }
+}

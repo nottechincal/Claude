@@ -1,0 +1,20 @@
+{
+  "business_details": {
+    "name": "Kebabalab St Kilda",
+    "address": "1/99 Carlisle St, St Kilda VIC 3182",
+    "phone": "+61 3 9534 5588",
+    "timezone": "Australia/Melbourne",
+    "website": "https://kebabalab.com.au",
+    "tagline": "Authentic Turkish Kebabs & HSP"
+  },
+  "ordering": {
+    "default_lead_minutes": 15,
+    "busy_lead_minutes": 25,
+    "currency": "AUD"
+  },
+  "contact": {
+    "email": "orders@kebabalab.com.au",
+    "instagram": "@kebabalab",
+    "facebook": "https://www.facebook.com/kebabalab"
+  }
+}

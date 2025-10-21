@@ -1,0 +1,32 @@
+{
+  "combos": [
+    {
+      "id": "kebab_combo",
+      "name": "Kebab + Chips + Drink Deal",
+      "items": ["kebab", "chips", "drink"],
+      "discount": 2.0
+    },
+    {
+      "id": "hsp_combo",
+      "name": "HSP + Drink Deal",
+      "items": ["hsp", "drink"],
+      "discount": 1.5
+    }
+  ],
+  "surcharges": {
+    "public_holiday_pct": 10,
+    "card_fee_pct": 1.5
+  },
+  "ordering": {
+    "max_items_per_order": 15,
+    "allow_custom_modifiers": true
+  },
+  "escalation": {
+    "keywords": [
+      "allergy",
+      "refund",
+      "complaint",
+      "human"
+    ]
+  }
+}

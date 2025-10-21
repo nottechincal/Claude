@@ -93,29 +93,31 @@ def clear_session():
     # For now, we'll just note that sessions are per-caller
     pass
 
-def test_case(name: str, func):
+def test_case(name: str):
     """Decorator for test cases"""
-    def wrapper():
-        stats.total += 1
-        print(f"\n{Colors.CYAN}{'='*80}{Colors.RESET}")
-        print(f"{Colors.BOLD}TEST {stats.total}: {name}{Colors.RESET}")
-        print(f"{Colors.CYAN}{'='*80}{Colors.RESET}")
+    def decorator(func):
+        def wrapper():
+            stats.total += 1
+            print(f"\n{Colors.CYAN}{'='*80}{Colors.RESET}")
+            print(f"{Colors.BOLD}TEST {stats.total}: {name}{Colors.RESET}")
+            print(f"{Colors.CYAN}{'='*80}{Colors.RESET}")
 
-        try:
-            result = func()
-            if result:
-                stats.passed += 1
-                print(f"{Colors.GREEN}✓ PASSED{Colors.RESET}")
-            else:
+            try:
+                result = func()
+                if result:
+                    stats.passed += 1
+                    print(f"{Colors.GREEN}✓ PASSED{Colors.RESET}")
+                else:
+                    stats.failed += 1
+                    print(f"{Colors.RED}✗ FAILED{Colors.RESET}")
+                return result
+            except Exception as e:
                 stats.failed += 1
-                print(f"{Colors.RED}✗ FAILED{Colors.RESET}")
-            return result
-        except Exception as e:
-            stats.failed += 1
-            print(f"{Colors.RED}✗ EXCEPTION: {str(e)}{Colors.RESET}")
-            return False
+                print(f"{Colors.RED}✗ EXCEPTION: {str(e)}{Colors.RESET}")
+                return False
 
-    return wrapper
+        return wrapper
+    return decorator
 
 def assert_equal(actual, expected, message=""):
     """Assert two values are equal"""

@@ -55,6 +55,10 @@ app.add_middleware(
 # Context variable for caller info
 caller_context: ContextVar[Optional[str]] = ContextVar('caller_context', default=None)
 
+# ==================== IN-MEMORY CACHE ====================
+# Cache static JSON files to avoid disk I/O on every request (10-50ms savings per request)
+_FILE_CACHE = {}
+
 # ==================== SESSION MANAGEMENT ====================
 # Per-caller session storage with expiration
 SESSION = {}
@@ -126,10 +130,17 @@ def session_reset() -> None:
 # ==================== HELPER FUNCTIONS ====================
 
 def load_json_file(filename: str) -> Dict:
-    """Load a JSON configuration file"""
+    """Load a JSON configuration file with in-memory caching"""
+    # Check cache first
+    if filename in _FILE_CACHE:
+        return _FILE_CACHE[filename]
+
+    # Load from disk and cache
     try:
         with open(filename, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            _FILE_CACHE[filename] = data
+            return data
     except Exception as e:
         logger.error(f"Error loading {filename}: {str(e)}")
         return {}
@@ -742,26 +753,6 @@ def tool_add_item_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         # Check for combo opportunities
         combo_detected = detect_combo_opportunity(cart)
 
-        result = {
-            "ok": True,
-            "itemAdded": cart_item,
-            "cartItemCount": len(cart)
-        }
-
-        if combo_detected:
-            # Apply combo
-            cart = apply_combo_to_cart(cart, combo_detected)
-            result["comboDetected"] = True
-            result["comboInfo"] = {
-                "name": combo_detected["name"],
-                "type": combo_detected["type"],
-                "savings": combo_detected["savings"]
-            }
-            result["message"] = f"I've made that a {combo_detected['name']} for you!"
-        else:
-            result["comboDetected"] = False
-            result["message"] = "Item added to cart"
-
         # Update cart in session
         session_set("cart", cart)
 
@@ -769,9 +760,21 @@ def tool_add_item_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("current_item", None)
         session_set("order_state", "CART_ACTIVE")
 
-        result["updatedCart"] = cart
+        # Minimal response for speed
+        if combo_detected:
+            # Apply combo
+            cart = apply_combo_to_cart(cart, combo_detected)
+            session_set("cart", cart)
+            return {
+                "ok": True,
+                "cartCount": len(cart),
+                "combo": combo_detected["name"]
+            }
 
-        return result
+        return {
+            "ok": True,
+            "cartCount": len(cart)
+        }
 
     except Exception as e:
         logger.error(f"Error adding item to cart: {str(e)}")
@@ -851,15 +854,10 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         })
         session_set("cart_priced", True)
 
+        # Minimal response for speed (AI doesn't need breakdown)
         return {
             "ok": True,
-            "totals": {
-                "subtotal": float(grand_total),
-                "gst": float(gst_amount),
-                "grand_total": float(grand_total)
-            },
-            "itemBreakdown": item_breakdown,
-            "currency": "AUD"
+            "total": float(grand_total)
         }
 
     except Exception as e:
@@ -1100,13 +1098,11 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("cart_priced", False)
         session_set("order_state", "ORDER_PLACED")
 
+        # Minimal response for speed
         return {
             "ok": True,
             "orderId": order_number,
-            "orderIdInternal": order_id_internal,
-            "total": totals["grand_total"],
-            "readyAt": ready_at_speech,
-            "message": f"Order {order_number} confirmed!"
+            "readyAt": ready_at_speech
         }
 
     except Exception as e:
@@ -1141,11 +1137,10 @@ def tool_remove_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("cart", cart)
         session_set("cart_priced", False)  # Cart changed, need to reprice
 
+        # Minimal response
         return {
             "ok": True,
-            "removedItem": removed_item,
-            "cartItemCount": len(cart),
-            "message": f"Removed item from cart. {len(cart)} items remaining."
+            "cartCount": len(cart)
         }
 
     except Exception as e:
@@ -1222,11 +1217,8 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("cart", cart)
         session_set("cart_priced", False)  # Cart changed, need to reprice
 
-        return {
-            "ok": True,
-            "updatedItem": item,
-            "message": f"Updated {field} on item {item_index + 1}"
-        }
+        # Minimal response
+        return {"ok": True}
 
     except Exception as e:
         logger.error(f"Error editing cart item: {str(e)}")
@@ -1248,11 +1240,8 @@ def tool_clear_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("current_item", None)
         session_set("order_state", "IDLE")
 
-        return {
-            "ok": True,
-            "itemsCleared": item_count,
-            "message": f"Cart cleared. {item_count} items removed."
-        }
+        # Minimal response
+        return {"ok": True}
 
     except Exception as e:
         logger.error(f"Error clearing cart: {str(e)}")
@@ -1262,19 +1251,10 @@ def tool_clear_session(params: Dict[str, Any]) -> Dict[str, Any]:
     """Clear/reset the current session (for testing or starting fresh)"""
     try:
         logger.info("Clearing session")
-
-        # Get session info before clearing
-        cart = session_get("cart", [])
-        item_count = len(cart)
-
-        # Reset session to fresh state
         session_reset()
 
-        return {
-            "ok": True,
-            "message": f"Session reset. Cleared {item_count} cart items.",
-            "itemsCleared": item_count
-        }
+        # Minimal response
+        return {"ok": True}
 
     except Exception as e:
         logger.error(f"Error clearing session: {str(e)}")

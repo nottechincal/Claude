@@ -124,6 +124,75 @@
     {
       "type": "function",
       "function": {
+        "name": "removeCartItem",
+        "description": "Remove an item from the cart by index. Use getCartState first to see cart items and their indexes (0-based).",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndex": {
+              "type": "number",
+              "description": "Zero-based index of item to remove (0 for first item, 1 for second, etc.)"
+            }
+          },
+          "required": ["itemIndex"]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "editCartItem",
+        "description": "Edit an existing cart item's properties (salads, sauces, extras, cheese, salt_type, quantity). Cannot change size or protein - remove and re-add instead.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndex": {
+              "type": "number",
+              "description": "Zero-based index of item to edit"
+            },
+            "field": {
+              "type": "string",
+              "description": "Field to edit: salads, sauces, extras, cheese, salt_type, quantity",
+              "enum": ["salads", "sauces", "extras", "cheese", "salt_type", "quantity"]
+            },
+            "value": {
+              "description": "New value for the field"
+            }
+          },
+          "required": ["itemIndex", "field", "value"]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "clearCart",
+        "description": "Clear all items from cart. Use when customer wants to start over.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "priceCart",
         "description": "Calculate total price for all items in cart with detailed breakdown.",
         "strict": true,

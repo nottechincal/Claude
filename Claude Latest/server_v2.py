@@ -890,6 +890,133 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         traceback.print_exc()
         return {"ok": False, "error": str(e)}
 
+def tool_remove_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove an item from the cart"""
+    try:
+        logger.info(f"Removing cart item: {params}")
+
+        cart = session_get("cart", [])
+        item_index = params.get("itemIndex")
+
+        if item_index is None:
+            return {"ok": False, "error": "itemIndex is required"}
+
+        try:
+            item_index = int(item_index)
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "itemIndex must be a number"}
+
+        if item_index < 0 or item_index >= len(cart):
+            return {"ok": False, "error": f"Invalid itemIndex. Cart has {len(cart)} items (0-{len(cart)-1})"}
+
+        # Remove the item
+        removed_item = cart.pop(item_index)
+
+        # Update cart
+        session_set("cart", cart)
+        session_set("cart_priced", False)  # Cart changed, need to reprice
+
+        return {
+            "ok": True,
+            "removedItem": removed_item,
+            "cartItemCount": len(cart),
+            "message": f"Removed item from cart. {len(cart)} items remaining."
+        }
+
+    except Exception as e:
+        logger.error(f"Error removing cart item: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Edit an existing cart item"""
+    try:
+        logger.info(f"Editing cart item: {params}")
+
+        cart = session_get("cart", [])
+        item_index = params.get("itemIndex")
+        field = params.get("field")
+        value = params.get("value")
+
+        if item_index is None:
+            return {"ok": False, "error": "itemIndex is required"}
+        if not field:
+            return {"ok": False, "error": "field is required"}
+
+        try:
+            item_index = int(item_index)
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "itemIndex must be a number"}
+
+        if item_index < 0 or item_index >= len(cart):
+            return {"ok": False, "error": f"Invalid itemIndex. Cart has {len(cart)} items (0-{len(cart)-1})"}
+
+        # Get the item
+        item = cart[item_index]
+
+        # Validate field can be edited
+        if field in ["size", "protein"]:
+            # Size/protein changes might affect combo detection, so we disallow it
+            # User should remove and re-add instead
+            return {
+                "ok": False,
+                "error": f"Cannot change {field} on existing item. Please remove and re-add the item."
+            }
+
+        # Update the field
+        if field == "salads":
+            item["salads"] = value if isinstance(value, list) else [value] if value else []
+        elif field == "sauces":
+            item["sauces"] = value if isinstance(value, list) else [value] if value else []
+        elif field == "extras":
+            item["extras"] = value if isinstance(value, list) else [value] if value else []
+        elif field == "cheese":
+            item["cheese"] = value
+        elif field == "salt_type":
+            item["salt_type"] = value
+        elif field == "quantity":
+            item["quantity"] = int(value) if value else 1
+        else:
+            return {"ok": False, "error": f"Cannot edit field: {field}"}
+
+        # Update cart
+        cart[item_index] = item
+        session_set("cart", cart)
+        session_set("cart_priced", False)  # Cart changed, need to reprice
+
+        return {
+            "ok": True,
+            "updatedItem": item,
+            "message": f"Updated {field} on item {item_index + 1}"
+        }
+
+    except Exception as e:
+        logger.error(f"Error editing cart item: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_clear_cart(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Clear all items from cart"""
+    try:
+        logger.info("Clearing cart")
+
+        cart = session_get("cart", [])
+        item_count = len(cart)
+
+        # Clear cart
+        session_set("cart", [])
+        session_set("cart_priced", False)
+        session_set("current_item", None)
+        session_set("order_state", "IDLE")
+
+        return {
+            "ok": True,
+            "itemsCleared": item_count,
+            "message": f"Cart cleared. {item_count} items removed."
+        }
+
+    except Exception as e:
+        logger.error(f"Error clearing cart: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
     """End the call"""
     logger.info("Ending call")
@@ -903,6 +1030,9 @@ TOOLS = {
     "setItemProperty": tool_set_item_property,
     "addItemToCart": tool_add_item_to_cart,
     "getCartState": tool_get_cart_state,
+    "removeCartItem": tool_remove_cart_item,
+    "editCartItem": tool_edit_cart_item,
+    "clearCart": tool_clear_cart,
     "priceCart": tool_price_cart,
     "estimateReadyTime": tool_estimate_ready_time,
     "createOrder": tool_create_order,

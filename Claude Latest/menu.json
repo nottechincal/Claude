@@ -700,8 +700,8 @@
     "kebab with can": "Kebab & Soft Drink Can",
     "kebab plus can": "Kebab & Soft Drink Can",
     "kebab and drink": "Kebab & Soft Drink Can",
-    "kebab with drink": "Kebab & Soft Drink Can"
-	"goslan": "gozleme",
+    "kebab with drink": "Kebab & Soft Drink Can",
+    "goslan": "gozleme",
     "goslingi": "gozleme",
     "gozlem": "gozleme",
     "gozlemi": "gozleme",
@@ -726,6 +726,6 @@
     "s": "small",
     "l": "large",
     "med": "medium",
-    "reg": "regular",
+    "reg": "regular"
   }
 }

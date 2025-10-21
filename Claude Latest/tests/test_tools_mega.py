@@ -88,10 +88,11 @@ def call_tool(tool_name: str, parameters: Optional[Dict] = None, expect_fail: bo
         return {"_test_meta": {"status": "exception", "error": str(e)}}
 
 def clear_session():
-    """Clear session by calling getCallerInfo (resets session)"""
-    # In a real implementation, you might need a clearSession tool
-    # For now, we'll just note that sessions are per-caller
-    pass
+    """Clear session using clearSession tool"""
+    try:
+        call_tool("clearSession", {})
+    except Exception as e:
+        print(f"Warning: Could not clear session: {e}")
 
 def test_case(name: str):
     """Decorator for test cases"""

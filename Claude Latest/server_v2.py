@@ -56,13 +56,31 @@ app.add_middleware(
 caller_context: ContextVar[Optional[str]] = ContextVar('caller_context', default=None)
 
 # ==================== SESSION MANAGEMENT ====================
-# Per-caller session storage
-SESSION = defaultdict(lambda: {
-    "current_item": None,  # Item being configured
-    "cart": [],  # Completed items
-    "customer_info": {},  # Name, phone, etc
-    "order_state": "IDLE"  # IDLE, CONFIGURING_ITEM, CART_READY, etc
-})
+# Per-caller session storage with expiration
+SESSION = {}
+SESSION_TIMEOUT = timedelta(minutes=15)  # Sessions expire after 15 minutes
+
+def _create_session() -> Dict:
+    """Create new session with timestamp"""
+    return {
+        "current_item": None,
+        "cart": [],
+        "customer_info": {},
+        "order_state": "IDLE",
+        "last_activity": datetime.now(),
+        "created_at": datetime.now()
+    }
+
+def _clean_expired_sessions() -> None:
+    """Remove expired sessions"""
+    now = datetime.now()
+    expired_keys = [
+        key for key, session in SESSION.items()
+        if now - session.get("last_activity", now) > SESSION_TIMEOUT
+    ]
+    for key in expired_keys:
+        del SESSION[key]
+        logger.info(f"Expired session: {key}")
 
 def _session_key() -> str:
     """Get session key from caller context"""
@@ -73,19 +91,37 @@ def _session_key() -> str:
     raw = re.sub(r"\D+", "", str(raw))
     return raw or "anon"
 
+def _ensure_session() -> None:
+    """Ensure session exists and is not expired"""
+    key = _session_key()
+    if key not in SESSION:
+        SESSION[key] = _create_session()
+    else:
+        # Update last activity
+        SESSION[key]["last_activity"] = datetime.now()
+
 def session_set(key: str, value: Any) -> None:
     """Set session value"""
+    _ensure_session()
     SESSION[_session_key()][key] = value
 
 def session_get(key: str, default: Any = None) -> Any:
     """Get session value"""
+    _ensure_session()
     return SESSION[_session_key()].get(key, default)
 
 def session_clear() -> None:
-    """Clear session"""
+    """Clear current session"""
     key = _session_key()
     if key in SESSION:
         del SESSION[key]
+        logger.info(f"Cleared session: {key}")
+
+def session_reset() -> None:
+    """Reset current session to fresh state"""
+    key = _session_key()
+    SESSION[key] = _create_session()
+    logger.info(f"Reset session: {key}")
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -232,11 +268,12 @@ class ItemState:
             item["size"] = self.size
         if self.protein:
             item["protein"] = self.protein
-        if self.salads:
+        # Always include salads/sauces/extras even if empty (to preserve explicit empty choice)
+        if self.salads is not None:
             item["salads"] = self.salads
-        if self.sauces:
+        if self.sauces is not None:
             item["sauces"] = self.sauces
-        if self.extras:
+        if self.extras is not None:
             item["extras"] = self.extras
         if self.cheese is not None:
             item["cheese"] = self.cheese
@@ -424,38 +461,53 @@ def calculate_item_price(item: Dict, menu: Dict) -> Decimal:
 
     category = item.get("category", "").lower()
     size = item.get("size", "").lower()
-    name = item.get("name", "")
 
     base_price = Decimal("0")
 
-    # Find base price in menu
-    for cat_name, items in menu.get("categories", {}).items():
-        if cat_name.lower() == category:
-            for menu_item in items:
-                # Match by name
-                if menu_item.get("name") == name:
-                    if "sizes" in menu_item and size:
-                        base_price = Decimal(str(menu_item["sizes"].get(size, 0)))
-                    elif "price" in menu_item:
-                        base_price = Decimal(str(menu_item["price"]))
-                    break
-            if base_price > 0:
-                break
+    # Standard pricing by category (protein type doesn't affect price)
+    if category in ["kebabs", "kebab"]:
+        # All kebabs same price by size
+        if size == "small":
+            base_price = Decimal("10.0")
+        elif size == "large":
+            base_price = Decimal("15.0")
+
+    elif category in ["hsp", "hsps"]:
+        # All HSPs same price by size
+        if size == "small":
+            base_price = Decimal("15.0")
+        elif size == "large":
+            base_price = Decimal("20.0")
+
+    elif category == "chips":
+        # Chips pricing by size
+        if size == "small":
+            base_price = Decimal("5.0")
+        elif size == "large":
+            base_price = Decimal("8.0")
+
+    elif category in ["drinks", "drink"]:
+        # All cans are $3
+        base_price = Decimal("3.0")
 
     # Add extras pricing
     extras = item.get("extras", [])
     for extra in extras:
-        for mod_extra in menu.get("modifiers", {}).get("extras", []):
-            if mod_extra["name"].lower() == str(extra).lower():
-                base_price += Decimal(str(mod_extra.get("price", 0)))
+        extra_lower = str(extra).lower()
+        # Cheese addon
+        if "cheese" in extra_lower:
+            base_price += Decimal("1.00")
+        # Extra meat
+        elif "meat" in extra_lower or "lamb" in extra_lower or "chicken" in extra_lower:
+            base_price += Decimal("3.00")
 
-    # Extra sauces (more than 2)
+    # Extra sauces (more than 2 free)
     sauces = item.get("sauces", [])
     if len(sauces) > 2:
         base_price += Decimal("0.50") * (len(sauces) - 2)
 
-    # Cheese if added
-    if item.get("cheese") and category in ["kebabs", "kebab"]:
+    # Cheese if added (separate boolean field)
+    if item.get("cheese") and category in ["kebabs", "kebab", "hsp", "hsps"]:
         base_price += Decimal("1.00")
 
     return base_price
@@ -507,29 +559,74 @@ def tool_set_item_property(params: Dict[str, Any]) -> Dict[str, Any]:
         if not field:
             return {"ok": False, "error": "Field name is required"}
 
-        # Set the property
+        # Parse value (VAPI might send JSON strings for arrays)
+        parsed_value = value
+        if isinstance(value, str) and value.strip():
+            # Try to parse as JSON
+            try:
+                parsed_value = json.loads(value)
+            except (json.JSONDecodeError, TypeError):
+                # Not JSON, use as-is
+                parsed_value = value
+
+        # Set the property with proper type handling
         if field == "size":
-            item_state.size = value
+            item_state.size = str(parsed_value) if parsed_value else None
         elif field == "protein":
-            item_state.protein = value
+            item_state.protein = str(parsed_value) if parsed_value else None
         elif field == "salads":
-            item_state.salads = value if isinstance(value, list) else [value] if value else []
+            # Explicitly handle empty arrays
+            if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                item_state.salads = []
+            elif isinstance(parsed_value, list):
+                item_state.salads = parsed_value
+            elif parsed_value:
+                item_state.salads = [str(parsed_value)]
+            else:
+                item_state.salads = []
         elif field == "sauces":
-            item_state.sauces = value if isinstance(value, list) else [value] if value else []
+            # Explicitly handle empty arrays
+            if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                item_state.sauces = []
+            elif isinstance(parsed_value, list):
+                item_state.sauces = parsed_value
+            elif parsed_value:
+                item_state.sauces = [str(parsed_value)]
+            else:
+                item_state.sauces = []
         elif field == "extras":
-            item_state.extras = value if isinstance(value, list) else [value] if value else []
+            # Explicitly handle empty arrays
+            if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                item_state.extras = []
+            elif isinstance(parsed_value, list):
+                item_state.extras = parsed_value
+            elif parsed_value:
+                item_state.extras = [str(parsed_value)]
+            else:
+                item_state.extras = []
         elif field == "cheese":
-            item_state.cheese = value
+            # Handle boolean strings
+            if isinstance(parsed_value, str):
+                item_state.cheese = parsed_value.lower() in ["true", "1", "yes"]
+            else:
+                item_state.cheese = bool(parsed_value)
         elif field == "brand":
-            item_state.brand = value
+            item_state.brand = str(parsed_value) if parsed_value else None
         elif field == "variant":
-            item_state.variant = value
+            item_state.variant = str(parsed_value) if parsed_value else None
         elif field == "salt_type":
-            item_state.salt_type = value
+            # Ensure salt_type is properly set (override default)
+            item_state.salt_type = str(parsed_value) if parsed_value else "chicken"
+            logger.info(f"Set salt_type to: {item_state.salt_type}")
         elif field == "sauce_type":
-            item_state.sauce_type = value
+            item_state.sauce_type = str(parsed_value) if parsed_value else None
         elif field == "quantity":
-            item_state.quantity = int(value) if value else 1
+            # Handle quantity properly
+            try:
+                item_state.quantity = int(parsed_value) if parsed_value else 1
+                logger.info(f"Set quantity to: {item_state.quantity}")
+            except (ValueError, TypeError):
+                item_state.quantity = 1
         else:
             return {"ok": False, "error": f"Unknown field: {field}"}
 
@@ -1033,9 +1130,35 @@ def tool_clear_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error clearing cart: {str(e)}")
         return {"ok": False, "error": str(e)}
 
+def tool_clear_session(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Clear/reset the current session (for testing or starting fresh)"""
+    try:
+        logger.info("Clearing session")
+
+        # Get session info before clearing
+        cart = session_get("cart", [])
+        item_count = len(cart)
+
+        # Reset session to fresh state
+        session_reset()
+
+        return {
+            "ok": True,
+            "message": f"Session reset. Cleared {item_count} cart items.",
+            "itemsCleared": item_count
+        }
+
+    except Exception as e:
+        logger.error(f"Error clearing session: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
     """End the call"""
     logger.info("Ending call")
+
+    # Clean up expired sessions
+    _clean_expired_sessions()
+
     return {"ok": True, "action": "end_call"}
 
 # Tool mapping
@@ -1049,6 +1172,7 @@ TOOLS = {
     "removeCartItem": tool_remove_cart_item,
     "editCartItem": tool_edit_cart_item,
     "clearCart": tool_clear_cart,
+    "clearSession": tool_clear_session,
     "priceCart": tool_price_cart,
     "estimateReadyTime": tool_estimate_ready_time,
     "createOrder": tool_create_order,

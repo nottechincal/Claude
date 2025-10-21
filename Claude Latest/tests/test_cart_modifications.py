@@ -50,6 +50,9 @@ def test_cart_modifications():
     print(f"\n{Colors.BOLD}{Colors.CYAN}CART MODIFICATION TOOLS TEST{Colors.RESET}")
     print("="*80)
 
+    # Clear session first
+    call_tool("clearSession")
+
     # Setup: Add 3 items to cart
     print(f"\n{Colors.CYAN}Setup: Adding 3 items to cart...{Colors.RESET}")
 

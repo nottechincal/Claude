@@ -6,16 +6,40 @@
 
 ---
 
+## 🚨 IMPORTANT: ELEVENLABS CREDIT SYSTEM ALERT
+
+**Your $34/month ElevenLabs subscription includes LIMITED credits (~30,000 characters = ~30 minutes).**
+
+**This means:**
+- You can only handle ~15 calls/month before running out
+- After that, you pay $0.12-0.24 per 1,000 characters in OVERAGE fees
+- At 500 calls/month, overages = $180 AUD/month EXTRA
+- **Total ElevenLabs cost: $214/month (not $34!)**
+
+**Solution:** Switch to Cartesia (pay-as-you-go, no credit limits)
+- Cost: $12/month for 500 calls (94% cheaper)
+- Savings: $202/month
+
+👉 **Read ELEVENLABS-CREDIT-SYSTEM-EXPLAINED.md for full details**
+
+---
+
 ## 📊 EXECUTIVE SUMMARY
 
-**Current Cost per Call:** $0.26 AUD (2 min avg call)
-**Monthly Cost (100 calls):** $26.20 AUD
-**Monthly Cost (500 calls):** $131.00 AUD
-**Monthly Cost (1000 calls):** $262.00 AUD
+⚠️ **CRITICAL UPDATE:** See ELEVENLABS-CREDIT-SYSTEM-EXPLAINED.md for complete credit system breakdown!
 
-**Recommended Pricing:** $2.50-$5.00 AUD per order (platform fee)
-**Break-even Point:** 11 calls/month at $2.50/order
-**Profit Margin:** 90%+ at scale (500+ calls/month)
+**Current Cost per Call:** $0.70 AUD (2 min avg call) - INCLUDES ELEVENLABS OVERAGE!
+**Monthly Cost (100 calls):** $169 AUD
+**Monthly Cost (500 calls):** $351 AUD
+**Monthly Cost (1000 calls):** $595 AUD
+
+**After Cartesia Migration:**
+**Cost per Call:** $0.30 AUD
+**Monthly Cost (500 calls):** $149 AUD (57% savings!)
+
+**Recommended Pricing:** $3.50 AUD per order (platform fee)
+**Break-even Point:** 49 orders/month at $3.50/order (with Cartesia)
+**Profit Margin:** 91%+ at scale (500+ calls/month)
 
 ---
 

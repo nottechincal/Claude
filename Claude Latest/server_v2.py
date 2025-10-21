@@ -55,6 +55,10 @@ app.add_middleware(
 # Context variable for caller info
 caller_context: ContextVar[Optional[str]] = ContextVar('caller_context', default=None)
 
+# ==================== IN-MEMORY CACHE ====================
+# Cache static JSON files to avoid disk I/O on every request (10-50ms savings per request)
+_FILE_CACHE = {}
+
 # ==================== SESSION MANAGEMENT ====================
 # Per-caller session storage with expiration
 SESSION = {}
@@ -126,10 +130,17 @@ def session_reset() -> None:
 # ==================== HELPER FUNCTIONS ====================
 
 def load_json_file(filename: str) -> Dict:
-    """Load a JSON configuration file"""
+    """Load a JSON configuration file with in-memory caching"""
+    # Check cache first
+    if filename in _FILE_CACHE:
+        return _FILE_CACHE[filename]
+
+    # Load from disk and cache
     try:
         with open(filename, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            _FILE_CACHE[filename] = data
+            return data
     except Exception as e:
         logger.error(f"Error loading {filename}: {str(e)}")
         return {}
@@ -197,6 +208,68 @@ def _last3(d: Optional[str]) -> Optional[str]:
         return None
     dd = re.sub(r"\D+", "", d)
     return dd[-3:] if len(dd) >= 3 else None
+
+def _send_order_notifications(order_number: str, order_id: str, customer_name: str, customer_phone: str, cart: List[Dict], totals: Dict, ready_at: str):
+    """Send SMS notifications to customer and shop"""
+    try:
+        # Check if Twilio is configured
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        twilio_from = os.getenv("TWILIO_FROM") or os.getenv("TWILIO_PHONE_NUMBER")
+        shop_number = os.getenv("SHOP_ORDER_TO")
+
+        if not all([account_sid, auth_token, twilio_from]):
+            logger.warning("Twilio not configured. Skipping SMS notifications.")
+            return
+
+        client = Client(account_sid, auth_token)
+        business = load_json_file("business.json")
+        shop_name = business.get("business_details", {}).get("name", "Kebabalab")
+
+        # Build cart summary
+        cart_lines = []
+        for item in cart:
+            qty = item.get("quantity", 1)
+            cat = item.get("category", "Item")
+            size = item.get("size", "")
+            protein = item.get("protein", "")
+            desc = f"{qty}x {size} {protein} {cat}".strip()
+            cart_lines.append(desc)
+
+        cart_summary = "\n".join(cart_lines)
+        total = totals.get("grand_total", 0)
+
+        # Send to customer
+        customer_msg = f"{shop_name} Order #{order_number}\n\n{cart_summary}\n\nTotal: ${total:.2f}\nReady: {ready_at}\n\nThank you!"
+
+        try:
+            customer_e164 = _au_to_e164(customer_phone)
+            client.messages.create(
+                body=customer_msg,
+                from_=twilio_from,
+                to=customer_e164
+            )
+            logger.info(f"SMS sent to customer: {customer_phone}")
+        except Exception as e:
+            logger.error(f"Failed to send SMS to customer: {e}")
+
+        # Send to shop
+        if shop_number:
+            shop_msg = f"NEW ORDER #{order_number}\n\nCustomer: {customer_name}\nPhone: {customer_phone}\n\n{cart_summary}\n\nTotal: ${total:.2f}\nReady: {ready_at}"
+
+            try:
+                shop_e164 = _au_to_e164(shop_number)
+                client.messages.create(
+                    body=shop_msg,
+                    from_=twilio_from,
+                    to=shop_e164
+                )
+                logger.info(f"SMS sent to shop: {shop_number}")
+            except Exception as e:
+                logger.error(f"Failed to send SMS to shop: {e}")
+
+    except Exception as e:
+        logger.error(f"Error sending SMS notifications: {e}")
 
 # ==================== ORDER STATE MACHINE ====================
 
@@ -680,26 +753,6 @@ def tool_add_item_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         # Check for combo opportunities
         combo_detected = detect_combo_opportunity(cart)
 
-        result = {
-            "ok": True,
-            "itemAdded": cart_item,
-            "cartItemCount": len(cart)
-        }
-
-        if combo_detected:
-            # Apply combo
-            cart = apply_combo_to_cart(cart, combo_detected)
-            result["comboDetected"] = True
-            result["comboInfo"] = {
-                "name": combo_detected["name"],
-                "type": combo_detected["type"],
-                "savings": combo_detected["savings"]
-            }
-            result["message"] = f"I've made that a {combo_detected['name']} for you!"
-        else:
-            result["comboDetected"] = False
-            result["message"] = "Item added to cart"
-
         # Update cart in session
         session_set("cart", cart)
 
@@ -707,9 +760,21 @@ def tool_add_item_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("current_item", None)
         session_set("order_state", "CART_ACTIVE")
 
-        result["updatedCart"] = cart
+        # Minimal response for speed
+        if combo_detected:
+            # Apply combo
+            cart = apply_combo_to_cart(cart, combo_detected)
+            session_set("cart", cart)
+            return {
+                "ok": True,
+                "cartCount": len(cart),
+                "combo": combo_detected["name"]
+            }
 
-        return result
+        return {
+            "ok": True,
+            "cartCount": len(cart)
+        }
 
     except Exception as e:
         logger.error(f"Error adding item to cart: {str(e)}")
@@ -789,15 +854,10 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         })
         session_set("cart_priced", True)
 
+        # Minimal response for speed (AI doesn't need breakdown)
         return {
             "ok": True,
-            "totals": {
-                "subtotal": float(grand_total),
-                "gst": float(gst_amount),
-                "grand_total": float(grand_total)
-            },
-            "itemBreakdown": item_breakdown,
-            "currency": "AUD"
+            "total": float(grand_total)
         }
 
     except Exception as e:
@@ -869,17 +929,71 @@ def tool_get_caller_info(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error getting caller info: {str(e)}")
         return {"ok": False, "error": str(e), "hasCallerID": False}
 
-def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Estimate order ready time"""
+def tool_set_pickup_time(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Set custom pickup time from customer request"""
     try:
-        logger.info(f"Estimating ready time: {params}")
+        logger.info(f"Setting pickup time: {params}")
 
-        # Check cart is priced
-        if not session_get("cart_priced", False):
+        minutes = params.get("minutes")
+
+        if minutes is None:
+            return {"ok": False, "error": "minutes parameter is required"}
+
+        try:
+            minutes = int(minutes)
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "minutes must be a number"}
+
+        # Minimum 10 minutes
+        MIN_PICKUP_TIME = 10
+        if minutes < MIN_PICKUP_TIME:
             return {
                 "ok": False,
-                "error": "Please price the cart first before estimating ready time"
+                "error": f"Minimum pickup time is {MIN_PICKUP_TIME} minutes",
+                "minimumMinutes": MIN_PICKUP_TIME,
+                "requestedMinutes": minutes,
+                "tooEarly": True
             }
+
+        business = load_json_file("business.json")
+        tz = pytz.timezone(business.get("business_details", {}).get("timezone", "Australia/Melbourne"))
+        now = datetime.now(tz)
+
+        ready_time = now + timedelta(minutes=minutes)
+
+        # Format time for speech
+        hour_12 = ready_time.hour if ready_time.hour <= 12 else ready_time.hour - 12
+        if hour_12 == 0:
+            hour_12 = 12
+        period = "AM" if ready_time.hour < 12 else "PM"
+        minute = ready_time.minute
+
+        if minute == 0:
+            time_speech = f"{hour_12} {period}"
+        else:
+            time_speech = f"{hour_12} {minute:02d} {period}"
+
+        # Store in session
+        session_set("pickup_time_iso", ready_time.isoformat())
+        session_set("pickup_time_speech", time_speech)
+        session_set("pickup_time_minutes", minutes)
+
+        return {
+            "ok": True,
+            "readyAtIso": ready_time.isoformat(),
+            "readyAt": time_speech,
+            "readyAtMinutes": minutes,
+            "message": f"Pickup time set to {time_speech} (in {minutes} minutes)"
+        }
+
+    except Exception as e:
+        logger.error(f"Error setting pickup time: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Estimate order ready time (for default/automatic estimation)"""
+    try:
+        logger.info(f"Estimating ready time: {params}")
 
         business = load_json_file("business.json")
         tz = pytz.timezone(business.get("business_details", {}).get("timezone", "Australia/Melbourne"))
@@ -904,6 +1018,11 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
             time_speech = f"{hour_12} {period}"
         else:
             time_speech = f"{hour_12} {minute:02d} {period}"
+
+        # Store in session
+        session_set("pickup_time_iso", ready_time.isoformat())
+        session_set("pickup_time_speech", time_speech)
+        session_set("pickup_time_minutes", lead_time)
 
         return {
             "ok": True,
@@ -932,14 +1051,17 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
         customer_name = params.get("customerName")
         customer_phone = params.get("customerPhone")
-        ready_at_iso = params.get("readyAtIso")
+
+        # Get pickup time from session (set by setPickupTime or estimateReadyTime)
+        ready_at_iso = session_get("pickup_time_iso")
+        ready_at_speech = session_get("pickup_time_speech")
 
         if not customer_name:
             return {"ok": False, "error": "Customer name is required"}
         if not customer_phone:
             return {"ok": False, "error": "Customer phone is required"}
         if not ready_at_iso:
-            return {"ok": False, "error": "Ready time is required"}
+            return {"ok": False, "error": "Pickup time not set. Call setPickupTime or estimateReadyTime first."}
 
         # Save to database
         conn = init_db()
@@ -968,17 +1090,19 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         conn.commit()
         conn.close()
 
+        # Send SMS notifications
+        _send_order_notifications(order_number, order_id_internal, customer_name, customer_phone, cart, totals, ready_at_speech)
+
         # Clear session
         session_set("cart", [])
         session_set("cart_priced", False)
         session_set("order_state", "ORDER_PLACED")
 
+        # Minimal response for speed
         return {
             "ok": True,
             "orderId": order_number,
-            "orderIdInternal": order_id_internal,
-            "total": totals["grand_total"],
-            "message": f"Order {order_number} confirmed!"
+            "readyAt": ready_at_speech
         }
 
     except Exception as e:
@@ -1013,11 +1137,10 @@ def tool_remove_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("cart", cart)
         session_set("cart_priced", False)  # Cart changed, need to reprice
 
+        # Minimal response
         return {
             "ok": True,
-            "removedItem": removed_item,
-            "cartItemCount": len(cart),
-            "message": f"Removed item from cart. {len(cart)} items remaining."
+            "cartCount": len(cart)
         }
 
     except Exception as e:
@@ -1094,11 +1217,8 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("cart", cart)
         session_set("cart_priced", False)  # Cart changed, need to reprice
 
-        return {
-            "ok": True,
-            "updatedItem": item,
-            "message": f"Updated {field} on item {item_index + 1}"
-        }
+        # Minimal response
+        return {"ok": True}
 
     except Exception as e:
         logger.error(f"Error editing cart item: {str(e)}")
@@ -1120,11 +1240,8 @@ def tool_clear_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set("current_item", None)
         session_set("order_state", "IDLE")
 
-        return {
-            "ok": True,
-            "itemsCleared": item_count,
-            "message": f"Cart cleared. {item_count} items removed."
-        }
+        # Minimal response
+        return {"ok": True}
 
     except Exception as e:
         logger.error(f"Error clearing cart: {str(e)}")
@@ -1134,19 +1251,10 @@ def tool_clear_session(params: Dict[str, Any]) -> Dict[str, Any]:
     """Clear/reset the current session (for testing or starting fresh)"""
     try:
         logger.info("Clearing session")
-
-        # Get session info before clearing
-        cart = session_get("cart", [])
-        item_count = len(cart)
-
-        # Reset session to fresh state
         session_reset()
 
-        return {
-            "ok": True,
-            "message": f"Session reset. Cleared {item_count} cart items.",
-            "itemsCleared": item_count
-        }
+        # Minimal response
+        return {"ok": True}
 
     except Exception as e:
         logger.error(f"Error clearing session: {str(e)}")
@@ -1174,6 +1282,7 @@ TOOLS = {
     "clearCart": tool_clear_cart,
     "clearSession": tool_clear_session,
     "priceCart": tool_price_cart,
+    "setPickupTime": tool_set_pickup_time,
     "estimateReadyTime": tool_estimate_ready_time,
     "createOrder": tool_create_order,
     "endCall": tool_end_call,

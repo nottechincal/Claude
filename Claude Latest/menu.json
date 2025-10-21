@@ -201,135 +201,146 @@
         "name": "Chips",
         "size": "small",
         "price": 5.0,
-        "salt_options": ["normal", "chicken", "none"],
-        "default_salt": "chicken"
+        "salt_options": ["normal", "chicken", "none"]
       },
       {
         "id": "CHP_L",
         "name": "Chips",
         "size": "large",
         "price": 9.0,
-        "salt_options": ["normal", "chicken", "none"],
-        "default_salt": "chicken"
+        "salt_options": ["normal", "chicken", "none"]
       },
       {
         "id": "CHP_S_CS",
         "name": "Chips w/ Cheese or Sauce",
         "size": "small",
         "price": 6.0,
-        "salt_options": ["normal", "chicken", "none"],
-        "default_salt": "chicken"
+        "salt_options": ["normal", "chicken", "none"]
       },
       {
         "id": "CHP_L_CS",
         "name": "Chips w/ Cheese & Sauce",
         "size": "large",
         "price": 10.0,
-        "salt_options": ["normal", "chicken", "none"],
-        "default_salt": "chicken"
+        "salt_options": ["normal", "chicken", "none"]
       }
     ],
     "kebab_can_combos": [
       {
         "id": "KEB_CAN_S",
-        "name": "Small Kebab & Can Combo",
+        "name": "Kebab & Soft Drink Can - Small",
         "price": 12.0,
         "description": "Small Kebab & 375ml Can",
-        "base_size": "small",
-        "requires": {
-          "kebab_size": "small",
-          "drink": "can"
+        "includes": {
+          "kebab": 1,
+          "drink_can": 1
         },
-        "savings": 1.5
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
       },
       {
         "id": "KEB_CAN_L",
-        "name": "Large Kebab & Can Combo",
+        "name": "Kebab & Soft Drink Can - Large",
         "price": 17.0,
         "description": "Large Kebab & 375ml Can",
-        "base_size": "large",
-        "requires": {
-          "kebab_size": "large",
-          "drink": "can"
+        "includes": {
+          "kebab": 1,
+          "drink_can": 1
         },
-        "savings": 1.5
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
       }
     ],
     "combos": [
       {
         "id": "CMB_KEB_SCHP_CAN",
-        "name": "Small Kebab Meal",
-        "description": "Small Kebab, Small Chips & Can",
-        "price": 17.0,
-        "base_size": "small",
-        "requires": {
-          "kebab_size": "small",
-          "chips_size": "small",
-          "drink": "can"
+        "name": "Kebab, Small Chips & Can",
+        "sizes": {
+          "small": 17.0,
+          "large": 22.0
         },
-        "savings": 1.5
+        "includes": {
+          "kebab": 1,
+          "chips_small": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
       },
       {
-        "id": "CMB_KEB_LCHP_S_CAN",
-        "name": "Large Kebab Meal",
-        "description": "Large Kebab, Small Chips & Can",
-        "price": 22.0,
-        "base_size": "large",
-        "requires": {
-          "kebab_size": "large",
-          "chips_size": "small",
-          "drink": "can"
+        "id": "CMB_KEB_LCHP_CAN",
+        "name": "Kebab, Large Chips & Can",
+        "sizes": {
+          "large": 25.0
         },
-        "savings": 1.5
+        "includes": {
+          "kebab": 1,
+          "chips_large": 1,
+          "drink_can": 1
+        },
+        "defaults": {
+          "salads": [
+            "lettuce",
+            "tomato",
+            "onion"
+          ],
+          "sauces": [
+            "garlic"
+          ]
+        }
       },
       {
-        "id": "CMB_KEB_LCHP_L_CAN",
-        "name": "Large Kebab Meal with Large Chips",
-        "description": "Large Kebab, Large Chips & Can",
-        "price": 25.0,
-        "base_size": "large",
-        "requires": {
-          "kebab_size": "large",
-          "chips_size": "large",
-          "drink": "can"
+        "id": "CMB_HSP_CAN",
+        "name": "HSP & Soft Drink Can",
+        "sizes": {
+          "small": 17.0,
+          "large": 22.0
         },
-        "savings": 2.5
-      },
-      {
-        "id": "CMB_HSP_CAN_S",
-        "name": "Small HSP Combo",
-        "description": "Small HSP & Can",
-        "price": 17.0,
-        "base_size": "small",
-        "requires": {
-          "hsp_size": "small",
-          "drink": "can"
+        "includes": {
+          "hsp": 1,
+          "drink_can": 1
         },
-        "savings": 1.5
-      },
-      {
-        "id": "CMB_HSP_CAN_L",
-        "name": "Large HSP Combo",
-        "description": "Large HSP & Can",
-        "price": 22.0,
-        "base_size": "large",
-        "requires": {
-          "hsp_size": "large",
-          "drink": "can"
-        },
-        "savings": 1.5
+        "defaults": {
+          "sauces": [
+            "garlic",
+            "chilli"
+          ],
+          "cheese": true
+        }
       },
       {
         "id": "CMB_GOZ_SCHP_CAN",
-        "name": "Gozleme Meal",
-        "description": "Gozleme, Small Chips & Can",
+        "name": "Gozleme, Small Chips & Can",
         "price": 23.0,
-        "requires": {
+        "includes": {
           "gozleme": 1,
-          "chips_size": "small",
-          "drink": "can"
-        },
-        "savings": 1.5
+          "chips_small": 1,
+          "drink_can": 1
+        }
       }
     ],
     "drinks": [
@@ -640,9 +651,14 @@
     ]
   },
   "defaults": {
-    "note": "NEVER USE THESE - Always explicitly ask for salads and sauces. These are kept for reference only.",
-    "salads": [],
-    "sauces": []
+    "salads": [
+      "lettuce",
+      "tomato",
+      "onion"
+    ],
+    "sauces": [
+      "garlic"
+    ]
   },
   "synonyms": {
     "lamp": "lamb",

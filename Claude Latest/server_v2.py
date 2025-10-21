@@ -56,8 +56,12 @@ app.add_middleware(
 caller_context: ContextVar[Optional[str]] = ContextVar('caller_context', default=None)
 
 # ==================== IN-MEMORY CACHE ====================
-# Cache static JSON files to avoid disk I/O on every request (10-50ms savings per request)
+# In-memory cache for static JSON files (10-50ms savings per request)
 _FILE_CACHE = {}
+
+# Database connection pool (5-15ms savings per query)
+_DB_POOL = []
+_DB_POOL_SIZE = 5
 
 # ==================== SESSION MANAGEMENT ====================
 # Per-caller session storage with expiration
@@ -169,6 +173,27 @@ def init_db():
     conn.commit()
     return conn
 
+def get_db_connection():
+    """Get database connection from pool or create new one"""
+    if _DB_POOL:
+        conn = _DB_POOL.pop()
+        logger.debug("Reusing pooled database connection")
+        return conn
+
+    db_path = os.getenv("DB_PATH", "orders.db")
+    conn = sqlite3.connect(db_path)
+    logger.debug("Created new database connection")
+    return conn
+
+def release_db_connection(conn):
+    """Return connection to pool"""
+    if len(_DB_POOL) < _DB_POOL_SIZE:
+        _DB_POOL.append(conn)
+        logger.debug("Returned connection to pool")
+    else:
+        conn.close()
+        logger.debug("Closed excess connection")
+
 # Phone number helpers
 def _au_normalise_local(s: Optional[str]) -> Optional[str]:
     """Normalize AU phone to local format (04xxxxxxxx)"""
@@ -209,8 +234,52 @@ def _last3(d: Optional[str]) -> Optional[str]:
     dd = re.sub(r"\D+", "", d)
     return dd[-3:] if len(dd) >= 3 else None
 
-def _send_order_notifications(order_number: str, order_id: str, customer_name: str, customer_phone: str, cart: List[Dict], totals: Dict, ready_at: str):
-    """Send SMS notifications to customer and shop"""
+def _format_item_details(item: Dict) -> str:
+    """Format item with full details for receipt"""
+    lines = []
+
+    # Main line
+    qty = item.get("quantity", 1)
+    size = item.get("size", "").upper()
+    protein = item.get("protein", "").upper()
+    category = item.get("category", "").upper()
+
+    main_line = f"{qty}x {size} {protein} {category}".strip()
+    lines.append(main_line)
+
+    # Salads
+    salads = item.get("salads", [])
+    if salads:
+        lines.append(f"  ├ Salads: {', '.join(s.capitalize() for s in salads)}")
+
+    # Sauces
+    sauces = item.get("sauces", [])
+    if sauces:
+        lines.append(f"  ├ Sauces: {', '.join(s.capitalize() for s in sauces)}")
+
+    # Salt type (for chips)
+    salt_type = item.get("salt_type")
+    if salt_type and category == "CHIPS":
+        lines.append(f"  ├ Salt: {salt_type.capitalize()}")
+
+    # Extras
+    extras = item.get("extras", [])
+    if extras:
+        lines.append(f"  ├ Extras: {', '.join(e.capitalize() for e in extras)}")
+
+    # Cheese
+    if item.get("cheese"):
+        lines.append(f"  ├ Extra Cheese")
+
+    # Notes
+    notes = item.get("notes")
+    if notes:
+        lines.append(f"  └ Note: {notes}")
+
+    return "\n".join(lines)
+
+def _send_order_notifications(order_number: str, order_id: str, customer_name: str, customer_phone: str, cart: List[Dict], totals: Dict, ready_at: str, send_customer_sms: bool = True):
+    """Send beautiful SMS notifications to customer and shop"""
     try:
         # Check if Twilio is configured
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
@@ -225,37 +294,64 @@ def _send_order_notifications(order_number: str, order_id: str, customer_name: s
         client = Client(account_sid, auth_token)
         business = load_json_file("business.json")
         shop_name = business.get("business_details", {}).get("name", "Kebabalab")
+        shop_phone = business.get("business_details", {}).get("phone", "0423 680 596")
+        shop_address = business.get("business_details", {}).get("address", "123 Main St, Melbourne")
 
-        # Build cart summary
-        cart_lines = []
+        # Build detailed cart summary
+        cart_details = []
         for item in cart:
-            qty = item.get("quantity", 1)
-            cat = item.get("category", "Item")
-            size = item.get("size", "")
-            protein = item.get("protein", "")
-            desc = f"{qty}x {size} {protein} {cat}".strip()
-            cart_lines.append(desc)
+            cart_details.append(_format_item_details(item))
 
-        cart_summary = "\n".join(cart_lines)
+        cart_summary = "\n\n".join(cart_details)
         total = totals.get("grand_total", 0)
 
-        # Send to customer
-        customer_msg = f"{shop_name} Order #{order_number}\n\n{cart_summary}\n\nTotal: ${total:.2f}\nReady: {ready_at}\n\nThank you!"
+        # Send to customer (if requested)
+        if send_customer_sms:
+            customer_msg = f"""🥙 {shop_name.upper()} ORDER #{order_number}
 
-        try:
-            customer_e164 = _au_to_e164(customer_phone)
-            client.messages.create(
-                body=customer_msg,
-                from_=twilio_from,
-                to=customer_e164
-            )
-            logger.info(f"SMS sent to customer: {customer_phone}")
-        except Exception as e:
-            logger.error(f"Failed to send SMS to customer: {e}")
+{cart_summary}
 
-        # Send to shop
+─────────────────────
+TOTAL: ${total:.2f}
+READY: {ready_at}
+
+📍 {shop_address}
+📞 Call: {shop_phone}
+
+Thank you, {customer_name}! 🙏"""
+
+            try:
+                customer_e164 = _au_to_e164(customer_phone)
+                client.messages.create(
+                    body=customer_msg,
+                    from_=twilio_from,
+                    to=customer_e164
+                )
+                logger.info(f"SMS sent to customer: {customer_phone}")
+            except Exception as e:
+                logger.error(f"Failed to send SMS to customer: {e}")
+
+        # Send to shop (always)
         if shop_number:
-            shop_msg = f"NEW ORDER #{order_number}\n\nCustomer: {customer_name}\nPhone: {customer_phone}\n\n{cart_summary}\n\nTotal: ${total:.2f}\nReady: {ready_at}"
+            from datetime import datetime
+            import pytz
+            tz = pytz.timezone(business.get("business_details", {}).get("timezone", "Australia/Melbourne"))
+            now = datetime.now(tz)
+            time_received = now.strftime("%I:%M %p")
+
+            shop_msg = f"""🔔 NEW ORDER #{order_number}
+
+👤 {customer_name}
+📞 {customer_phone}
+⏰ PICKUP: {ready_at}
+
+📋 ORDER:
+{cart_summary}
+
+💰 TOTAL: ${total:.2f}
+
+──────────────────────
+Time received: {time_received}"""
 
             try:
                 shop_e164 = _au_to_e164(shop_number)
@@ -991,7 +1087,7 @@ def tool_set_pickup_time(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Estimate order ready time (for default/automatic estimation)"""
+    """Estimate order ready time with dynamic queue-based calculation"""
     try:
         logger.info(f"Estimating ready time: {params}")
 
@@ -999,11 +1095,37 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
         tz = pytz.timezone(business.get("business_details", {}).get("timezone", "Australia/Melbourne"))
         now = datetime.now(tz)
 
-        # Default lead time: 15 min, busy time: 25 min
-        lead_time = 15
+        # Check current order queue
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Count pending orders in last 30 minutes
+        thirty_mins_ago = (now - timedelta(minutes=30)).isoformat()
+        cursor.execute("""
+            SELECT COUNT(*) FROM orders
+            WHERE created_at >= ? AND status IN ('pending', 'preparing')
+        """, (thirty_mins_ago,))
+
+        queue_length = cursor.fetchone()[0]
+        release_db_connection(conn)
+
+        # Dynamic lead time based on queue
+        base_time = 10  # Minimum 10 minutes
+        if queue_length == 0:
+            lead_time = base_time  # Quiet - 10 mins
+        elif queue_length <= 2:
+            lead_time = 15  # Normal - 15 mins
+        elif queue_length <= 5:
+            lead_time = 20  # Busy - 20 mins
+        else:
+            lead_time = 30  # Very busy - 30 mins
+
+        # Also factor in busy hours
         hour = now.hour
         if (11 <= hour <= 14) or (17 <= hour <= 20):
-            lead_time = 25
+            lead_time += 5  # Add 5 mins during peak hours
+
+        logger.info(f"Queue length: {queue_length}, Lead time: {lead_time} mins")
 
         ready_time = now + timedelta(minutes=lead_time)
 
@@ -1036,6 +1158,251 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error estimating ready time: {str(e)}")
         return {"ok": False, "error": str(e)}
 
+def tool_get_order_summary(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Get human-readable order summary for agent to repeat"""
+    try:
+        logger.info("Getting order summary")
+
+        cart = session_get("cart", [])
+        if not cart:
+            return {"ok": False, "error": "Cart is empty"}
+
+        # Build summary text
+        items_text = []
+        for item in cart:
+            qty = item.get("quantity", 1)
+            size = item.get("size", "").lower()
+            protein = item.get("protein", "").lower()
+            category = item.get("category", "").lower()
+
+            # Build item description
+            parts = []
+            if qty > 1:
+                parts.append(f"{qty}")
+            if size:
+                parts.append(size)
+            if protein:
+                parts.append(protein)
+            parts.append(category)
+
+            item_desc = " ".join(parts)
+
+            # Add modifiers
+            modifiers = []
+            salads = item.get("salads", [])
+            if salads:
+                modifiers.append(f"with {', '.join(salads)}")
+
+            sauces = item.get("sauces", [])
+            if sauces:
+                modifiers.append(f"{', '.join(sauces)} sauce")
+
+            if modifiers:
+                item_desc += " " + " ".join(modifiers)
+
+            items_text.append(item_desc)
+
+        # Get total
+        totals = session_get("last_totals")
+        total = totals.get("grand_total", 0) if totals else 0
+
+        summary = ", ".join(items_text)
+
+        return {
+            "ok": True,
+            "summary": summary,
+            "total": total,
+            "itemCount": len(cart)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting order summary: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_set_order_notes(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Set special instructions/notes for the order"""
+    try:
+        notes = params.get("notes")
+
+        if not notes:
+            return {"ok": False, "error": "notes parameter is required"}
+
+        # Store in session
+        session_set("order_notes", notes)
+        logger.info(f"Order notes set: {notes}")
+
+        return {
+            "ok": True,
+            "notes": notes
+        }
+
+    except Exception as e:
+        logger.error(f"Error setting order notes: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_get_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Get customer's last order for repeat ordering"""
+    try:
+        phone_number = params.get("phoneNumber")
+
+        if not phone_number:
+            return {"ok": False, "error": "phoneNumber is required"}
+
+        # Normalize phone
+        phone_normalized = _au_normalise_local(phone_number)
+
+        # Query database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT order_id, customer_name, cart, totals, created_at
+            FROM orders
+            WHERE customer_phone = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (phone_normalized,))
+
+        row = cursor.fetchone()
+        release_db_connection(conn)
+
+        if not row:
+            return {
+                "ok": True,
+                "hasLastOrder": False
+            }
+
+        order_id, customer_name, cart_json, totals_json, created_at = row
+        cart = json.loads(cart_json)
+        totals = json.loads(totals_json)
+
+        return {
+            "ok": True,
+            "hasLastOrder": True,
+            "customerName": customer_name,
+            "cart": cart,
+            "total": totals.get("grand_total", 0),
+            "orderId": order_id,
+            "orderDate": created_at
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting last order: {str(e)}")
+        release_db_connection(conn)
+        return {"ok": False, "error": str(e)}
+
+def tool_lookup_order(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Look up an existing order by ID or phone number"""
+    try:
+        order_id = params.get("orderId")
+        phone_number = params.get("phoneNumber")
+
+        if not order_id and not phone_number:
+            return {"ok": False, "error": "Either orderId or phoneNumber is required"}
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if order_id:
+            # Search by order ID
+            cursor.execute("""
+                SELECT order_id, customer_name, customer_phone, cart, totals, ready_at, status
+                FROM orders
+                WHERE order_id LIKE ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            """, (f"%{order_id}%",))
+        else:
+            # Search by phone (most recent)
+            phone_normalized = _au_normalise_local(phone_number)
+            cursor.execute("""
+                SELECT order_id, customer_name, customer_phone, cart, totals, ready_at, status
+                FROM orders
+                WHERE customer_phone = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            """, (phone_normalized,))
+
+        row = cursor.fetchone()
+        release_db_connection(conn)
+
+        if not row:
+            return {
+                "ok": True,
+                "found": False,
+                "message": "No order found"
+            }
+
+        order_id, customer_name, customer_phone, cart_json, totals_json, ready_at, status = row
+        cart = json.loads(cart_json)
+        totals = json.loads(totals_json)
+
+        return {
+            "ok": True,
+            "found": True,
+            "orderId": order_id,
+            "customerName": customer_name,
+            "customerPhone": customer_phone,
+            "cart": cart,
+            "total": totals.get("grand_total", 0),
+            "readyAt": ready_at,
+            "status": status
+        }
+
+    except Exception as e:
+        logger.error(f"Error looking up order: {str(e)}")
+        release_db_connection(conn)
+        return {"ok": False, "error": str(e)}
+
+def tool_send_menu_link(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Send menu link via SMS"""
+    try:
+        phone_number = params.get("phoneNumber")
+
+        if not phone_number:
+            return {"ok": False, "error": "phoneNumber is required"}
+
+        # Check if Twilio is configured
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        twilio_from = os.getenv("TWILIO_FROM") or os.getenv("TWILIO_PHONE_NUMBER")
+
+        if not all([account_sid, auth_token, twilio_from]):
+            return {"ok": False, "error": "SMS not configured"}
+
+        client = Client(account_sid, auth_token)
+        menu_url = "https://www.kebabalab.com.au/menu.html"
+
+        message = f"""🥙 KEBABALAB MENU
+
+Check out our full menu:
+{menu_url}
+
+📞 Call to order: 0423 680 596"""
+
+        try:
+            phone_e164 = _au_to_e164(phone_number)
+            client.messages.create(
+                body=message,
+                from_=twilio_from,
+                to=phone_e164
+            )
+            logger.info(f"Menu link sent to: {phone_number}")
+
+            return {
+                "ok": True,
+                "message": "Menu link sent!",
+                "menuUrl": menu_url
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to send menu link: {e}")
+            return {"ok": False, "error": str(e)}
+
+    except Exception as e:
+        logger.error(f"Error sending menu link: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Create final order"""
     try:
@@ -1051,10 +1418,14 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
         customer_name = params.get("customerName")
         customer_phone = params.get("customerPhone")
+        send_sms = params.get("sendSMS", True)  # Default to True
 
         # Get pickup time from session (set by setPickupTime or estimateReadyTime)
         ready_at_iso = session_get("pickup_time_iso")
         ready_at_speech = session_get("pickup_time_speech")
+
+        # Get order notes if any
+        order_notes = session_get("order_notes", "")
 
         if not customer_name:
             return {"ok": False, "error": "Customer name is required"}
@@ -1063,8 +1434,8 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         if not ready_at_iso:
             return {"ok": False, "error": "Pickup time not set. Call setPickupTime or estimateReadyTime first."}
 
-        # Save to database
-        conn = init_db()
+        # Save to database using connection pool
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         today = datetime.now().strftime("%Y%m%d")
@@ -1080,18 +1451,18 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         cursor.execute("""
             INSERT INTO orders (
                 order_id, created_at, ready_at, customer_name, customer_phone,
-                order_type, cart, totals, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                order_type, cart, totals, status, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             order_id_internal, now.isoformat(), ready_at_iso,
             customer_name, customer_phone, "pickup",
-            json.dumps(cart), json.dumps(totals), "pending"
+            json.dumps(cart), json.dumps(totals), "pending", order_notes
         ))
         conn.commit()
-        conn.close()
+        release_db_connection(conn)
 
-        # Send SMS notifications
-        _send_order_notifications(order_number, order_id_internal, customer_name, customer_phone, cart, totals, ready_at_speech)
+        # Send SMS notifications (customer SMS optional based on sendSMS param)
+        _send_order_notifications(order_number, order_id_internal, customer_name, customer_phone, cart, totals, ready_at_speech, send_sms)
 
         # Clear session
         session_set("cart", [])
@@ -1282,6 +1653,11 @@ TOOLS = {
     "clearCart": tool_clear_cart,
     "clearSession": tool_clear_session,
     "priceCart": tool_price_cart,
+    "getOrderSummary": tool_get_order_summary,
+    "setOrderNotes": tool_set_order_notes,
+    "getLastOrder": tool_get_last_order,
+    "lookupOrder": tool_lookup_order,
+    "sendMenuLink": tool_send_menu_link,
     "setPickupTime": tool_set_pickup_time,
     "estimateReadyTime": tool_estimate_ready_time,
     "createOrder": tool_create_order,

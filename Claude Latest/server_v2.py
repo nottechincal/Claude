@@ -962,19 +962,33 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
                 "error": f"Cannot change {field} on existing item. Please remove and re-add the item."
             }
 
+        # Parse value (VAPI sends as string, may need to parse JSON for arrays)
+        parsed_value = value
+        if isinstance(value, str):
+            # Try to parse as JSON for arrays
+            try:
+                parsed_value = json.loads(value)
+            except (json.JSONDecodeError, TypeError):
+                # Not JSON, use as-is (for string values)
+                parsed_value = value
+
         # Update the field
         if field == "salads":
-            item["salads"] = value if isinstance(value, list) else [value] if value else []
+            item["salads"] = parsed_value if isinstance(parsed_value, list) else [parsed_value] if parsed_value else []
         elif field == "sauces":
-            item["sauces"] = value if isinstance(value, list) else [value] if value else []
+            item["sauces"] = parsed_value if isinstance(parsed_value, list) else [parsed_value] if parsed_value else []
         elif field == "extras":
-            item["extras"] = value if isinstance(value, list) else [value] if value else []
+            item["extras"] = parsed_value if isinstance(parsed_value, list) else [parsed_value] if parsed_value else []
         elif field == "cheese":
-            item["cheese"] = value
+            # Handle boolean strings
+            if isinstance(parsed_value, str):
+                item["cheese"] = parsed_value.lower() in ["true", "1", "yes"]
+            else:
+                item["cheese"] = bool(parsed_value)
         elif field == "salt_type":
-            item["salt_type"] = value
+            item["salt_type"] = str(parsed_value)
         elif field == "quantity":
-            item["quantity"] = int(value) if value else 1
+            item["quantity"] = int(parsed_value) if parsed_value else 1
         else:
             return {"ok": False, "error": f"Cannot edit field: {field}"}
 
@@ -991,6 +1005,8 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error editing cart item: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return {"ok": False, "error": str(e)}
 
 def tool_clear_cart(params: Dict[str, Any]) -> Dict[str, Any]:

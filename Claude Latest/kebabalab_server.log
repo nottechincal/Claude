@@ -10004,3 +10004,6 @@
 2025-10-22 23:14:15,033 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
 2025-10-22 23:14:15,033 - server_v2 - INFO - Adding item to cart
 2025-10-22 23:14:15,034 - server_v2 - INFO - Converting items to meals: {}
+2025-10-22 23:31:35,765 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:31:35,766 - server_v2 - INFO - Repeating last order
+2025-10-22 23:31:35,767 - server_v2 - INFO - Repeating last order

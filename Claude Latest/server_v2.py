@@ -27,6 +27,7 @@ import re
 from contextvars import ContextVar
 from collections import defaultdict
 from copy import deepcopy
+import asyncio
 
 # Set up logging
 logging.basicConfig(
@@ -463,26 +464,40 @@ def detect_combo_opportunity(cart: List[Dict]) -> Optional[Dict]:
     """
     Detect if cart items can form a combo.
     Returns combo info if detected, None otherwise.
+
+    FIXED: Now handles multiple quantities correctly
     """
     menu = load_json_file("menu.json")
 
-    # Extract item types from cart
-    has_kebab = None
-    has_hsp = None
-    has_chips = None
-    has_can = None
+    # Extract item types from cart (find ALL items, not just first)
+    kebabs = []
+    hsps = []
+    chips_items = []
+    cans = []
 
     for item in cart:
         cat = item.get("category", "").lower()
+        qty = item.get("quantity", 1)
 
         if cat in ["kebabs", "kebab"]:
-            has_kebab = item
+            # Add this item qty times to match individual items
+            for _ in range(qty):
+                kebabs.append(item)
         elif cat in ["hsp", "hsps"]:
-            has_hsp = item
+            for _ in range(qty):
+                hsps.append(item)
         elif cat == "chips":
-            has_chips = item
+            for _ in range(qty):
+                chips_items.append(item)
         elif cat == "drinks" and item.get("brand"):
-            has_can = item
+            for _ in range(qty):
+                cans.append(item)
+
+    # Use first available items for combo detection
+    has_kebab = kebabs[0] if kebabs else None
+    has_hsp = hsps[0] if hsps else None
+    has_chips = chips_items[0] if chips_items else None
+    has_can = cans[0] if cans else None
 
     # Check for combos
 
@@ -653,11 +668,11 @@ def calculate_item_price(item: Dict, menu: Dict) -> Decimal:
         if size == "small":
             base_price = Decimal("5.0")
         elif size == "large":
-            base_price = Decimal("8.0")
+            base_price = Decimal("9.0")  # FIXED: Was $8.00, now correct $9.00
 
     elif category in ["drinks", "drink"]:
-        # All cans are $3
-        base_price = Decimal("3.0")
+        # All cans are $3.50
+        base_price = Decimal("3.5")  # FIXED: Was $3.00, now correct $3.50
 
     # Add extras pricing
     extras = item.get("extras", [])
@@ -1242,6 +1257,7 @@ def tool_set_order_notes(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def tool_get_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Get customer's last order for repeat ordering"""
+    conn = None  # Initialize early to prevent NameError
     try:
         phone_number = params.get("phoneNumber")
 
@@ -1288,11 +1304,13 @@ def tool_get_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error getting last order: {str(e)}")
-        release_db_connection(conn)
+        if conn:  # Only release if connection was established
+            release_db_connection(conn)
         return {"ok": False, "error": str(e)}
 
 def tool_lookup_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Look up an existing order by ID or phone number"""
+    conn = None  # Initialize early to prevent NameError
     try:
         order_id = params.get("orderId")
         phone_number = params.get("phoneNumber")
@@ -1351,7 +1369,8 @@ def tool_lookup_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error looking up order: {str(e)}")
-        release_db_connection(conn)
+        if conn:  # Only release if connection was established
+            release_db_connection(conn)
         return {"ok": False, "error": str(e)}
 
 def tool_send_menu_link(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -1901,12 +1920,170 @@ def tool_get_detailed_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error getting detailed cart: {str(e)}")
         return {"ok": False, "error": str(e)}
 
+def tool_validate_menu_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate that item exists in menu and properties are valid"""
+    try:
+        category = params.get("category", "").lower()
+        size = params.get("size", "").lower() if params.get("size") else None
+        protein = params.get("protein", "").lower() if params.get("protein") else None
+
+        menu = load_json_file("menu.json")
+        categories = menu.get("categories", {})
+
+        # Check category exists
+        if category not in categories:
+            valid_cats = list(categories.keys())
+            return {
+                "ok": False,
+                "valid": False,
+                "error": f"Invalid category '{category}'. Valid categories: {', '.join(valid_cats)}",
+                "validCategories": valid_cats
+            }
+
+        # Validate protein for kebabs/hsp
+        if category in ["kebabs", "kebab", "hsp", "hsps"]:
+            valid_proteins = ["lamb", "chicken", "mixed", "falafel"]
+            if protein and protein not in valid_proteins:
+                return {
+                    "ok": False,
+                    "valid": False,
+                    "error": f"Invalid protein '{protein}'. Valid proteins: {', '.join(valid_proteins)}",
+                    "validProteins": valid_proteins
+                }
+
+        # Validate size
+        if size:
+            valid_sizes = ["small", "large"]
+            if size not in valid_sizes:
+                return {
+                    "ok": False,
+                    "valid": False,
+                    "error": f"Invalid size '{size}'. Valid sizes: {', '.join(valid_sizes)}",
+                    "validSizes": valid_sizes
+                }
+
+        return {
+            "ok": True,
+            "valid": True,
+            "category": category,
+            "message": "Item configuration is valid"
+        }
+
+    except Exception as e:
+        logger.error(f"Error validating menu item: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_repeat_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Copy customer's last order to current cart for fast reordering"""
+    try:
+        logger.info("Repeating last order")
+
+        phone_number = params.get("phoneNumber")
+        if not phone_number:
+            return {"ok": False, "error": "phoneNumber is required"}
+
+        # Get last order
+        last_order_result = tool_get_last_order({"phoneNumber": phone_number})
+
+        if not last_order_result.get("ok"):
+            return last_order_result
+
+        if not last_order_result.get("hasLastOrder"):
+            return {
+                "ok": False,
+                "error": "No previous order found for this phone number"
+            }
+
+        # Copy cart from last order
+        last_cart = last_order_result.get("cart", [])
+        if not last_cart:
+            return {"ok": False, "error": "Last order has no items"}
+
+        # Set current cart to last order's cart
+        session_set("cart", deepcopy(last_cart))
+        session_set("cart_priced", False)  # Need to reprice
+
+        return {
+            "ok": True,
+            "itemCount": len(last_cart),
+            "lastOrderDate": last_order_result.get("orderDate"),
+            "message": f"Added {len(last_cart)} items from your last order"
+        }
+
+    except Exception as e:
+        logger.error(f"Error repeating last order: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+def tool_get_menu_by_category(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Get all menu items in a specific category for browsing"""
+    try:
+        category = params.get("category", "").lower()
+
+        if not category:
+            # Return list of all categories
+            menu = load_json_file("menu.json")
+            categories = list(menu.get("categories", {}).keys())
+            return {
+                "ok": True,
+                "categories": categories,
+                "message": "Available categories"
+            }
+
+        menu = load_json_file("menu.json")
+        categories = menu.get("categories", {})
+
+        if category not in categories:
+            return {
+                "ok": False,
+                "error": f"Invalid category: {category}",
+                "availableCategories": list(categories.keys())
+            }
+
+        items = categories[category]
+
+        # Format items for easy reading
+        formatted_items = []
+        for item in items:
+            item_info = {
+                "id": item.get("id"),
+                "name": item.get("name"),
+            }
+
+            # Add pricing
+            if "price" in item:
+                item_info["price"] = item["price"]
+            elif "sizes" in item:
+                item_info["sizes"] = item["sizes"]
+
+            # Add variants if present
+            if "variants" in item:
+                item_info["variants"] = item["variants"]
+
+            # Add brands if present (for drinks)
+            if "brands" in item:
+                item_info["brands"] = item["brands"]
+
+            formatted_items.append(item_info)
+
+        return {
+            "ok": True,
+            "category": category,
+            "items": formatted_items,
+            "itemCount": len(formatted_items)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting menu by category: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
     """End the call"""
     logger.info("Ending call")
 
-    # Clean up expired sessions
-    _clean_expired_sessions()
+    # FIXED: Don't clean sessions here - done by background task instead
+    # This prevents deleting other active caller sessions
 
     return {"ok": True, "action": "end_call"}
 
@@ -1914,6 +2091,7 @@ def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
 TOOLS = {
     "checkOpen": tool_check_open,
     "getCallerInfo": tool_get_caller_info,
+    "validateMenuItem": tool_validate_menu_item,
     "startItemConfiguration": tool_start_item_configuration,
     "setItemProperty": tool_set_item_property,
     "addItemToCart": tool_add_item_to_cart,
@@ -1929,6 +2107,8 @@ TOOLS = {
     "getOrderSummary": tool_get_order_summary,
     "setOrderNotes": tool_set_order_notes,
     "getLastOrder": tool_get_last_order,
+    "repeatLastOrder": tool_repeat_last_order,
+    "getMenuByCategory": tool_get_menu_by_category,
     "lookupOrder": tool_lookup_order,
     "sendMenuLink": tool_send_menu_link,
     "setPickupTime": tool_set_pickup_time,
@@ -1992,6 +2172,31 @@ async def vapi_webhook(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "healthy", "version": "2.0"}
+
+async def cleanup_sessions_background():
+    """Background task to clean expired sessions every 5 minutes"""
+    while True:
+        try:
+            await asyncio.sleep(300)  # 5 minutes
+            logger.info("Running background session cleanup...")
+            _clean_expired_sessions()
+        except Exception as e:
+            logger.error(f"Error in session cleanup background task: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database and resources on startup"""
+    logger.info("=" * 60)
+    logger.info("Starting Kebabalab VAPI Server v2.0")
+    logger.info("=" * 60)
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("✓ Database initialized")
+    logger.info("Starting background tasks...")
+    asyncio.create_task(cleanup_sessions_background())
+    logger.info("✓ Background session cleanup started")
+    logger.info("Server ready to accept requests")
+    logger.info("=" * 60)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

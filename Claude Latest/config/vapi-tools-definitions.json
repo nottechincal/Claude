@@ -20,6 +20,83 @@
     {
       "type": "function",
       "function": {
+        "name": "validateMenuItem",
+        "description": "Validate that a menu item configuration is valid before adding to cart. Prevents fake/invalid orders.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Item category to validate",
+              "enum": ["kebabs", "hsp", "chips", "drinks", "gozleme", "sweets", "extras", "sauce_tubs"]
+            },
+            "size": {
+              "type": "string",
+              "description": "Size to validate (if applicable)",
+              "enum": ["small", "large"]
+            },
+            "protein": {
+              "type": "string",
+              "description": "Protein type to validate (for kebabs/hsp)",
+              "enum": ["lamb", "chicken", "mixed", "falafel"]
+            }
+          },
+          "required": ["category"]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "repeatLastOrder",
+        "description": "Copy customer's last order to cart for fast reordering. Great for regular customers.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Customer's phone number to look up last order"
+            }
+          },
+          "required": ["phoneNumber"]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "getMenuByCategory",
+        "description": "Browse menu items by category. If no category provided, returns list of all categories.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Category to browse. Leave empty to get list of all categories."
+            }
+          },
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "getCallerInfo",
         "description": "Silently retrieve caller's phone number from call context. Use at start of call.",
         "strict": false,

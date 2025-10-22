@@ -27,6 +27,7 @@ import re
 from contextvars import ContextVar
 from collections import defaultdict
 from copy import deepcopy
+import asyncio
 
 # Set up logging
 logging.basicConfig(
@@ -463,26 +464,40 @@ def detect_combo_opportunity(cart: List[Dict]) -> Optional[Dict]:
     """
     Detect if cart items can form a combo.
     Returns combo info if detected, None otherwise.
+
+    FIXED: Now handles multiple quantities correctly
     """
     menu = load_json_file("menu.json")
 
-    # Extract item types from cart
-    has_kebab = None
-    has_hsp = None
-    has_chips = None
-    has_can = None
+    # Extract item types from cart (find ALL items, not just first)
+    kebabs = []
+    hsps = []
+    chips_items = []
+    cans = []
 
     for item in cart:
         cat = item.get("category", "").lower()
+        qty = item.get("quantity", 1)
 
         if cat in ["kebabs", "kebab"]:
-            has_kebab = item
+            # Add this item qty times to match individual items
+            for _ in range(qty):
+                kebabs.append(item)
         elif cat in ["hsp", "hsps"]:
-            has_hsp = item
+            for _ in range(qty):
+                hsps.append(item)
         elif cat == "chips":
-            has_chips = item
+            for _ in range(qty):
+                chips_items.append(item)
         elif cat == "drinks" and item.get("brand"):
-            has_can = item
+            for _ in range(qty):
+                cans.append(item)
+
+    # Use first available items for combo detection
+    has_kebab = kebabs[0] if kebabs else None
+    has_hsp = hsps[0] if hsps else None
+    has_chips = chips_items[0] if chips_items else None
+    has_can = cans[0] if cans else None
 
     # Check for combos
 
@@ -653,11 +668,11 @@ def calculate_item_price(item: Dict, menu: Dict) -> Decimal:
         if size == "small":
             base_price = Decimal("5.0")
         elif size == "large":
-            base_price = Decimal("8.0")
+            base_price = Decimal("9.0")  # FIXED: Was $8.00, now correct $9.00
 
     elif category in ["drinks", "drink"]:
-        # All cans are $3
-        base_price = Decimal("3.0")
+        # All cans are $3.50
+        base_price = Decimal("3.5")  # FIXED: Was $3.00, now correct $3.50
 
     # Add extras pricing
     extras = item.get("extras", [])
@@ -1242,6 +1257,7 @@ def tool_set_order_notes(params: Dict[str, Any]) -> Dict[str, Any]:
 
 def tool_get_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Get customer's last order for repeat ordering"""
+    conn = None  # Initialize early to prevent NameError
     try:
         phone_number = params.get("phoneNumber")
 
@@ -1288,11 +1304,13 @@ def tool_get_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error getting last order: {str(e)}")
-        release_db_connection(conn)
+        if conn:  # Only release if connection was established
+            release_db_connection(conn)
         return {"ok": False, "error": str(e)}
 
 def tool_lookup_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Look up an existing order by ID or phone number"""
+    conn = None  # Initialize early to prevent NameError
     try:
         order_id = params.get("orderId")
         phone_number = params.get("phoneNumber")
@@ -1351,7 +1369,8 @@ def tool_lookup_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error looking up order: {str(e)}")
-        release_db_connection(conn)
+        if conn:  # Only release if connection was established
+            release_db_connection(conn)
         return {"ok": False, "error": str(e)}
 
 def tool_send_menu_link(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -1631,12 +1650,440 @@ def tool_clear_session(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error clearing session: {str(e)}")
         return {"ok": False, "error": str(e)}
 
+def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert kebabs in cart to meals by adding chips and drink.
+    Can convert all kebabs or specific items by index."""
+    try:
+        logger.info(f"Converting items to meals: {params}")
+
+        cart = session_get("cart", [])
+        if not cart:
+            return {"ok": False, "error": "Cart is empty"}
+
+        # Get parameters
+        item_indices = params.get("itemIndices")  # Optional: specific indices to convert
+        drink_brand = params.get("drinkBrand", "coke")  # Default to coke
+        chips_size = params.get("chipsSize", "small")  # Default to small chips
+        chips_salt = params.get("chipsSalt", "chicken")  # Default to chicken salt
+
+        # If no indices specified, convert ALL kebabs
+        if item_indices is None:
+            item_indices = []
+            for idx, item in enumerate(cart):
+                if item.get("category", "").lower() in ["kebabs", "kebab"]:
+                    item_indices.append(idx)
+        elif not isinstance(item_indices, list):
+            item_indices = [item_indices]
+
+        if not item_indices:
+            return {"ok": False, "error": "No kebabs found to convert to meals"}
+
+        logger.info(f"Converting {len(item_indices)} kebabs to meals")
+
+        # Process each kebab
+        converted_count = 0
+        new_cart = []
+
+        for idx, item in enumerate(cart):
+            if idx in item_indices:
+                # This is a kebab to convert
+                if item.get("category", "").lower() not in ["kebabs", "kebab"]:
+                    logger.warning(f"Item at index {idx} is not a kebab, skipping")
+                    new_cart.append(item)
+                    continue
+
+                # Get kebab details
+                keb_size = item.get("size", "").lower()
+
+                # Create combo item
+                if keb_size == "small":
+                    combo_price = 17.0 if chips_size == "small" else 20.0
+                    combo_name = "Small Kebab Meal" if chips_size == "small" else "Small Kebab Meal (Large Chips)"
+                    combo_id = "CMB_KEB_SCHP_CAN" if chips_size == "small" else "CMB_KEB_SCHP_L_CAN"
+                elif keb_size == "large":
+                    if chips_size == "small":
+                        combo_price = 22.0
+                        combo_name = "Large Kebab Meal"
+                        combo_id = "CMB_KEB_LCHP_S_CAN"
+                    else:
+                        combo_price = 25.0
+                        combo_name = "Large Kebab Meal (Large Chips)"
+                        combo_id = "CMB_KEB_LCHP_L_CAN"
+                else:
+                    logger.warning(f"Unknown kebab size: {keb_size}, skipping")
+                    new_cart.append(item)
+                    continue
+
+                # Create meal combo item preserving kebab details
+                combo_item = {
+                    "category": "combo",
+                    "combo_id": combo_id,
+                    "name": combo_name,
+                    "price": combo_price,
+                    "quantity": item.get("quantity", 1),
+                    "is_combo": True,
+                    "protein": item.get("protein"),
+                    "salads": item.get("salads", []),
+                    "sauces": item.get("sauces", []),
+                    "extras": item.get("extras", []),
+                    "drink_brand": drink_brand,
+                    "chips_salt": chips_salt
+                }
+
+                if item.get("cheese") is not None:
+                    combo_item["cheese"] = item["cheese"]
+
+                new_cart.append(combo_item)
+                converted_count += 1
+                logger.info(f"Converted kebab #{idx} to {combo_name}")
+            else:
+                # Keep item as-is
+                new_cart.append(item)
+
+        # Update cart
+        session_set("cart", new_cart)
+        session_set("cart_priced", False)  # Cart changed, need to reprice
+
+        return {
+            "ok": True,
+            "convertedCount": converted_count,
+            "cartCount": len(new_cart),
+            "message": f"Converted {converted_count} kebab(s) to meal(s)"
+        }
+
+    except Exception as e:
+        logger.error(f"Error converting items to meals: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+def tool_modify_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Modify an existing cart item completely. Unlike editCartItem, this can change ANY property including size, protein, etc."""
+    try:
+        logger.info(f"Modifying cart item: {params}")
+
+        cart = session_get("cart", [])
+        item_index = params.get("itemIndex")
+        modifications = params.get("modifications", {})
+
+        if item_index is None:
+            return {"ok": False, "error": "itemIndex is required"}
+
+        if not modifications:
+            return {"ok": False, "error": "modifications object is required"}
+
+        try:
+            item_index = int(item_index)
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "itemIndex must be a number"}
+
+        if item_index < 0 or item_index >= len(cart):
+            return {"ok": False, "error": f"Invalid itemIndex. Cart has {len(cart)} items (0-{len(cart)-1})"}
+
+        # Get the item
+        item = cart[item_index]
+
+        # Apply modifications
+        for field, value in modifications.items():
+            # Parse value if it's a JSON string
+            parsed_value = value
+            if isinstance(value, str):
+                try:
+                    parsed_value = json.loads(value)
+                except (json.JSONDecodeError, TypeError):
+                    parsed_value = value
+
+            # Update the field
+            if field == "size":
+                item["size"] = str(parsed_value) if parsed_value else None
+            elif field == "protein":
+                item["protein"] = str(parsed_value) if parsed_value else None
+            elif field == "salads":
+                if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                    item["salads"] = []
+                elif isinstance(parsed_value, list):
+                    item["salads"] = parsed_value
+                elif parsed_value:
+                    item["salads"] = [str(parsed_value)]
+                else:
+                    item["salads"] = []
+            elif field == "sauces":
+                if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                    item["sauces"] = []
+                elif isinstance(parsed_value, list):
+                    item["sauces"] = parsed_value
+                elif parsed_value:
+                    item["sauces"] = [str(parsed_value)]
+                else:
+                    item["sauces"] = []
+            elif field == "extras":
+                if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                    item["extras"] = []
+                elif isinstance(parsed_value, list):
+                    item["extras"] = parsed_value
+                elif parsed_value:
+                    item["extras"] = [str(parsed_value)]
+                else:
+                    item["extras"] = []
+            elif field == "cheese":
+                if isinstance(parsed_value, str):
+                    item["cheese"] = parsed_value.lower() in ["true", "1", "yes"]
+                else:
+                    item["cheese"] = bool(parsed_value)
+            elif field == "brand":
+                item["brand"] = str(parsed_value) if parsed_value else None
+            elif field == "variant":
+                item["variant"] = str(parsed_value) if parsed_value else None
+            elif field == "salt_type":
+                item["salt_type"] = str(parsed_value) if parsed_value else "chicken"
+            elif field == "sauce_type":
+                item["sauce_type"] = str(parsed_value) if parsed_value else None
+            elif field == "quantity":
+                try:
+                    item["quantity"] = int(parsed_value) if parsed_value else 1
+                except (ValueError, TypeError):
+                    item["quantity"] = 1
+            else:
+                logger.warning(f"Unknown field in modifications: {field}")
+
+        # Update cart
+        cart[item_index] = item
+        session_set("cart", cart)
+        session_set("cart_priced", False)
+
+        return {
+            "ok": True,
+            "message": f"Modified item at index {item_index}"
+        }
+
+    except Exception as e:
+        logger.error(f"Error modifying cart item: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+def tool_get_detailed_cart(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Get detailed cart with human-readable descriptions for each item"""
+    try:
+        cart = session_get("cart", [])
+
+        detailed_items = []
+        for idx, item in enumerate(cart):
+            qty = item.get("quantity", 1)
+            size = item.get("size", "").capitalize()
+            protein = item.get("protein", "").capitalize()
+            category = item.get("category", "").upper()
+
+            # Build description
+            parts = []
+            if qty > 1:
+                parts.append(f"{qty}x")
+            if size:
+                parts.append(size)
+            if protein:
+                parts.append(protein)
+            if item.get("name"):
+                parts.append(item["name"])
+            else:
+                parts.append(category)
+
+            description = " ".join(parts)
+
+            # Add modifiers
+            modifiers = []
+            if item.get("salads"):
+                modifiers.append(f"Salads: {', '.join(item['salads'])}")
+            if item.get("sauces"):
+                modifiers.append(f"Sauces: {', '.join(item['sauces'])}")
+            if item.get("extras"):
+                modifiers.append(f"Extras: {', '.join(item['extras'])}")
+            if item.get("cheese"):
+                modifiers.append("Extra Cheese")
+            if item.get("is_combo"):
+                modifiers.append(f"MEAL (includes {item.get('chips_salt', 'chicken')} salt chips + {item.get('drink_brand', 'drink')})")
+
+            detailed_items.append({
+                "index": idx,
+                "description": description,
+                "modifiers": modifiers,
+                "isCombo": item.get("is_combo", False),
+                "rawItem": item
+            })
+
+        return {
+            "ok": True,
+            "items": detailed_items,
+            "itemCount": len(cart)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting detailed cart: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_validate_menu_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Validate that item exists in menu and properties are valid"""
+    try:
+        category = params.get("category", "").lower()
+        size = params.get("size", "").lower() if params.get("size") else None
+        protein = params.get("protein", "").lower() if params.get("protein") else None
+
+        menu = load_json_file("menu.json")
+        categories = menu.get("categories", {})
+
+        # Check category exists
+        if category not in categories:
+            valid_cats = list(categories.keys())
+            return {
+                "ok": False,
+                "valid": False,
+                "error": f"Invalid category '{category}'. Valid categories: {', '.join(valid_cats)}",
+                "validCategories": valid_cats
+            }
+
+        # Validate protein for kebabs/hsp
+        if category in ["kebabs", "kebab", "hsp", "hsps"]:
+            valid_proteins = ["lamb", "chicken", "mixed", "falafel"]
+            if protein and protein not in valid_proteins:
+                return {
+                    "ok": False,
+                    "valid": False,
+                    "error": f"Invalid protein '{protein}'. Valid proteins: {', '.join(valid_proteins)}",
+                    "validProteins": valid_proteins
+                }
+
+        # Validate size
+        if size:
+            valid_sizes = ["small", "large"]
+            if size not in valid_sizes:
+                return {
+                    "ok": False,
+                    "valid": False,
+                    "error": f"Invalid size '{size}'. Valid sizes: {', '.join(valid_sizes)}",
+                    "validSizes": valid_sizes
+                }
+
+        return {
+            "ok": True,
+            "valid": True,
+            "category": category,
+            "message": "Item configuration is valid"
+        }
+
+    except Exception as e:
+        logger.error(f"Error validating menu item: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
+def tool_repeat_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Copy customer's last order to current cart for fast reordering"""
+    try:
+        logger.info("Repeating last order")
+
+        phone_number = params.get("phoneNumber")
+        if not phone_number:
+            return {"ok": False, "error": "phoneNumber is required"}
+
+        # Get last order
+        last_order_result = tool_get_last_order({"phoneNumber": phone_number})
+
+        if not last_order_result.get("ok"):
+            return last_order_result
+
+        if not last_order_result.get("hasLastOrder"):
+            return {
+                "ok": False,
+                "error": "No previous order found for this phone number"
+            }
+
+        # Copy cart from last order
+        last_cart = last_order_result.get("cart", [])
+        if not last_cart:
+            return {"ok": False, "error": "Last order has no items"}
+
+        # Set current cart to last order's cart
+        session_set("cart", deepcopy(last_cart))
+        session_set("cart_priced", False)  # Need to reprice
+
+        return {
+            "ok": True,
+            "itemCount": len(last_cart),
+            "lastOrderDate": last_order_result.get("orderDate"),
+            "message": f"Added {len(last_cart)} items from your last order"
+        }
+
+    except Exception as e:
+        logger.error(f"Error repeating last order: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+def tool_get_menu_by_category(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Get all menu items in a specific category for browsing"""
+    try:
+        category = params.get("category", "").lower()
+
+        if not category:
+            # Return list of all categories
+            menu = load_json_file("menu.json")
+            categories = list(menu.get("categories", {}).keys())
+            return {
+                "ok": True,
+                "categories": categories,
+                "message": "Available categories"
+            }
+
+        menu = load_json_file("menu.json")
+        categories = menu.get("categories", {})
+
+        if category not in categories:
+            return {
+                "ok": False,
+                "error": f"Invalid category: {category}",
+                "availableCategories": list(categories.keys())
+            }
+
+        items = categories[category]
+
+        # Format items for easy reading
+        formatted_items = []
+        for item in items:
+            item_info = {
+                "id": item.get("id"),
+                "name": item.get("name"),
+            }
+
+            # Add pricing
+            if "price" in item:
+                item_info["price"] = item["price"]
+            elif "sizes" in item:
+                item_info["sizes"] = item["sizes"]
+
+            # Add variants if present
+            if "variants" in item:
+                item_info["variants"] = item["variants"]
+
+            # Add brands if present (for drinks)
+            if "brands" in item:
+                item_info["brands"] = item["brands"]
+
+            formatted_items.append(item_info)
+
+        return {
+            "ok": True,
+            "category": category,
+            "items": formatted_items,
+            "itemCount": len(formatted_items)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting menu by category: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
     """End the call"""
     logger.info("Ending call")
 
-    # Clean up expired sessions
-    _clean_expired_sessions()
+    # FIXED: Don't clean sessions here - done by background task instead
+    # This prevents deleting other active caller sessions
 
     return {"ok": True, "action": "end_call"}
 
@@ -1644,18 +2091,24 @@ def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
 TOOLS = {
     "checkOpen": tool_check_open,
     "getCallerInfo": tool_get_caller_info,
+    "validateMenuItem": tool_validate_menu_item,
     "startItemConfiguration": tool_start_item_configuration,
     "setItemProperty": tool_set_item_property,
     "addItemToCart": tool_add_item_to_cart,
     "getCartState": tool_get_cart_state,
+    "getDetailedCart": tool_get_detailed_cart,
     "removeCartItem": tool_remove_cart_item,
     "editCartItem": tool_edit_cart_item,
+    "modifyCartItem": tool_modify_cart_item,
+    "convertItemsToMeals": tool_convert_items_to_meals,
     "clearCart": tool_clear_cart,
     "clearSession": tool_clear_session,
     "priceCart": tool_price_cart,
     "getOrderSummary": tool_get_order_summary,
     "setOrderNotes": tool_set_order_notes,
     "getLastOrder": tool_get_last_order,
+    "repeatLastOrder": tool_repeat_last_order,
+    "getMenuByCategory": tool_get_menu_by_category,
     "lookupOrder": tool_lookup_order,
     "sendMenuLink": tool_send_menu_link,
     "setPickupTime": tool_set_pickup_time,
@@ -1719,6 +2172,31 @@ async def vapi_webhook(request: Request):
 @app.get("/health")
 async def health():
     return {"status": "healthy", "version": "2.0"}
+
+async def cleanup_sessions_background():
+    """Background task to clean expired sessions every 5 minutes"""
+    while True:
+        try:
+            await asyncio.sleep(300)  # 5 minutes
+            logger.info("Running background session cleanup...")
+            _clean_expired_sessions()
+        except Exception as e:
+            logger.error(f"Error in session cleanup background task: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database and resources on startup"""
+    logger.info("=" * 60)
+    logger.info("Starting Kebabalab VAPI Server v2.0")
+    logger.info("=" * 60)
+    logger.info("Initializing database...")
+    init_db()
+    logger.info("✓ Database initialized")
+    logger.info("Starting background tasks...")
+    asyncio.create_task(cleanup_sessions_background())
+    logger.info("✓ Background session cleanup started")
+    logger.info("Server ready to accept requests")
+    logger.info("=" * 60)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

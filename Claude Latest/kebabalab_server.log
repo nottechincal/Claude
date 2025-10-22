@@ -9932,3 +9932,78 @@
   }
 }
 2025-10-21 15:57:28,128 - server - INFO - Calling tool: validateItem with {'category': 'kebabs', 'name': 'Chicken Kebab'}
+2025-10-22 23:13:59,470 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:13:59,471 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,026 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:14:15,026 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,026 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,026 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'lamb'}
+2025-10-22 23:14:15,026 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato', 'onion']}
+2025-10-22 23:14:15,026 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic', 'chilli']}
+2025-10-22 23:14:15,027 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,027 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,027 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,027 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'chicken'}
+2025-10-22 23:14:15,027 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato']}
+2025-10-22 23:14:15,027 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic']}
+2025-10-22 23:14:15,027 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,028 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'mixed'}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato', 'onion', 'tabouli']}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic', 'bbq']}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,028 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'lamb'}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'onion']}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic', 'chilli', 'bbq']}
+2025-10-22 23:14:15,028 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,029 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,029 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,029 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'chicken'}
+2025-10-22 23:14:15,029 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato', 'tabouli']}
+2025-10-22 23:14:15,029 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic']}
+2025-10-22 23:14:15,029 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,029 - server_v2 - INFO - Pricing cart
+2025-10-22 23:14:15,029 - server_v2 - INFO - Converting items to meals: {'drinkBrand': 'coke', 'chipsSize': 'small', 'chipsSalt': 'chicken'}
+2025-10-22 23:14:15,030 - server_v2 - INFO - Converting 5 kebabs to meals
+2025-10-22 23:14:15,030 - server_v2 - INFO - Converted kebab #0 to Large Kebab Meal
+2025-10-22 23:14:15,030 - server_v2 - INFO - Converted kebab #1 to Large Kebab Meal
+2025-10-22 23:14:15,030 - server_v2 - INFO - Converted kebab #2 to Large Kebab Meal
+2025-10-22 23:14:15,030 - server_v2 - INFO - Converted kebab #3 to Large Kebab Meal
+2025-10-22 23:14:15,030 - server_v2 - INFO - Converted kebab #4 to Large Kebab Meal
+2025-10-22 23:14:15,030 - server_v2 - INFO - Pricing cart
+2025-10-22 23:14:15,031 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:14:15,031 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,031 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,031 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'chicken'}
+2025-10-22 23:14:15,031 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato']}
+2025-10-22 23:14:15,031 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic']}
+2025-10-22 23:14:15,031 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,032 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'chicken'}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato']}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic']}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,032 - server_v2 - INFO - Starting item configuration: {'category': 'kebabs'}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,032 - server_v2 - INFO - Setting item property: {'field': 'protein', 'value': 'chicken'}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Setting item property: {'field': 'salads', 'value': ['lettuce', 'tomato']}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Setting item property: {'field': 'sauces', 'value': ['garlic']}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,033 - server_v2 - INFO - Converting items to meals: {'itemIndices': [0, 2], 'drinkBrand': 'sprite', 'chipsSize': 'small', 'chipsSalt': 'chicken'}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Converting 2 kebabs to meals
+2025-10-22 23:14:15,033 - server_v2 - INFO - Converted kebab #0 to Large Kebab Meal
+2025-10-22 23:14:15,033 - server_v2 - INFO - Converted kebab #2 to Large Kebab Meal
+2025-10-22 23:14:15,033 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:14:15,033 - server_v2 - INFO - Converting items to meals: {}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:14:15,033 - server_v2 - INFO - Starting item configuration: {'category': 'chips'}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Setting item property: {'field': 'size', 'value': 'large'}
+2025-10-22 23:14:15,033 - server_v2 - INFO - Adding item to cart
+2025-10-22 23:14:15,034 - server_v2 - INFO - Converting items to meals: {}
+2025-10-22 23:31:35,765 - server_v2 - INFO - Reset session: anon
+2025-10-22 23:31:35,766 - server_v2 - INFO - Repeating last order
+2025-10-22 23:31:35,767 - server_v2 - INFO - Repeating last order

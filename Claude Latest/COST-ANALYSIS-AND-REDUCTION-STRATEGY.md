@@ -1,5 +1,7 @@
 # 💰 KEBABALAB VAPI COST ANALYSIS & REDUCTION STRATEGY
 
+⚠️ **WARNING: This document contains pricing errors and needs verification. Please see VERIFIED-COST-BREAKDOWN-2025.md for accurate, fact-checked information.**
+
 **Report Date:** October 21, 2025
 **Currency:** AUD (Australian Dollars)
 **Exchange Rate:** 1 USD = 1.55 AUD (current rate)

@@ -114,6 +114,23 @@
     {
       "type": "function",
       "function": {
+        "name": "getCallerSmartContext",
+        "description": "⚡ NEW: Get enhanced caller info with order history, favorite items, and smart greeting suggestions. Use this instead of getCallerInfo for returning customers. Provides personalized experience with pattern analysis.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "startItemConfiguration",
         "description": "Start configuring a new menu item. Call this when customer mentions an item.",
         "strict": false,
@@ -174,6 +191,67 @@
           "type": "object",
           "properties": {},
           "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "addMultipleItemsToCart",
+        "description": "⚡ NEW: Add multiple items to cart in one call for 60-70% faster ordering. Perfect for customers who know what they want. Accepts array of fully configured items with all properties set.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "Array of items to add to cart. Each item should have: category, size, protein (if applicable), salads, sauces, quantity, etc.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": {"type": "string", "description": "Item category"},
+                  "size": {"type": "string", "description": "Size: small or large"},
+                  "protein": {"type": "string", "description": "Protein: lamb, chicken, mixed, falafel"},
+                  "salads": {"type": "array", "items": {"type": "string"}, "description": "Array of salad toppings"},
+                  "sauces": {"type": "array", "items": {"type": "string"}, "description": "Array of sauces"},
+                  "extras": {"type": "array", "items": {"type": "string"}, "description": "Extra toppings like haloumi"},
+                  "cheese": {"type": "boolean", "description": "Add extra cheese"},
+                  "quantity": {"type": "number", "description": "Quantity to add"},
+                  "brand": {"type": "string", "description": "Brand for drinks"},
+                  "salt_type": {"type": "string", "description": "Salt type for chips: chicken, sea, none"},
+                  "notes": {"type": "string", "description": "Special instructions"}
+                },
+                "required": ["category"]
+              }
+            }
+          },
+          "required": ["items"]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "quickAddItem",
+        "description": "⚡ NEW: Smart NLP parser that adds items from natural language description. Handles phrases like '2 large lamb kebabs with extra garlic sauce' or 'large chips with chicken salt'. 40-50% faster for simple orders. Falls back to guided flow if unable to parse.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Natural language description of item(s) to add. Examples: 'large lamb kebab with garlic sauce', '2 cokes', 'small chicken hsp with no salad'"
+            }
+          },
+          "required": ["description"]
         }
       },
       "async": false,

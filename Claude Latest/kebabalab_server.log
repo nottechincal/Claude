@@ -10007,3 +10007,25 @@
 2025-10-22 23:31:35,765 - server_v2 - INFO - Reset session: anon
 2025-10-22 23:31:35,766 - server_v2 - INFO - Repeating last order
 2025-10-22 23:31:35,767 - server_v2 - INFO - Repeating last order
+2025-10-22 23:49:51,970 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:49:51,971 - server_v2 - INFO - Quick add item: {'description': 'large lamb kebab with extra garlic sauce'}
+2025-10-22 23:49:51,971 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:49:51,971 - server_v2 - INFO - Quick add item: {'description': '2 large chips with chicken salt'}
+2025-10-22 23:49:51,971 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:49:51,972 - server_v2 - INFO - Getting caller smart context
+2025-10-22 23:49:51,974 - server_v2 - ERROR - Error getting caller smart context: no such column: order_number
+2025-10-22 23:49:51,976 - server_v2 - INFO - Getting caller info
+2025-10-22 23:49:51,981 - server_v2 - INFO - Getting caller smart context
+2025-10-22 23:49:51,981 - server_v2 - ERROR - Error getting caller smart context: no such column: order_number
+2025-10-22 23:49:51,982 - server_v2 - INFO - Getting caller info
+2025-10-22 23:51:15,173 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:51:15,174 - server_v2 - INFO - Quick add item: {'description': 'large lamb kebab with extra garlic sauce'}
+2025-10-22 23:51:15,174 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:51:15,177 - server_v2 - INFO - Quick add item: {'description': '2 large chips with chicken salt'}
+2025-10-22 23:51:15,177 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:51:15,177 - server_v2 - INFO - Getting caller smart context
+2025-10-22 23:51:15,188 - server_v2 - INFO - Getting caller smart context
+2025-10-22 23:51:15,189 - server_v2 - INFO - Getting caller smart context
+2025-10-22 23:51:15,190 - server_v2 - INFO - Adding multiple items to cart in batch
+2025-10-22 23:51:15,190 - server_v2 - INFO - Quick add item: {'description': '2 cokes'}
+2025-10-22 23:51:15,190 - server_v2 - INFO - Adding multiple items to cart in batch

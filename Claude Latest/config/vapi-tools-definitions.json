@@ -193,6 +193,91 @@
     {
       "type": "function",
       "function": {
+        "name": "convertItemsToMeals",
+        "description": "Convert kebabs in cart to meals (kebab + chips + drink). Can convert all kebabs or specific items by index. Use when customer says 'make them all meals' or 'upgrade to meals'.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndices": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Optional: specific cart item indices to convert (0-based). If not provided, converts ALL kebabs in cart."
+            },
+            "drinkBrand": {
+              "type": "string",
+              "description": "Drink choice for the meal: coke, sprite, fanta, etc. Default: coke",
+              "default": "coke"
+            },
+            "chipsSize": {
+              "type": "string",
+              "description": "Chips size: small or large. Default: small",
+              "enum": ["small", "large"],
+              "default": "small"
+            },
+            "chipsSalt": {
+              "type": "string",
+              "description": "Salt type for chips: chicken, plain, or seasoned. Default: chicken",
+              "enum": ["chicken", "plain", "seasoned"],
+              "default": "chicken"
+            }
+          },
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "modifyCartItem",
+        "description": "Modify any property of an existing cart item including size, protein, salads, sauces, etc. Unlike editCartItem, this can change ANY field.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndex": {
+              "type": "number",
+              "description": "Zero-based index of item to modify"
+            },
+            "modifications": {
+              "type": "object",
+              "description": "Object containing fields to modify and their new values. Example: {\"salads\": [\"tomato\", \"lettuce\"], \"sauces\": [\"garlic\"], \"size\": \"large\"}"
+            }
+          },
+          "required": ["itemIndex", "modifications"]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "getDetailedCart",
+        "description": "Get detailed human-readable cart with descriptions and modifiers for each item. Better than getCartState for reviewing order with customer.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "clearSession",
         "description": "Reset entire session (cart, config, state). Use for testing or complete restart.",
         "strict": false,

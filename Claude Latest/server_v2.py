@@ -1631,6 +1631,276 @@ def tool_clear_session(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error clearing session: {str(e)}")
         return {"ok": False, "error": str(e)}
 
+def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert kebabs in cart to meals by adding chips and drink.
+    Can convert all kebabs or specific items by index."""
+    try:
+        logger.info(f"Converting items to meals: {params}")
+
+        cart = session_get("cart", [])
+        if not cart:
+            return {"ok": False, "error": "Cart is empty"}
+
+        # Get parameters
+        item_indices = params.get("itemIndices")  # Optional: specific indices to convert
+        drink_brand = params.get("drinkBrand", "coke")  # Default to coke
+        chips_size = params.get("chipsSize", "small")  # Default to small chips
+        chips_salt = params.get("chipsSalt", "chicken")  # Default to chicken salt
+
+        # If no indices specified, convert ALL kebabs
+        if item_indices is None:
+            item_indices = []
+            for idx, item in enumerate(cart):
+                if item.get("category", "").lower() in ["kebabs", "kebab"]:
+                    item_indices.append(idx)
+        elif not isinstance(item_indices, list):
+            item_indices = [item_indices]
+
+        if not item_indices:
+            return {"ok": False, "error": "No kebabs found to convert to meals"}
+
+        logger.info(f"Converting {len(item_indices)} kebabs to meals")
+
+        # Process each kebab
+        converted_count = 0
+        new_cart = []
+
+        for idx, item in enumerate(cart):
+            if idx in item_indices:
+                # This is a kebab to convert
+                if item.get("category", "").lower() not in ["kebabs", "kebab"]:
+                    logger.warning(f"Item at index {idx} is not a kebab, skipping")
+                    new_cart.append(item)
+                    continue
+
+                # Get kebab details
+                keb_size = item.get("size", "").lower()
+
+                # Create combo item
+                if keb_size == "small":
+                    combo_price = 17.0 if chips_size == "small" else 20.0
+                    combo_name = "Small Kebab Meal" if chips_size == "small" else "Small Kebab Meal (Large Chips)"
+                    combo_id = "CMB_KEB_SCHP_CAN" if chips_size == "small" else "CMB_KEB_SCHP_L_CAN"
+                elif keb_size == "large":
+                    if chips_size == "small":
+                        combo_price = 22.0
+                        combo_name = "Large Kebab Meal"
+                        combo_id = "CMB_KEB_LCHP_S_CAN"
+                    else:
+                        combo_price = 25.0
+                        combo_name = "Large Kebab Meal (Large Chips)"
+                        combo_id = "CMB_KEB_LCHP_L_CAN"
+                else:
+                    logger.warning(f"Unknown kebab size: {keb_size}, skipping")
+                    new_cart.append(item)
+                    continue
+
+                # Create meal combo item preserving kebab details
+                combo_item = {
+                    "category": "combo",
+                    "combo_id": combo_id,
+                    "name": combo_name,
+                    "price": combo_price,
+                    "quantity": item.get("quantity", 1),
+                    "is_combo": True,
+                    "protein": item.get("protein"),
+                    "salads": item.get("salads", []),
+                    "sauces": item.get("sauces", []),
+                    "extras": item.get("extras", []),
+                    "drink_brand": drink_brand,
+                    "chips_salt": chips_salt
+                }
+
+                if item.get("cheese") is not None:
+                    combo_item["cheese"] = item["cheese"]
+
+                new_cart.append(combo_item)
+                converted_count += 1
+                logger.info(f"Converted kebab #{idx} to {combo_name}")
+            else:
+                # Keep item as-is
+                new_cart.append(item)
+
+        # Update cart
+        session_set("cart", new_cart)
+        session_set("cart_priced", False)  # Cart changed, need to reprice
+
+        return {
+            "ok": True,
+            "convertedCount": converted_count,
+            "cartCount": len(new_cart),
+            "message": f"Converted {converted_count} kebab(s) to meal(s)"
+        }
+
+    except Exception as e:
+        logger.error(f"Error converting items to meals: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+def tool_modify_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Modify an existing cart item completely. Unlike editCartItem, this can change ANY property including size, protein, etc."""
+    try:
+        logger.info(f"Modifying cart item: {params}")
+
+        cart = session_get("cart", [])
+        item_index = params.get("itemIndex")
+        modifications = params.get("modifications", {})
+
+        if item_index is None:
+            return {"ok": False, "error": "itemIndex is required"}
+
+        if not modifications:
+            return {"ok": False, "error": "modifications object is required"}
+
+        try:
+            item_index = int(item_index)
+        except (ValueError, TypeError):
+            return {"ok": False, "error": "itemIndex must be a number"}
+
+        if item_index < 0 or item_index >= len(cart):
+            return {"ok": False, "error": f"Invalid itemIndex. Cart has {len(cart)} items (0-{len(cart)-1})"}
+
+        # Get the item
+        item = cart[item_index]
+
+        # Apply modifications
+        for field, value in modifications.items():
+            # Parse value if it's a JSON string
+            parsed_value = value
+            if isinstance(value, str):
+                try:
+                    parsed_value = json.loads(value)
+                except (json.JSONDecodeError, TypeError):
+                    parsed_value = value
+
+            # Update the field
+            if field == "size":
+                item["size"] = str(parsed_value) if parsed_value else None
+            elif field == "protein":
+                item["protein"] = str(parsed_value) if parsed_value else None
+            elif field == "salads":
+                if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                    item["salads"] = []
+                elif isinstance(parsed_value, list):
+                    item["salads"] = parsed_value
+                elif parsed_value:
+                    item["salads"] = [str(parsed_value)]
+                else:
+                    item["salads"] = []
+            elif field == "sauces":
+                if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                    item["sauces"] = []
+                elif isinstance(parsed_value, list):
+                    item["sauces"] = parsed_value
+                elif parsed_value:
+                    item["sauces"] = [str(parsed_value)]
+                else:
+                    item["sauces"] = []
+            elif field == "extras":
+                if parsed_value == [] or parsed_value == "" or parsed_value == "[]":
+                    item["extras"] = []
+                elif isinstance(parsed_value, list):
+                    item["extras"] = parsed_value
+                elif parsed_value:
+                    item["extras"] = [str(parsed_value)]
+                else:
+                    item["extras"] = []
+            elif field == "cheese":
+                if isinstance(parsed_value, str):
+                    item["cheese"] = parsed_value.lower() in ["true", "1", "yes"]
+                else:
+                    item["cheese"] = bool(parsed_value)
+            elif field == "brand":
+                item["brand"] = str(parsed_value) if parsed_value else None
+            elif field == "variant":
+                item["variant"] = str(parsed_value) if parsed_value else None
+            elif field == "salt_type":
+                item["salt_type"] = str(parsed_value) if parsed_value else "chicken"
+            elif field == "sauce_type":
+                item["sauce_type"] = str(parsed_value) if parsed_value else None
+            elif field == "quantity":
+                try:
+                    item["quantity"] = int(parsed_value) if parsed_value else 1
+                except (ValueError, TypeError):
+                    item["quantity"] = 1
+            else:
+                logger.warning(f"Unknown field in modifications: {field}")
+
+        # Update cart
+        cart[item_index] = item
+        session_set("cart", cart)
+        session_set("cart_priced", False)
+
+        return {
+            "ok": True,
+            "message": f"Modified item at index {item_index}"
+        }
+
+    except Exception as e:
+        logger.error(f"Error modifying cart item: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+def tool_get_detailed_cart(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Get detailed cart with human-readable descriptions for each item"""
+    try:
+        cart = session_get("cart", [])
+
+        detailed_items = []
+        for idx, item in enumerate(cart):
+            qty = item.get("quantity", 1)
+            size = item.get("size", "").capitalize()
+            protein = item.get("protein", "").capitalize()
+            category = item.get("category", "").upper()
+
+            # Build description
+            parts = []
+            if qty > 1:
+                parts.append(f"{qty}x")
+            if size:
+                parts.append(size)
+            if protein:
+                parts.append(protein)
+            if item.get("name"):
+                parts.append(item["name"])
+            else:
+                parts.append(category)
+
+            description = " ".join(parts)
+
+            # Add modifiers
+            modifiers = []
+            if item.get("salads"):
+                modifiers.append(f"Salads: {', '.join(item['salads'])}")
+            if item.get("sauces"):
+                modifiers.append(f"Sauces: {', '.join(item['sauces'])}")
+            if item.get("extras"):
+                modifiers.append(f"Extras: {', '.join(item['extras'])}")
+            if item.get("cheese"):
+                modifiers.append("Extra Cheese")
+            if item.get("is_combo"):
+                modifiers.append(f"MEAL (includes {item.get('chips_salt', 'chicken')} salt chips + {item.get('drink_brand', 'drink')})")
+
+            detailed_items.append({
+                "index": idx,
+                "description": description,
+                "modifiers": modifiers,
+                "isCombo": item.get("is_combo", False),
+                "rawItem": item
+            })
+
+        return {
+            "ok": True,
+            "items": detailed_items,
+            "itemCount": len(cart)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting detailed cart: {str(e)}")
+        return {"ok": False, "error": str(e)}
+
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
     """End the call"""
     logger.info("Ending call")
@@ -1648,8 +1918,11 @@ TOOLS = {
     "setItemProperty": tool_set_item_property,
     "addItemToCart": tool_add_item_to_cart,
     "getCartState": tool_get_cart_state,
+    "getDetailedCart": tool_get_detailed_cart,
     "removeCartItem": tool_remove_cart_item,
     "editCartItem": tool_edit_cart_item,
+    "modifyCartItem": tool_modify_cart_item,
+    "convertItemsToMeals": tool_convert_items_to_meals,
     "clearCart": tool_clear_cart,
     "clearSession": tool_clear_session,
     "priceCart": tool_price_cart,

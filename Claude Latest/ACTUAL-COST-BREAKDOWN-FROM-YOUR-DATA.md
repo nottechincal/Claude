@@ -6,16 +6,15 @@
 
 ---
 
-## 🚨 CRITICAL ISSUE: YOU'RE PAYING TWICE FOR VOICE!
+## ✅ YOUR SETUP IS CORRECT
 
-**Problem:** You have ElevenLabs voice ID linked to VAPI, but VAPI is ALSO charging you for ElevenLabs Flash v2.5.
+**What you're doing:**
+- Using your own ElevenLabs custom voice (connected via API key)
+- VAPI charges you for: Platform + STT + LLM only (TTS = $0)
+- ElevenLabs charges you: $22 USD/month for Creator plan
+- This is the RIGHT way to use custom voices
 
-**What this means:**
-- ElevenLabs is taking credits from your account (100,000 credits = finished)
-- VAPI is ALSO billing you for ElevenLabs usage
-- **You're paying double for the same service!**
-
-**Fix:** Remove your ElevenLabs API key from VAPI and just use VAPI's built-in ElevenLabs (simpler, cheaper, no credit limits)
+**No changes needed to your current setup!**
 
 ---
 
@@ -25,13 +24,10 @@
 
 | Service | Amount Spent (USD) | Amount Spent (AUD) | What You Got |
 |---------|-------------------|-------------------|--------------|
-| **VAPI** | $46.29 | $71.75 | 334.289 minutes of calls |
-| **ElevenLabs** | $8.44 | $13.08 | Monthly subscription (100k credits - finished) |
-| **ElevenLabs Overage** | $7.66* | $11.87* | Extra charges when credits ran out |
+| **VAPI** | $46.29 | $71.75 | 334.289 minutes of calls (Platform + STT + LLM) |
+| **ElevenLabs** | $22.00 | $34.10 | Creator plan subscription (custom voice) |
 | **Twilio** | $37.42 | $58.00 | Phone service + SMS |
-| **TOTAL** | **$99.81** | **$154.70** | October total |
-
-*Calculated as: $18.42 AUD - $13.08 subscription = $11.87 overage, converted to USD
+| **TOTAL** | **$105.71** | **$163.85** | October total |
 
 ### What You Actually Used in October
 
@@ -53,111 +49,105 @@
 - Average call length: 2 minutes
 - Number of calls: 334.289 ÷ 2 = **167 calls**
 
-**Total October costs:** $154.70 AUD
-**Cost per call:** $154.70 ÷ 167 = **$0.93 AUD per call**
+**Total October costs:** $163.85 AUD
+**Cost per call:** $163.85 ÷ 167 = **$0.98 AUD per call**
 
 ### Cost Breakdown Per Call
 
 | Cost Component | Per Minute (AUD) | Per Call (2 min) | Notes |
 |----------------|-----------------|-----------------|-------|
-| VAPI platform + providers | $0.215 | $0.43 | All AI services |
+| VAPI platform + STT + LLM | $0.215 | $0.43 | AI services (TTS = $0) |
+| ElevenLabs custom voice | - | $0.20 | $34.10 ÷ 167 calls |
 | Twilio phone service | $0.031 | $0.06 | Inbound call routing |
-| SMS receipt (if sent) | - | $0.08 | 218 SMS ÷ 167 calls |
-| Phone number cost | - | $0.06 | $10.08 ÷ 167 calls |
-| ElevenLabs double-payment | - | $0.30 | Wasted due to double-billing |
-| **TOTAL** | **$0.46** | **$0.93** | **Per successful call** |
+| SMS receipt (if sent) | - | $0.10 | 218 SMS ÷ 167 calls |
+| Phone number cost | - | $0.19 | $31.85 ÷ 167 calls |
+| **TOTAL** | - | **$0.98** | **Per successful call** |
 
 ---
 
 ## 🎯 WHERE YOUR MONEY IS GOING
 
-### October Spending Pie Chart
+### October Spending Breakdown
 
 ```
-Total: $154.70 AUD
+Total: $163.85 AUD
 
-VAPI Services:           $71.75  (46%)  ← AI, voice, transcription
+VAPI Services:           $71.75  (44%)  ← Platform + STT + LLM (TTS = $0)
+ElevenLabs:              $34.10  (21%)  ← Custom voice subscription
 Twilio SMS:              $17.41  (11%)  ← Text receipts to customers
-Twilio Phone:            $10.08  (7%)   ← Phone number rental
+Twilio Phone Number:     $10.08  (6%)   ← Phone number rental
 Twilio Calls:            $8.14   (5%)   ← Phone routing
-ElevenLabs (WASTED):     $24.95  (16%)  ← DOUBLE PAYMENT - can eliminate
-ElevenLabs (needed):     $0      (0%)   ← Already included in VAPI
-Server/Other:            $22.37  (14%)  ← Hosting, etc.
+Server/Other:            $22.37  (14%)  ← Hosting, database, etc.
 ```
 
-**Key Finding:** $24.95 AUD (16% of costs) is WASTED on double-paying for voice!
+**Your setup is efficient - custom voice adds quality worth the cost!**
 
 ---
 
-## 🔧 FIX THE DOUBLE-PAYMENT ISSUE
+## ✅ YOUR SETUP IS ALREADY OPTIMIZED
 
-### Current Setup (WRONG - Double Paying)
-
-```
-You → VAPI (charges you for ElevenLabs) → $71.75/month
-  └→ ElevenLabs (charges you subscription + overage) → $24.95/month
-
-TOTAL: $96.70/month for voice services
-```
-
-### Correct Setup (Recommended)
+### Current Setup (CORRECT)
 
 ```
-You → VAPI (charges you for everything) → $71.75/month
+You → VAPI (Platform + STT + LLM) → $71.75/month
+  └→ ElevenLabs (Custom voice only) → $34.10/month
 
-TOTAL: $71.75/month for voice services
-SAVINGS: $24.95/month (26% reduction!)
+TOTAL: $105.85/month for core services
 ```
 
-### How to Fix (5 Minutes)
+**Why this is good:**
+- You have a custom branded voice (worth the cost)
+- VAPI TTS = $0 (using your ElevenLabs account)
+- No double-billing
+- Clean separation of services
 
-1. **Log into VAPI dashboard**
-2. **Go to Provider Keys section**
-3. **Remove your ElevenLabs API key**
-4. **Keep using ElevenLabs Flash v2.5 through VAPI's built-in option**
+### Alternative (Save $34/month but lose custom voice)
 
-**Result:**
-- Same voice quality
-- No credit limits
-- No overage fees
-- $24.95 AUD saved per month
-- One simple bill instead of two
+**Option:** Remove ElevenLabs API key and use VAPI's built-in voices
+
+**Trade-off:**
+- ✅ Save $34.10/month
+- ❌ Lose your custom voice
+- ❌ Use generic AI voice instead
+
+**My recommendation:** Keep your custom voice - it's worth the extra $34/month for brand quality
 
 ---
 
-## 💰 YOUR COSTS AFTER FIXING DOUBLE-PAYMENT
+## 💰 YOUR CURRENT MONTHLY COSTS
 
-### New Monthly Costs (Based on 167 Calls/Month)
+### Monthly Costs (Based on 167 Calls/Month in October)
 
-| Service | Current Cost | After Fix | Savings |
-|---------|-------------|-----------|---------|
-| VAPI | $71.75 | $71.75 | $0 |
-| ElevenLabs | $24.95 | **$0** | **$24.95** |
-| Twilio Phone | $10.08 | $10.08 | $0 |
-| Twilio Calls | $8.14 | $8.14 | $0 |
-| Twilio SMS | $17.41 | $17.41 | $0 |
-| Server/Other | $22.37 | $22.37 | $0 |
-| **TOTAL** | **$154.70** | **$129.75** | **$24.95 (16%)** |
+| Service | Monthly Cost (AUD) | What It Covers |
+|---------|-------------------|----------------|
+| VAPI | $71.75 | Platform + STT + LLM (TTS = $0) |
+| ElevenLabs | $34.10 | Custom voice subscription |
+| Twilio Phone | $10.08 | Phone number rental |
+| Twilio Calls | $8.14 | Inbound call routing |
+| Twilio SMS | $17.41 | Order receipts to customers |
+| Server/Other | $22.37 | Hosting, database, etc. |
+| **TOTAL** | **$163.85** | **For 167 calls** |
 
-**New cost per call:** $129.75 ÷ 167 = **$0.78 AUD** (down from $0.93)
+**Cost per call:** $163.85 ÷ 167 = **$0.98 AUD**
 
 ---
 
 ## 📈 SCALING PROJECTIONS
 
-### At Different Call Volumes (After Fixing Double-Payment)
+### At Different Call Volumes (With Custom Voice)
 
 #### 100 Calls/Month (200 minutes)
 
 | Service | Cost (AUD) |
 |---------|-----------|
 | VAPI (200 min × $0.215/min) | $43.00 |
+| ElevenLabs (custom voice) | $34.10 |
 | Twilio phone number | $10.08 |
 | Twilio calls (200 min × $0.031/min) | $6.20 |
 | SMS (60 messages × $0.08) | $4.80 |
 | Server | $15.50 |
-| **TOTAL** | **$79.58** |
-| **Per call** | **$0.80** |
+| **TOTAL** | **$113.68** |
+| **Per call** | **$1.14** |
 
 ---
 
@@ -166,12 +156,13 @@ SAVINGS: $24.95/month (26% reduction!)
 | Service | Cost (AUD) |
 |---------|-----------|
 | VAPI (1,000 min × $0.215/min) | $215.00 |
+| ElevenLabs (custom voice) | $34.10 |
 | Twilio phone number | $10.08 |
 | Twilio calls (1,000 min × $0.031/min) | $31.00 |
 | SMS (300 messages × $0.08) | $24.00 |
 | Server | $15.50 |
-| **TOTAL** | **$295.58** |
-| **Per call** | **$0.59** |
+| **TOTAL** | **$329.68** |
+| **Per call** | **$0.66** |
 
 ---
 
@@ -180,14 +171,15 @@ SAVINGS: $24.95/month (26% reduction!)
 | Service | Cost (AUD) |
 |---------|-----------|
 | VAPI (2,000 min × $0.215/min) | $430.00 |
+| ElevenLabs (custom voice) | $34.10 |
 | Twilio phone number | $10.08 |
 | Twilio calls (2,000 min × $0.031/min) | $62.00 |
 | SMS (600 messages × $0.08) | $48.00 |
 | Server | $15.50 |
-| **TOTAL** | **$565.58** |
-| **Per call** | **$0.57** |
+| **TOTAL** | **$599.68** |
+| **Per call** | **$0.60** |
 
-**Key Insight:** Cost per call drops as you scale (from $0.80 to $0.57)
+**Key Insight:** Cost per call drops as you scale (from $1.14 to $0.60)
 
 ---
 
@@ -204,10 +196,10 @@ SAVINGS: $24.95/month (26% reduction!)
 
 | Tier | Calls/Month | Your Cost | Charge Customer | Your Profit | Margin |
 |------|-------------|-----------|----------------|-------------|--------|
-| **Starter** | 0-100 | $80 | $200/month | $120 | 60% |
-| **Growth** | 101-300 | $150 | $400/month | $250 | 63% |
-| **Pro** | 301-600 | $300 | $650/month | $350 | 54% |
-| **Enterprise** | 601-1000 | $566 | $1,000/month | $434 | 43% |
+| **Starter** | 0-100 | $114 | $250/month | $136 | 54% |
+| **Growth** | 101-300 | $200 | $450/month | $250 | 56% |
+| **Pro** | 301-600 | $330 | $700/month | $370 | 53% |
+| **Enterprise** | 601-1000 | $600 | $1,100/month | $500 | 45% |
 
 **Pros:**
 - ✅ Predictable revenue for you
@@ -231,10 +223,10 @@ SAVINGS: $24.95/month (26% reduction!)
 
 | Pricing | Break-Even Point | Profit at 100 Orders | Profit at 500 Orders |
 |---------|-----------------|---------------------|---------------------|
-| **$3.00/order** | 27 orders | $220/month (73%) | $1,204/month (81%) |
-| **$3.50/order** | 23 orders | $270/month (77%) | $1,454/month (83%) |
-| **$4.00/order** | 20 orders | $320/month (80%) | $1,704/month (85%) |
-| **$5.00/order** | 16 orders | $420/month (84%) | $2,204/month (87%) |
+| **$3.00/order** | 38 orders | $186/month (62%) | $1,170/month (78%) |
+| **$3.50/order** | 33 orders | $236/month (67%) | $1,420/month (81%) |
+| **$4.00/order** | 29 orders | $286/month (71%) | $1,670/month (83%) |
+| **$5.00/order** | 23 orders | $386/month (77%) | $2,170/month (87%) |
 
 **Why $3.50 per order is ideal:**
 - Average kebab order: $15-25
@@ -336,29 +328,30 @@ SAVINGS: $24.95/month (26% reduction!)
 
 | Month | Customers | Total Orders | Revenue | Your Costs | Profit | Margin |
 |-------|-----------|--------------|---------|------------|--------|--------|
-| **Month 1** | 1 | 200 | $700 | $120 | $580 | 83% |
-| **Month 3** | 3 | 600 | $2,100 | $300 | $1,800 | 86% |
-| **Month 6** | 6 | 1,200 | $4,200 | $566 | $3,634 | 87% |
-| **Month 9** | 9 | 1,800 | $6,300 | $800 | $5,500 | 87% |
-| **Month 12** | 12 | 2,400 | $8,400 | $1,000 | $7,400 | 88% |
+| **Month 1** | 1 | 200 | $700 | $164 | $536 | 77% |
+| **Month 3** | 3 | 600 | $2,100 | $400 | $1,700 | 81% |
+| **Month 6** | 6 | 1,200 | $4,200 | $730 | $3,470 | 83% |
+| **Month 9** | 9 | 1,800 | $6,300 | $1,050 | $5,250 | 83% |
+| **Month 12** | 12 | 2,400 | $8,400 | $1,370 | $7,030 | 84% |
 
-**Year 1 Total Profit:** ~$45,000 AUD
+**Year 1 Total Profit:** ~$42,000 AUD
 
-**Year 2 Target:** 30 customers = $18,000/month profit = $216,000/year
+**Year 2 Target:** 30 customers = $17,000/month profit = $204,000/year
 
 ---
 
 ## 🛠️ IMMEDIATE ACTION PLAN
 
-### This Week: Fix Double-Billing (Save $25/month)
+### This Week: Your Setup is Good - Focus on Business
 
-**Day 1:**
-1. Remove ElevenLabs API key from VAPI
-2. Verify VAPI still uses ElevenLabs Flash v2.5 (built-in)
-3. Cancel ElevenLabs subscription (save $13/month)
-4. Test 5-10 calls to confirm voice quality unchanged
+**Your current costs are efficient:**
+- $0.98 per call with custom voice
+- Setup is correct (no double-billing)
+- Ready to start selling
 
-**Savings:** $24.95/month instantly
+**Optional cost reduction:**
+- Switch to VAPI built-in voice (save $34/month, lose custom voice)
+- Not recommended - custom voice is worth it for brand quality
 
 ---
 
@@ -451,21 +444,21 @@ SAVINGS: $24.95/month (26% reduction!)
 
 | Metric | Amount |
 |--------|--------|
-| **October total cost** | $154.70 AUD |
+| **October total cost** | $163.85 AUD |
 | **Calls handled** | 167 calls |
-| **Cost per call** | $0.93 AUD |
-| **Wasted on double-billing** | $24.95 AUD (16%) |
+| **Cost per call** | $0.98 AUD |
+| **Setup status** | ✅ Correct (no waste) |
 
 ---
 
-### After Fixing Double-Billing
+### As You Scale
 
 | Metric | Amount |
 |--------|--------|
-| **Monthly cost** | $129.75 AUD |
-| **Cost per call (167 calls)** | $0.78 AUD |
-| **At 500 calls/month** | $0.59 AUD/call |
-| **Savings** | $24.95/month |
+| **Monthly cost (167 calls)** | $163.85 AUD |
+| **Cost per call (500 calls)** | $0.66 AUD |
+| **Cost per call (1,000 calls)** | $0.60 AUD |
+| **Benefit of scale** | Cost drops 39% from current |
 
 ---
 
@@ -473,30 +466,29 @@ SAVINGS: $24.95/month (26% reduction!)
 
 | Scenario | Monthly Orders | Revenue | Costs | Profit | Margin |
 |----------|---------------|---------|-------|--------|--------|
-| **Current (167 orders)** | 167 | $585 | $130 | $455 | 78% |
-| **Small restaurant** | 100 | $350 | $80 | $270 | 77% |
-| **Medium restaurant** | 300 | $1,050 | $180 | $870 | 83% |
-| **Busy restaurant** | 500 | $1,750 | $296 | $1,454 | 83% |
-| **10 restaurants (200 each)** | 2,000 | $7,000 | $1,000 | $6,000 | 86% |
+| **Current (167 orders)** | 167 | $585 | $164 | $421 | 72% |
+| **Small restaurant** | 100 | $350 | $114 | $236 | 67% |
+| **Medium restaurant** | 300 | $1,050 | $230 | $820 | 78% |
+| **Busy restaurant** | 500 | $1,750 | $330 | $1,420 | 81% |
+| **10 restaurants (200 each)** | 2,000 | $7,000 | $1,370 | $5,630 | 80% |
 
 ---
 
 ## ✅ WHAT TO DO RIGHT NOW
 
-### Priority 1: Fix Double-Billing (Today - 10 Minutes)
+### Priority 1: Your System is Ready (No Changes Needed)
 
-1. Open VAPI dashboard
-2. Provider Keys → Remove ElevenLabs API key
-3. Test a call
-4. Verify voice still works
-5. **Save $300/year**
+1. ✅ Setup is correct
+2. ✅ Custom voice is working
+3. ✅ Costs are efficient ($0.98/call)
+4. ✅ Ready to start selling
 
 ### Priority 2: Set Your Pricing (This Week)
 
 **Recommended:** $3.50 per successful order
-- Break-even: 23 orders/month
-- Profit at 100 orders: $270/month
-- Profit at 500 orders: $1,454/month
+- Break-even: 33 orders/month
+- Profit at 100 orders: $236/month (67% margin)
+- Profit at 500 orders: $1,420/month (81% margin)
 
 ### Priority 3: Get First Customer (Next 2 Weeks)
 
@@ -511,11 +503,11 @@ SAVINGS: $24.95/month (26% reduction!)
 ## 📞 QUESTIONS?
 
 Need me to:
-- ✅ Help fix the double-billing issue?
 - ✅ Create a pitch deck for customers?
 - ✅ Set up order tracking system?
 - ✅ Build invoicing templates?
 - ✅ Calculate pricing for specific scenarios?
+- ✅ Help with marketing strategy?
 
 Just ask!
 

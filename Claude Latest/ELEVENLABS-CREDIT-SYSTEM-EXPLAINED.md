@@ -1,5 +1,7 @@
 # 🎙️ ELEVENLABS CREDIT SYSTEM EXPLAINED
 
+⚠️ **WARNING: This document contains pricing errors. Please see VERIFIED-COST-BREAKDOWN-2025.md for accurate information.**
+
 **Critical Update to Cost Analysis**
 
 ---

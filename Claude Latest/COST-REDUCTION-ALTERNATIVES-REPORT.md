@@ -19,9 +19,9 @@
 | **Text-to-Speech** | ElevenLabs (custom) | $34.10/month | Your branded voice |
 | **Phone Service** | Twilio | $10.08/month + $0.031/min | Phone number + routing |
 | **SMS** | Twilio | $0.08/message | Order receipts |
-| **TOTAL** | - | **$0.98/call** | **Full system** |
+| **TOTAL** | - | **$0.49/min** | **$0.98/call** |
 
-**At 500 calls/month:** $329.68 AUD
+**At 500 calls/month (1,000 minutes):** $329.68 AUD ($0.33/min)
 
 ---
 
@@ -93,7 +93,8 @@ These handle your phone number and text messages.
 | Twilio SMS | 300 × $0.079 | $23.70 |
 | Server | Fixed | $15.50 |
 | **TOTAL** | - | **$222.88** |
-| **Per call** | 500 calls | **$0.66** |
+| **Per minute** | 1,000 min | **$0.22** |
+| **Per call** | 500 calls (2 min) | **$0.45** |
 
 ---
 
@@ -116,7 +117,8 @@ These handle your phone number and text messages.
 | SMS (via Retell/Twilio) | 300 × $0.040 | $12.00 |
 | Server | Fixed | $15.50 |
 | **TOTAL** | - | **$189.20** |
-| **Per call** | 500 calls | **$0.38** |
+| **Per minute** | 1,000 min | **$0.19** |
+| **Per call** | 500 calls (2 min) | **$0.38** |
 
 **Savings:** $33.68/month (15% reduction)
 
@@ -142,7 +144,8 @@ These handle your phone number and text messages.
 | Telnyx SMS | 300 × $0.040 | $12.00 |
 | Server | Fixed | $15.50 |
 | **TOTAL** | - | **$196.60** |
-| **Per call** | 500 calls | **$0.39** |
+| **Per minute** | 1,000 min | **$0.20** |
+| **Per call** | 500 calls (2 min) | **$0.39** |
 
 **Savings:** $26.28/month (12% reduction)
 
@@ -167,7 +170,8 @@ These handle your phone number and text messages.
 | Telnyx SMS | 300 × $0.040 | $12.00 |
 | Server | Fixed | $15.50 |
 | **TOTAL** | - | **$212.60** |
-| **Per call** | 500 calls | **$0.43** |
+| **Per minute** | 1,000 min | **$0.21** |
+| **Per call** | 500 calls (2 min) | **$0.43** |
 
 **Savings:** $10.28/month (5% reduction)
 
@@ -195,7 +199,8 @@ These handle your phone number and text messages.
 | SignalWire SMS | 300 × $0.039 | $11.70 |
 | Server | Fixed | $15.50 |
 | **TOTAL** | - | **$351.25** |
-| **Per call** | 500 calls | **$0.70** |
+| **Per minute** | 1,000 min | **$0.35** |
+| **Per call** | 500 calls (2 min) | **$0.70** |
 
 **More expensive** - Resemble has high subscription cost
 
@@ -218,7 +223,8 @@ These handle your phone number and text messages.
 | Telnyx SMS | 300 × $0.040 | $12.00 |
 | Server (dedicated) | Larger server needed | $31.00 |
 | **TOTAL** | - | **$181.10** |
-| **Per call** | 500 calls | **$0.36** |
+| **Per minute** | 1,000 min | **$0.18** |
+| **Per call** | 500 calls (2 min) | **$0.36** |
 
 **Trade-offs:**
 - ❌ NO custom voice (OpenAI doesn't support cloning)
@@ -252,14 +258,14 @@ These handle your phone number and text messages.
 
 ## 📋 COMPLETE COST COMPARISON TABLE
 
-| Scenario | Platform | Voice | Phone | Cost/Call | 500 Calls/Mo | Savings | Migration Effort |
-|----------|----------|-------|-------|-----------|-------------|---------|-----------------|
-| **Current** | VAPI | ElevenLabs | Twilio | $0.66 | $329.68 | Baseline | - |
-| **Scenario B** | Retell | ElevenLabs | Retell | $0.38 | $189.20 | 43% | Medium |
-| **Scenario C** ⭐ | VAPI | Cartesia | Telnyx | $0.39 | $196.60 | 40% | **Low** |
-| **Scenario D** | Retell | Cartesia | Telnyx | $0.43 | $212.60 | 36% | High |
-| **Scenario E** | VAPI | Resemble | SignalWire | $0.70 | $351.25 | -7% ❌ | Medium |
-| **Scenario F** | DIY | None | Telnyx | $0.36* | $181.10* | 45%* | **Very High** |
+| Scenario | Platform | Voice | Phone | $/Min | $/Call | 500 Calls/Mo | Savings | Effort |
+|----------|----------|-------|-------|-------|--------|-------------|---------|--------|
+| **Current** | VAPI | ElevenLabs | Twilio | $0.33 | $0.66 | $329.68 | Baseline | - |
+| **Scenario B** | Retell | ElevenLabs | Retell | $0.19 | $0.38 | $189.20 | 43% | Medium |
+| **Scenario C** ⭐ | VAPI | Cartesia | Telnyx | $0.20 | $0.39 | $196.60 | 40% | **Low** |
+| **Scenario D** | Retell | Cartesia | Telnyx | $0.21 | $0.43 | $212.60 | 36% | High |
+| **Scenario E** | VAPI | Resemble | SignalWire | $0.35 | $0.70 | $351.25 | -7% ❌ | Medium |
+| **Scenario F** | DIY | None | Telnyx | $0.18* | $0.36* | $181.10* | 45%* | Very High |
 
 *Scenario F excludes custom voice and requires 40-80 hours development
 

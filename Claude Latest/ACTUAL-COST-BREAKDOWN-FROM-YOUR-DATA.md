@@ -50,7 +50,9 @@
 - Number of calls: 334.289 ÷ 2 = **167 calls**
 
 **Total October costs:** $163.85 AUD
-**Cost per call:** $163.85 ÷ 167 = **$0.98 AUD per call**
+**Total minutes used:** 334.289 minutes
+**Cost per minute:** $163.85 ÷ 334.289 = **$0.49 AUD per minute**
+**Cost per call (2 min avg):** $163.85 ÷ 167 = **$0.98 AUD per call**
 
 ### Cost Breakdown Per Call
 
@@ -126,9 +128,10 @@ TOTAL: $105.85/month for core services
 | Twilio Calls | $8.14 | Inbound call routing |
 | Twilio SMS | $17.41 | Order receipts to customers |
 | Server/Other | $22.37 | Hosting, database, etc. |
-| **TOTAL** | **$163.85** | **For 167 calls** |
+| **TOTAL** | **$163.85** | **For 167 calls (334 minutes)** |
 
-**Cost per call:** $163.85 ÷ 167 = **$0.98 AUD**
+**Cost per minute:** $163.85 ÷ 334.289 min = **$0.49 AUD/min**
+**Cost per call (2 min avg):** $163.85 ÷ 167 = **$0.98 AUD/call**
 
 ---
 
@@ -147,7 +150,8 @@ TOTAL: $105.85/month for core services
 | SMS (60 messages × $0.08) | $4.80 |
 | Server | $15.50 |
 | **TOTAL** | **$113.68** |
-| **Per call** | **$1.14** |
+| **Per minute** | **$0.57** |
+| **Per call (2 min)** | **$1.14** |
 
 ---
 
@@ -162,7 +166,8 @@ TOTAL: $105.85/month for core services
 | SMS (300 messages × $0.08) | $24.00 |
 | Server | $15.50 |
 | **TOTAL** | **$329.68** |
-| **Per call** | **$0.66** |
+| **Per minute** | **$0.33** |
+| **Per call (2 min)** | **$0.66** |
 
 ---
 
@@ -177,9 +182,10 @@ TOTAL: $105.85/month for core services
 | SMS (600 messages × $0.08) | $48.00 |
 | Server | $15.50 |
 | **TOTAL** | **$599.68** |
-| **Per call** | **$0.60** |
+| **Per minute** | **$0.30** |
+| **Per call (2 min)** | **$0.60** |
 
-**Key Insight:** Cost per call drops as you scale (from $1.14 to $0.60)
+**Key Insight:** Cost per minute drops as you scale (from $0.57 to $0.30)
 
 ---
 
@@ -221,12 +227,12 @@ TOTAL: $105.85/month for core services
 
 **Recommended Pricing:**
 
-| Pricing | Break-Even Point | Profit at 100 Orders | Profit at 500 Orders |
-|---------|-----------------|---------------------|---------------------|
-| **$3.00/order** | 38 orders | $186/month (62%) | $1,170/month (78%) |
-| **$3.50/order** | 33 orders | $236/month (67%) | $1,420/month (81%) |
-| **$4.00/order** | 29 orders | $286/month (71%) | $1,670/month (83%) |
-| **$5.00/order** | 23 orders | $386/month (77%) | $2,170/month (87%) |
+| Pricing | Break-Even Point | Cost Coverage | Profit at 100 Orders | Profit at 500 Orders |
+|---------|-----------------|---------------|---------------------|---------------------|
+| **$3.00/order** | 38 orders | $0.57/min | $186/month (62%) | $1,170/month (78%) |
+| **$3.50/order** | 33 orders | $0.49/min | $236/month (67%) | $1,420/month (81%) |
+| **$4.00/order** | 29 orders | $0.43/min | $286/month (71%) | $1,670/month (83%) |
+| **$5.00/order** | 23 orders | $0.34/min | $386/month (77%) | $2,170/month (87%) |
 
 **Why $3.50 per order is ideal:**
 - Average kebab order: $15-25
@@ -445,7 +451,9 @@ TOTAL: $105.85/month for core services
 | Metric | Amount |
 |--------|--------|
 | **October total cost** | $163.85 AUD |
-| **Calls handled** | 167 calls |
+| **Minutes used** | 334.289 minutes |
+| **Calls handled** | 167 calls (2 min avg) |
+| **Cost per minute** | $0.49 AUD |
 | **Cost per call** | $0.98 AUD |
 | **Setup status** | ✅ Correct (no waste) |
 
@@ -456,9 +464,12 @@ TOTAL: $105.85/month for core services
 | Metric | Amount |
 |--------|--------|
 | **Monthly cost (167 calls)** | $163.85 AUD |
+| **Current cost per minute** | $0.49 AUD |
+| **Cost per minute (500 calls)** | $0.33 AUD |
+| **Cost per minute (1,000 calls)** | $0.30 AUD |
 | **Cost per call (500 calls)** | $0.66 AUD |
 | **Cost per call (1,000 calls)** | $0.60 AUD |
-| **Benefit of scale** | Cost drops 39% from current |
+| **Benefit of scale** | Cost per minute drops 39% |
 
 ---
 

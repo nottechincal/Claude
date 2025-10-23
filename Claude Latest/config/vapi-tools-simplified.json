@@ -223,7 +223,7 @@
       "type": "function",
       "function": {
         "name": "convertItemsToMeals",
-        "description": "Convert kebabs in cart to meals (kebab + chips + drink). Use when customer says 'make it a meal' or 'upgrade to meal'. Can specify drink brand, chips size, and which items to convert.",
+        "description": "Convert kebabs or HSPs to combo meals. KEBAB COMBO = kebab + chips + drink. HSP COMBO = HSP + drink (HSP already includes chips). Use when customer says 'make it a meal/combo', 'add a drink', or orders items that should be combos. Can specify drink brand, chips size (kebabs only), and which items to convert.",
         "strict": false,
         "parameters": {
           "type": "object",
@@ -233,7 +233,7 @@
               "items": {
                 "type": "number"
               },
-              "description": "Optional: specific cart item indices to convert (0-based). If not provided, converts ALL kebabs."
+              "description": "Optional: specific cart item indices to convert (0-based). If not provided, converts ALL kebabs and HSPs."
             },
             "drinkBrand": {
               "type": "string",

@@ -19,9 +19,77 @@ import os
 import sqlite3
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+try:
+    from flask import Flask, request, jsonify
+    from flask_cors import CORS
+except ModuleNotFoundError:  # pragma: no cover - exercised only in CI without Flask
+    # Minimal fallbacks so tests can run in environments without Flask installed.
+    from types import SimpleNamespace
+
+    class _RequestProxy:
+        def __init__(self):
+            self._stack: List[SimpleNamespace] = []
+
+        def push(self, payload: Dict[str, Any]):
+            self._stack.append(SimpleNamespace(json=payload))
+
+        def pop(self):
+            if self._stack:
+                self._stack.pop()
+
+        def get_json(self, *_, **__):
+            if not self._stack:
+                return {}
+            return self._stack[-1].json or {}
+
+    class _TestRequestContext:
+        def __init__(self, app: "Flask", json: Optional[Dict[str, Any]] = None):
+            self.app = app
+            self.json = json or {}
+
+        def __enter__(self):
+            request.push(self.json)
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            request.pop()
+
+    class Flask:  # type: ignore
+        def __init__(self, name: str):
+            self.name = name
+
+        def route(self, *_args, **_kwargs):
+            def decorator(func):
+                return func
+
+            return decorator
+
+        def get(self, *args, **kwargs):
+            return self.route(*args, **kwargs)
+
+        def post(self, *args, **kwargs):
+            return self.route(*args, **kwargs)
+
+        def test_request_context(self, json: Optional[Dict[str, Any]] = None):
+            return _TestRequestContext(self, json=json)
+
+        def run(self, *_, **__):
+            raise RuntimeError("Flask is not installed in this environment")
+
+    def jsonify(payload: Dict[str, Any]):
+        return payload
+
+    def CORS(_app):  # noqa: N802 - matching Flask extension signature
+        return _app
+
+    request = _RequestProxy()
+
+# Optional Twilio client for SMS notifications
+try:  # pragma: no cover - optional dependency
+    from twilio.rest import Client  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - exercised only when Twilio isn't installed
+    Client = None  # type: ignore
 
 # ==================== CONFIGURATION ====================
 
@@ -46,6 +114,12 @@ logger = logging.getLogger(__name__)
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 MENU_FILE = os.path.join(DATA_DIR, 'menu.json')
 DB_FILE = os.path.join(DATA_DIR, 'orders.db')
+
+# Business constants
+MENU_LINK_URL = os.getenv('MENU_LINK_URL', 'https://www.kebabalab.com.au/menu.html')
+SHOP_NUMBER_DEFAULT = os.getenv('SHOP_ORDER_TO', '0423680596')
+SHOP_NAME = os.getenv('SHOP_NAME', 'Kebabalab')
+SHOP_ADDRESS = os.getenv('SHOP_ADDRESS', 'Melbourne')
 
 # Global menu
 MENU = {}
@@ -136,6 +210,164 @@ def normalize_text(text: str) -> str:
         return ""
     return text.lower().strip()
 
+
+def _human_join(items: Iterable[str]) -> str:
+    """Join words with commas and 'and' for natural speech."""
+    cleaned = [str(item).strip() for item in items if str(item).strip()]
+    if not cleaned:
+        return ""
+    if len(cleaned) == 1:
+        return cleaned[0]
+    return ", ".join(cleaned[:-1]) + f" and {cleaned[-1]}"
+
+
+def _title_case_phrase(value: Optional[str]) -> str:
+    if not value:
+        return ""
+    words = re.split(r"\s+", str(value).replace('_', ' ').strip())
+    return " ".join(word.capitalize() for word in words if word)
+
+
+def _format_time_for_display(dt: datetime) -> str:
+    formatted = dt.strftime("%I:%M %p")
+    return formatted.lstrip('0') if formatted.startswith('0') else formatted
+
+
+def _format_pickup_phrase(dt: datetime, minutes_offset: Optional[int] = None) -> str:
+    formatted = _format_time_for_display(dt)
+    if minutes_offset is not None:
+        return f"in {minutes_offset} minutes ({formatted})"
+    return formatted
+
+
+def _normalize_au_local(phone: str) -> str:
+    digits = re.sub(r"\D+", "", str(phone or ""))
+    if not digits:
+        return str(phone or "").strip()
+    if digits.startswith("61") and len(digits) == 11:
+        return "0" + digits[2:]
+    if digits.startswith("0") and len(digits) == 10:
+        return digits
+    return digits
+
+
+def _au_to_e164(phone: str) -> str:
+    digits = re.sub(r"\D+", "", str(phone or ""))
+    if not digits:
+        return str(phone or "")
+    if digits.startswith("0") and len(digits) == 10:
+        return "+61" + digits[1:]
+    if digits.startswith("61") and len(digits) == 11:
+        return "+" + digits
+    if str(phone).startswith("+"):
+        return str(phone)
+    return str(phone)
+
+
+def _get_twilio_client():  # pragma: no cover - optional runtime dependency
+    if Client is None:
+        return None, None
+    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+    from_number = os.getenv('TWILIO_FROM') or os.getenv('TWILIO_PHONE_NUMBER')
+    if not all([account_sid, auth_token, from_number]):
+        return None, None
+    try:
+        client = Client(account_sid, auth_token)
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.error(f"Failed to initialise Twilio client: {exc}")
+        return None, None
+    return client, from_number
+
+
+def _send_sms(phone: str, body: str) -> Tuple[bool, Optional[str]]:
+    client, from_number = _get_twilio_client()
+    if not client or not from_number:
+        return False, "SMS not configured"
+    try:
+        client.messages.create(body=body, from_=from_number, to=_au_to_e164(phone))
+        return True, None
+    except Exception as exc:  # pragma: no cover - network dependant
+        logger.error(f"Failed to send SMS to {phone}: {exc}")
+        return False, str(exc)
+
+
+def _format_item_for_sms(item: Dict) -> str:
+    qty = item.get('quantity', 1)
+    prefix = f"{qty}x " if qty and qty > 1 else ""
+    size = _title_case_phrase(item.get('size'))
+    protein = _title_case_phrase(item.get('protein'))
+    category = _title_case_phrase(item.get('category')) or _title_case_phrase(item.get('name'))
+
+    if item.get('category') == 'kebabs':
+        base = f"{size} {protein} Kebab".strip()
+        if item.get('is_combo'):
+            chips_size = _title_case_phrase(item.get('chips_size') or 'small')
+            drink = _title_case_phrase(item.get('drink_brand') or 'coke')
+            base = f"{size} {protein} Kebab Meal ({chips_size} chips, {drink})".strip()
+    elif item.get('category') == 'hsp':
+        cheese_text = "with cheese" if item.get('cheese') else "no cheese"
+        base = f"{size} {protein} HSP ({cheese_text})"
+    else:
+        base = item.get('name') or category
+
+    salads = item.get('salads') or []
+    sauces = item.get('sauces') or []
+    extras = [e for e in (item.get('extras') or []) if e]
+
+    lines = [f"{prefix}{base}".strip()]
+    if salads:
+        lines.append(f"  • Salads: {_human_join(_title_case_phrase(s) for s in salads)}")
+    if sauces:
+        lines.append(f"  • Sauces: {_human_join(_title_case_phrase(s) for s in sauces)}")
+    if extras:
+        lines.append(f"  • Extras: {_human_join(_title_case_phrase(e) for e in extras)}")
+
+    return "\n".join(lines)
+
+
+def _send_order_notifications(
+    order_display_number: str,
+    customer_name: str,
+    customer_phone: str,
+    cart: List[Dict],
+    total: float,
+    ready_phrase: str,
+    send_customer_sms: bool = True,
+):
+    client, from_number = _get_twilio_client()
+    if not client or not from_number:  # pragma: no cover - optional runtime dependency
+        logger.warning("SMS notifications skipped - Twilio not configured")
+        return
+
+    cart_summary = "\n\n".join(_format_item_for_sms(item) for item in cart)
+
+    if send_customer_sms:
+        customer_message = (
+            f"🥙 {SHOP_NAME.upper()} ORDER {order_display_number}\n\n"
+            f"{cart_summary}\n\n"
+            f"TOTAL: ${total:.2f}\n"
+            f"Ready {ready_phrase}\n\n"
+            f"Thank you, {customer_name}!"
+        )
+        success, error = _send_sms(customer_phone, customer_message)
+        if not success:
+            logger.error(f"Customer SMS failed: {error}")
+
+    shop_number = SHOP_NUMBER_DEFAULT
+    shop_message = (
+        f"🔔 NEW ORDER {order_display_number}\n\n"
+        f"Customer: {customer_name}\n"
+        f"Phone: {customer_phone}\n"
+        f"Pickup: {ready_phrase}\n\n"
+        f"ORDER DETAILS:\n{cart_summary}\n\n"
+        f"TOTAL: ${total:.2f}\n"
+        f"Location: {SHOP_ADDRESS}"
+    )
+    success, error = _send_sms(shop_number, shop_message)
+    if not success:
+        logger.error(f"Shop SMS failed: {error}")
+
 def parse_protein(text: str) -> Optional[str]:
     """Extract protein type from text"""
     text = normalize_text(text)
@@ -155,10 +387,19 @@ def parse_size(text: str) -> Optional[str]:
     """Extract size from text"""
     text = normalize_text(text)
 
-    if any(word in text for word in ['large', 'big', 'l ']):
-        return 'large'
-    if any(word in text for word in ['small', 's ']):
+    if not text:
+        return None
+
+    # Match explicit words first to avoid substring collisions (e.g. "small" containing "l ")
+    if re.search(r"\bsmall\b", text):
         return 'small'
+    if re.search(r"\bs\b", text):
+        return 'small'
+
+    if re.search(r"\blarge\b", text) or re.search(r"\bbig\b", text):
+        return 'large'
+    if re.search(r"\bl\b", text):
+        return 'large'
 
     return None
 
@@ -209,6 +450,26 @@ def parse_sauces(text: str) -> List[str]:
         return []
 
     return sauces
+
+
+def parse_extras(text: str) -> List[str]:
+    """Extract extras such as cheese or haloumi from text."""
+    text = normalize_text(text)
+    extras: List[str] = []
+
+    extra_keywords = {
+        "cheese": ["cheese", "extra cheese", "add cheese", "with cheese"],
+        "haloumi": ["haloumi", "halloumi"],
+        "jalapenos": ["jalapeno", "jalapeño", "jalapenos"],
+        "olives": ["olive", "olives"],
+        "extra meat": ["extra meat", "more meat", "double meat"],
+    }
+
+    for extra, keywords in extra_keywords.items():
+        if any(keyword in text for keyword in keywords):
+            extras.append(extra)
+
+    return extras
 
 def parse_quantity(text: str) -> int:
     """Extract quantity from text"""
@@ -283,63 +544,60 @@ def calculate_price(item: Dict) -> float:
     return price
 
 def format_cart_item(item: Dict, index: int) -> str:
-    """Format a cart item for human reading"""
-    parts = []
+    """Format a cart item for natural order review."""
+    qty = max(1, int(item.get('quantity', 1) or 1))
+    qty_prefix = f"{qty}x " if qty > 1 else ""
 
-    # Quantity
-    qty = item.get('quantity', 1)
-    if qty > 1:
-        parts.append(f"{qty}x")
+    category = item.get('category')
+    size = _title_case_phrase(item.get('size'))
+    protein = _title_case_phrase(item.get('protein'))
+    salads = [s.lower() for s in (item.get('salads') or [])]
+    sauces = [s.lower() for s in (item.get('sauces') or [])]
+    extras = [e.lower() for e in (item.get('extras') or [])]
 
-    # Size
-    size = item.get('size', '')
-    if size:
-        parts.append(size.capitalize())
+    segments: List[str] = []
 
-    # Protein
-    protein = item.get('protein', '')
-    if protein:
-        parts.append(protein.capitalize())
+    if category == 'kebabs':
+        base = f"{size} {protein} kebab".strip()
+        if item.get('is_combo'):
+            chips_size = _title_case_phrase(item.get('chips_size') or 'small')
+            drink = _title_case_phrase(item.get('drink_brand') or 'coke')
+            base = f"{size} {protein} kebab meal with {chips_size.lower()} chips and a {drink}"
+        segments.append(base.strip())
+        segments.append(
+            f"salads: {_human_join(s.capitalize() for s in salads) if salads else 'none'}"
+        )
+        segments.append(
+            f"sauces: {_human_join(s.capitalize() for s in sauces) if sauces else 'none'}"
+        )
+    elif category == 'hsp':
+        cheese_flag = item.get('cheese') or ('cheese' in extras)
+        cheese_text = 'yes' if cheese_flag else 'no'
+        base = f"{size} {protein} HSP"
+        segments.append(base.strip())
+        segments.append(f"cheese: {cheese_text}")
+        segments.append(
+            f"sauces: {_human_join(s.capitalize() for s in sauces) if sauces else 'none'}"
+        )
+    elif category == 'chips':
+        salt_type = item.get('salt_type') or item.get('salt')
+        base = f"{size} chips".strip()
+        if salt_type:
+            base += f" with {salt_type} salt"
+        segments.append(base)
+    else:
+        name = item.get('name') or category or 'Item'
+        segments.append(_title_case_phrase(name))
 
-    # Category/Name
-    category = item.get('category', '').title()
-    name = item.get('name', category)
-    if not name:
-        name = category
-    parts.append(name)
+    extras_filtered = [e for e in extras if e != 'cheese']
+    if extras_filtered:
+        segments.append(
+            f"extras: {_human_join(e.capitalize() for e in extras_filtered)}"
+        )
 
-    # Combo info
-    if item.get('is_combo'):
-        combo_parts = []
-        chips_size = item.get('chips_size', 'small')
-        if chips_size:
-            combo_parts.append(f"{chips_size} chips")
-        drink = item.get('drink_brand', 'Coke')
-        if drink:
-            combo_parts.append(drink)
-        if combo_parts:
-            parts.append(f"({', '.join(combo_parts)})")
-
-    # Salads
-    salads = item.get('salads', [])
-    if salads:
-        parts.append(f"w/ {', '.join(salads)}")
-
-    # Sauces
-    sauces = item.get('sauces', [])
-    if sauces:
-        parts.append(f"+ {', '.join(sauces)} sauce")
-
-    # Extras
-    extras = item.get('extras', [])
-    if extras:
-        parts.append(f"+ {', '.join(extras)}")
-
-    # Price
     price = calculate_price(item) * qty
-    parts.append(f"- ${price:.2f}")
-
-    return f"{index}. {' '.join(parts)}"
+    line = f"{index}. {qty_prefix}{' | '.join(segments)} - ${price:.2f}"
+    return line.strip()
 
 # ==================== TOOL IMPLEMENTATIONS ====================
 
@@ -524,6 +782,9 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Parse sauces
         sauces = parse_sauces(description)
 
+        # Parse extras/add-ons
+        extras = parse_extras(description)
+
         # Create item
         item = {
             "category": category,
@@ -532,9 +793,10 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
             "protein": protein,
             "salads": salads,
             "sauces": sauces,
-            "extras": [],
+            "extras": extras,
             "quantity": quantity,
-            "is_combo": False
+            "is_combo": False,
+            "cheese": "cheese" in extras,
         }
 
         # Calculate price
@@ -665,6 +927,122 @@ def tool_remove_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 # Tool 7: editCartItem - THE CRITICAL ONE
+_MOD_KEY_CANDIDATES: Tuple[str, ...] = (
+    "property",
+    "name",
+    "field",
+    "key",
+    "attribute",
+    "path",
+    "propertyName",
+    "prop",
+)
+
+_MOD_VALUE_CANDIDATES: Tuple[str, ...] = (
+    "value",
+    "newValue",
+    "new_value",
+    "values",
+    "val",
+    "propertyValue",
+)
+
+
+def _coerce_key_value(entry: Dict[str, Any]) -> Optional[Tuple[str, Any]]:
+    """Extract a key/value pair from a mapping if it stores the data indirectly."""
+    key = None
+    for candidate in _MOD_KEY_CANDIDATES:
+        if candidate in entry and entry[candidate] not in (None, ""):
+            key = str(entry[candidate])
+            break
+
+    if not key:
+        return None
+
+    for candidate in _MOD_VALUE_CANDIDATES:
+        if candidate in entry:
+            return key, entry[candidate]
+
+    # Some payloads provide the value under the derived key
+    if key in entry:
+        return key, entry[key]
+
+    return None
+
+
+def _normalise_mapping(mapping: Dict[str, Any], parent_key: Optional[str] = None) -> Dict[str, Any]:
+    extracted = _coerce_key_value(mapping)
+    if extracted:
+        key, value = extracted
+        return {key: value}
+
+    if parent_key:
+        for candidate in _MOD_VALUE_CANDIDATES:
+            if candidate in mapping:
+                return {parent_key: mapping[candidate]}
+
+    normalised: Dict[str, Any] = {}
+    for key, value in mapping.items():
+        if isinstance(value, dict):
+            extracted_child = _coerce_key_value(value)
+            if extracted_child and extracted_child[0] == key:
+                normalised[key] = extracted_child[1]
+                continue
+            nested = _normalise_mapping(value, parent_key=key)
+            for nested_key, nested_value in nested.items():
+                normalised[nested_key] = nested_value
+        else:
+            normalised[key] = value
+
+    # If the mapping only contained helper keys (like property/value) recurse once more
+    if not normalised:
+        return {}
+
+    # Collapse cases where recursion produced {"value": "large"}
+    extracted_again = _coerce_key_value(normalised)
+    if extracted_again:
+        key, value = extracted_again
+        return {key: value}
+
+    return normalised
+
+
+def _normalise_modifications(raw: Any) -> Dict[str, Any]:
+    """Normalise different modification payload shapes into a dict."""
+    if raw is None:
+        return {}
+
+    if isinstance(raw, dict):
+        return _normalise_mapping(raw)
+
+    if isinstance(raw, str):
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError:
+            logger.warning("Failed to decode modifications string; defaulting to empty dict")
+            return {}
+        return _normalise_modifications(decoded)
+
+    if isinstance(raw, (list, tuple, set)):
+        collected: Dict[str, Any] = {}
+        iterable: Iterable[Any] = list(raw)
+        for entry in iterable:
+            if isinstance(entry, dict):
+                for key, value in _normalise_mapping(entry).items():
+                    collected[key] = value
+            elif isinstance(entry, (list, tuple)) and entry:
+                key = entry[0]
+                if key is None:
+                    continue
+                value = entry[1] if len(entry) > 1 else None
+                collected[str(key)] = value
+            else:
+                continue
+        return collected
+
+    return {}
+
+
 def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Edit ANY property of a cart item in ONE call.
@@ -679,10 +1057,37 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     try:
         item_index = params.get('itemIndex')
-        modifications = params.get('modifications', {})
+
+        modifications = _normalise_modifications(params.get('modifications'))
+
+        # Accept VAPI "properties" payloads in all supported shapes
+        if not modifications:
+            modifications = _normalise_modifications(params.get('properties'))
+
+        # Some integrations send {"property": "size", "value": "large"}
+        if not modifications and params.get('property') and 'value' in params:
+            modifications = {str(params['property']): params['value']}
+
+        if not modifications:
+            # Fall back to treating any additional params as modifications
+            fallback = {
+                key: value
+                for key, value in params.items()
+                if key not in {"itemIndex", "modifications", "properties", "property", "value"}
+            }
+            modifications = _normalise_modifications(fallback)
 
         if item_index is None:
             return {"ok": False, "error": "itemIndex is required"}
+
+        if modifications:
+            aux_keys = set(_MOD_KEY_CANDIDATES) | set(_MOD_VALUE_CANDIDATES)
+            cleaned = {}
+            for key, value in modifications.items():
+                if key in aux_keys and any(k not in aux_keys for k in modifications):
+                    continue
+                cleaned[key] = value
+            modifications = cleaned
 
         if not modifications:
             return {"ok": False, "error": "modifications object is required"}
@@ -706,6 +1111,10 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         for field, value in modifications.items():
             if field == "size":
                 item["size"] = value
+                name = item.get("name", "")
+                if name:
+                    updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
+                    item["name"] = updated
             elif field == "protein":
                 item["protein"] = value
             elif field == "salads":
@@ -794,13 +1203,18 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
             quantity = item.get('quantity', 1)
             subtotal += item_price * quantity
 
-        gst = round(subtotal * 0.1, 2)  # 10% GST
-        total = round(subtotal + gst, 2)
+        total = round(subtotal, 2)
+        gst = 0.0
 
         session_set('cart_priced', True)
         session_set('last_subtotal', subtotal)
         session_set('last_gst', gst)
         session_set('last_total', total)
+        session_set('last_totals', {
+            'subtotal': round(subtotal, 2),
+            'gst': gst,
+            'grand_total': total,
+        })
 
         return {
             "ok": True,
@@ -808,7 +1222,7 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
             "gst": gst,
             "total": total,
             "itemCount": len(cart),
-            "message": f"Total: ${total:.2f} (includes ${gst:.2f} GST)"
+            "message": f"Total: ${total:.2f}"
         }
 
     except Exception as e:
@@ -901,29 +1315,23 @@ def tool_get_order_summary(params: Dict[str, Any]) -> Dict[str, Any]:
         for idx, item in enumerate(cart):
             summary_lines.append(format_cart_item(item, idx + 1))
 
-        # Get pricing
-        subtotal = session_get('last_subtotal', 0.0)
-        gst = session_get('last_gst', 0.0)
-        total = session_get('last_total', 0.0)
+        totals_snapshot = session_get('last_totals', {})
+        total = totals_snapshot.get('grand_total')
 
-        # If not priced yet, calculate now
-        if not session_get('cart_priced'):
+        if total is None or not session_get('cart_priced'):
             price_result = tool_price_cart({})
-            subtotal = price_result.get('subtotal', 0.0)
-            gst = price_result.get('gst', 0.0)
-            total = price_result.get('total', 0.0)
+            totals_snapshot = session_get('last_totals', {})
+            total = price_result.get('total', totals_snapshot.get('grand_total', 0.0))
 
         summary_lines.append("")
-        summary_lines.append(f"Subtotal: ${subtotal:.2f}")
-        summary_lines.append(f"GST: ${gst:.2f}")
-        summary_lines.append(f"TOTAL: ${total:.2f}")
+        summary_lines.append(f"Total: ${float(total or 0.0):.2f}")
 
         summary_text = "\n".join(summary_lines)
 
         return {
             "ok": True,
             "summary": summary_text,
-            "total": total,
+            "total": float(total or 0.0),
             "itemCount": len(cart)
         }
 
@@ -940,49 +1348,63 @@ def tool_set_pickup_time(params: Dict[str, Any]) -> Dict[str, Any]:
         if not requested_time:
             return {"ok": False, "error": "requestedTime is required"}
 
-        # Parse the time (simple implementation)
-        # In production, use dateparser or similar
         requested_time_clean = requested_time.lower().strip()
-
-        # Try to extract time
+        now = datetime.now()
         pickup_time = None
+        minutes_offset: Optional[int] = None
 
-        # Check for "in X minutes"
         if 'minute' in requested_time_clean:
             match = re.search(r'(\d+)\s*minute', requested_time_clean)
             if match:
                 minutes = int(match.group(1))
-                pickup_time = datetime.now() + timedelta(minutes=minutes)
+                if minutes < 10:
+                    return {"ok": False, "error": "Pickup time must be at least 10 minutes from now"}
+                minutes_offset = minutes
+                pickup_time = now + timedelta(minutes=minutes)
+        else:
+            ampm_match = re.search(r'(\d+)(?::(\d+))?\s*(am|pm)', requested_time_clean)
+            time_only_match = re.search(r'\b(\d{1,2})(?::(\d{2}))\b', requested_time_clean)
 
-        # Check for specific time like "6pm" or "18:00"
-        elif 'pm' in requested_time_clean or 'am' in requested_time_clean:
-            match = re.search(r'(\d+)(?::(\d+))?\s*(am|pm)', requested_time_clean)
-            if match:
-                hour = int(match.group(1))
-                minute = int(match.group(2)) if match.group(2) else 0
-                meridiem = match.group(3)
+            if ampm_match:
+                hour = int(ampm_match.group(1))
+                minute = int(ampm_match.group(2)) if ampm_match.group(2) else 0
+                meridiem = ampm_match.group(3)
 
                 if meridiem == 'pm' and hour < 12:
                     hour += 12
                 elif meridiem == 'am' and hour == 12:
                     hour = 0
 
-                pickup_time = datetime.now().replace(hour=hour, minute=minute, second=0)
+                pickup_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            elif time_only_match:
+                hour = int(time_only_match.group(1))
+                minute = int(time_only_match.group(2)) if time_only_match.group(2) else 0
+                if hour < 24 and minute < 60:
+                    pickup_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
         if not pickup_time:
             return {"ok": False, "error": f"Couldn't parse time from '{requested_time}'"}
 
+        if pickup_time <= now:
+            pickup_time += timedelta(days=1)
+
+        diff_minutes = int((pickup_time - now).total_seconds() // 60)
+        if diff_minutes < 10:
+            return {"ok": False, "error": "Pickup time must be at least 10 minutes from now"}
+
         ready_at_iso = pickup_time.isoformat()
-        ready_at_formatted = pickup_time.strftime("%I:%M %p")
+        ready_at_formatted = _format_time_for_display(pickup_time)
+        ready_phrase = _format_pickup_phrase(pickup_time, minutes_offset) if minutes_offset is not None else f"at {ready_at_formatted}"
 
         session_set('ready_at', ready_at_iso)
         session_set('ready_at_formatted', ready_at_formatted)
+        session_set('ready_at_speech', ready_phrase)
 
         return {
             "ok": True,
             "readyAt": ready_at_formatted,
             "readyAtIso": ready_at_iso,
-            "message": f"Pickup time set for {ready_at_formatted}"
+            "message": f"Pickup time set for {ready_phrase}",
         }
 
     except Exception as e:
@@ -1004,17 +1426,19 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
 
         ready_time = datetime.now() + timedelta(minutes=total_minutes)
         ready_at_iso = ready_time.isoformat()
-        ready_at_formatted = ready_time.strftime("%I:%M %p")
+        ready_at_formatted = _format_time_for_display(ready_time)
+        ready_phrase = f"in about {total_minutes} minutes ({ready_at_formatted})"
 
         session_set('ready_at', ready_at_iso)
         session_set('ready_at_formatted', ready_at_formatted)
+        session_set('ready_at_speech', ready_phrase)
 
         return {
             "ok": True,
             "estimatedMinutes": total_minutes,
             "readyAt": ready_at_formatted,
             "readyAtIso": ready_at_iso,
-            "message": f"Your order will be ready in about {total_minutes} minutes (around {ready_at_formatted})"
+            "message": f"Your order will be ready {ready_phrase}"
         }
 
     except Exception as e:
@@ -1026,8 +1450,9 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Create and save final order to database"""
     try:
         customer_name = params.get('customerName', '').strip()
-        customer_phone = params.get('customerPhone', '').strip()
+        customer_phone = _normalize_au_local(params.get('customerPhone', '').strip())
         notes = params.get('notes', '').strip()
+        send_sms_raw = params.get('sendSMS', True)
 
         if not customer_name:
             return {"ok": False, "error": "customerName is required"}
@@ -1040,67 +1465,124 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         if not cart:
             return {"ok": False, "error": "Cart is empty"}
 
-        # Get pricing
         if not session_get('cart_priced'):
             tool_price_cart({})
 
-        subtotal = session_get('last_subtotal', 0.0)
-        gst = session_get('last_gst', 0.0)
-        total = session_get('last_total', 0.0)
+        totals_snapshot = session_get('last_totals', {})
+        subtotal = totals_snapshot.get('subtotal', session_get('last_subtotal', 0.0))
+        total = totals_snapshot.get('grand_total', session_get('last_total', 0.0))
+        gst = 0.0
 
-        # Get ready time
         ready_at_iso = session_get('ready_at', '')
-
         if not ready_at_iso:
-            # Auto-estimate if not set
             estimate_result = tool_estimate_ready_time({})
             ready_at_iso = estimate_result.get('readyAtIso', '')
 
-        # Generate order number
+        ready_at_formatted = session_get('ready_at_formatted', '')
+        ready_phrase = session_get('ready_at_speech', ready_at_formatted)
+        if isinstance(send_sms_raw, str):
+            send_sms_flag = send_sms_raw.strip().lower() not in {'false', '0', 'no'}
+        else:
+            send_sms_flag = bool(send_sms_raw)
+
         today = datetime.now().strftime("%Y%m%d")
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
 
-        cursor.execute('''
+        cursor.execute(
+            '''
             SELECT COUNT(*) FROM orders WHERE order_number LIKE ?
-        ''', (f"{today}-%",))
+            ''',
+            (f"{today}-%",),
+        )
 
         count = cursor.fetchone()[0]
         order_number = f"{today}-{count + 1:03d}"
+        display_order = f"#{count + 1:03d}"
 
-        # Save order
-        cursor.execute('''
+        cursor.execute(
+            '''
             INSERT INTO orders (
                 order_number, customer_name, customer_phone,
                 cart_json, subtotal, gst, total,
                 ready_at, notes, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            order_number, customer_name, customer_phone,
-            json.dumps(cart), subtotal, gst, total,
-            ready_at_iso, notes, 'pending'
-        ))
+            ''',
+            (
+                order_number,
+                customer_name,
+                customer_phone,
+                json.dumps(cart),
+                float(subtotal),
+                gst,
+                float(total),
+                ready_at_iso,
+                notes,
+                'pending',
+            ),
+        )
 
         conn.commit()
         conn.close()
 
         logger.info(f"Order {order_number} created for {customer_name}")
 
-        # Clear cart
+        display_ready = ready_phrase or ready_at_formatted or 'soon'
+
+        try:
+            _send_order_notifications(
+                display_order,
+                customer_name,
+                customer_phone,
+                cart,
+                float(total),
+                display_ready,
+                send_sms_flag,
+            )
+        except Exception as notification_error:  # pragma: no cover - safety net
+            logger.error(f"Failed to send SMS notifications: {notification_error}")
+
         session_set('cart', [])
         session_set('cart_priced', False)
 
         return {
             "ok": True,
             "orderNumber": order_number,
-            "total": total,
-            "readyAt": session_get('ready_at_formatted', ''),
-            "message": f"Order {order_number} confirmed! Total ${total:.2f}. Ready at {session_get('ready_at_formatted', '')}"
+            "displayOrderNumber": display_order,
+            "total": float(total),
+            "readyAt": ready_at_formatted,
+            "message": f"Order {display_order} confirmed! Total ${float(total):.2f}, ready {display_ready}",
         }
 
     except Exception as e:
         logger.error(f"Error creating order: {e}", exc_info=True)
         return {"ok": False, "error": str(e)}
+
+
+def tool_send_menu_link(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Send the digital menu link via SMS."""
+    try:
+        phone_number = params.get('phoneNumber', '').strip()
+
+        if not phone_number:
+            return {"ok": False, "error": "phoneNumber is required"}
+
+        message = (
+            "🥙 KEBABALAB MENU\n\n"
+            f"Check out our full menu: {MENU_LINK_URL}\n\n"
+            f"Call or text us on {SHOP_NUMBER_DEFAULT} if you need a hand!"
+        )
+
+        success, error = _send_sms(phone_number, message)
+        if not success:
+            return {"ok": False, "error": error or "SMS not configured"}
+
+        return {"ok": True, "message": "Menu link sent!", "menuUrl": MENU_LINK_URL}
+
+    except Exception as e:
+        logger.error(f"Error sending menu link: {e}")
+        return {"ok": False, "error": str(e)}
+
 
 # Tool 14: repeatLastOrder
 def tool_repeat_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -1181,6 +1663,7 @@ TOOLS = {
     "setPickupTime": tool_set_pickup_time,
     "estimateReadyTime": tool_estimate_ready_time,
     "createOrder": tool_create_order,
+    "sendMenuLink": tool_send_menu_link,
     "repeatLastOrder": tool_repeat_last_order,
     "endCall": tool_end_call,
 }
@@ -1203,30 +1686,62 @@ def webhook():
     try:
         data = request.get_json() or {}
         message = data.get('message', {})
-        tool_call = message.get('toolCalls', [{}])[0] if message.get('toolCalls') else {}
-        function_name = tool_call.get('function', {}).get('name', '')
-        arguments = tool_call.get('function', {}).get('arguments', {})
+        tool_calls = message.get('toolCalls', []) or []
 
-        if not function_name:
-            return jsonify({"error": "No function specified"}), 400
+        if not tool_calls:
+            return jsonify({"error": "No tool calls provided"}), 400
 
-        logger.info(f"Tool call: {function_name}({arguments})")
+        results = []
 
-        # Get tool function
-        tool_func = TOOLS.get(function_name)
+        for tool_call in tool_calls:
+            function_data = tool_call.get('function', {})
+            function_name = function_data.get('name', '')
+            raw_arguments = function_data.get('arguments', {})
+            tool_call_id = tool_call.get('id') or tool_call.get('toolCallId')
 
-        if not tool_func:
-            logger.error(f"Unknown tool: {function_name}")
-            return jsonify({"error": f"Unknown tool: {function_name}"}), 404
+            if isinstance(raw_arguments, str):
+                try:
+                    arguments = json.loads(raw_arguments)
+                except json.JSONDecodeError:
+                    logger.warning("Failed to decode tool arguments string; defaulting to empty dict")
+                    arguments = {}
+            else:
+                arguments = raw_arguments or {}
 
-        # Execute tool
-        result = tool_func(arguments)
+            if not function_name:
+                logger.error("Tool call missing function name")
+                results.append({
+                    "toolCallId": tool_call_id,
+                    "result": {"ok": False, "error": "No function specified"}
+                })
+                continue
 
-        logger.info(f"Tool result: {result}")
+            logger.info(f"Tool call: {function_name}({arguments})")
 
-        return jsonify({
-            "results": [result]
-        })
+            tool_func = TOOLS.get(function_name)
+
+            if not tool_func:
+                logger.error(f"Unknown tool: {function_name}")
+                results.append({
+                    "toolCallId": tool_call_id,
+                    "result": {"ok": False, "error": f"Unknown tool: {function_name}"}
+                })
+                continue
+
+            try:
+                result = tool_func(arguments)
+            except Exception as tool_error:
+                logger.error(f"Error executing tool {function_name}: {tool_error}", exc_info=True)
+                result = {"ok": False, "error": str(tool_error)}
+
+            logger.info(f"Tool result: {result}")
+
+            results.append({
+                "toolCallId": tool_call_id,
+                "result": result
+            })
+
+        return jsonify({"results": results})
 
     except Exception as e:
         logger.error(f"Webhook error: {e}", exc_info=True)

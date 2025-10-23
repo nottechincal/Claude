@@ -29,11 +29,14 @@ app = Flask(__name__)
 CORS(app)
 
 # Logging
+# Create logs directory if it doesn't exist
+os.makedirs('logs', exist_ok=True)
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('kebabalab_simplified.log'),
+        logging.FileHandler('logs/kebabalab_simplified.log'),
         logging.StreamHandler()
     ]
 )
@@ -54,6 +57,9 @@ SESSIONS = {}
 
 def init_database():
     """Initialize SQLite database for orders"""
+    # Create data directory if it doesn't exist
+    os.makedirs(DATA_DIR, exist_ok=True)
+
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 

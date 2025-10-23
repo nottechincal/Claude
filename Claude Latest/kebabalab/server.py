@@ -212,13 +212,13 @@ def normalize_text(text: str) -> str:
 
 
 def _human_join(items: Iterable[str]) -> str:
-    """Join words with commas and 'and' for natural speech."""
+    """Join words with commas for natural speech."""
     cleaned = [str(item).strip() for item in items if str(item).strip()]
     if not cleaned:
         return ""
     if len(cleaned) == 1:
         return cleaned[0]
-    return ", ".join(cleaned[:-1]) + f" and {cleaned[-1]}"
+    return ", ".join(cleaned)
 
 
 def _title_case_phrase(value: Optional[str]) -> str:
@@ -1399,6 +1399,9 @@ def tool_set_pickup_time(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set('ready_at', ready_at_iso)
         session_set('ready_at_formatted', ready_at_formatted)
         session_set('ready_at_speech', ready_phrase)
+        session_set('pickup_confirmed', True)
+        session_set('pickup_method', 'customer')
+        session_set('pickup_requested_text', requested_time)
 
         return {
             "ok": True,
@@ -1432,6 +1435,9 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set('ready_at', ready_at_iso)
         session_set('ready_at_formatted', ready_at_formatted)
         session_set('ready_at_speech', ready_phrase)
+        session_set('pickup_confirmed', True)
+        session_set('pickup_method', 'estimate')
+        session_set('pickup_requested_text', f"asap ~{total_minutes}m")
 
         return {
             "ok": True,
@@ -1473,10 +1479,18 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         total = totals_snapshot.get('grand_total', session_get('last_total', 0.0))
         gst = 0.0
 
+        if not session_get('pickup_confirmed', False):
+            return {
+                "ok": False,
+                "error": "Pickup time not confirmed. Ask the customer when they'd like it ready, then call setPickupTime or estimateReadyTime.",
+            }
+
         ready_at_iso = session_get('ready_at', '')
         if not ready_at_iso:
-            estimate_result = tool_estimate_ready_time({})
-            ready_at_iso = estimate_result.get('readyAtIso', '')
+            return {
+                "ok": False,
+                "error": "Pickup time missing. Call setPickupTime or estimateReadyTime before creating the order.",
+            }
 
         ready_at_formatted = session_get('ready_at_formatted', '')
         ready_phrase = session_get('ready_at_speech', ready_at_formatted)
@@ -1528,6 +1542,14 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"Order {order_number} created for {customer_name}")
 
         display_ready = ready_phrase or ready_at_formatted or 'soon'
+        cart_snapshot = json.loads(json.dumps(cart))
+
+        session_set('last_order_cart', cart_snapshot)
+        session_set('last_order_total', float(total))
+        session_set('last_order_display', display_order)
+        session_set('last_ready_phrase', display_ready)
+        session_set('last_customer_name', customer_name)
+        session_set('last_customer_phone', customer_phone)
 
         try:
             _send_order_notifications(
@@ -1544,6 +1566,7 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
         session_set('cart', [])
         session_set('cart_priced', False)
+        session_set('pickup_confirmed', False)
 
         return {
             "ok": True,
@@ -1581,6 +1604,47 @@ def tool_send_menu_link(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error sending menu link: {e}")
+        return {"ok": False, "error": str(e)}
+
+
+def tool_send_receipt(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Send the latest order receipt via SMS."""
+    try:
+        phone_number = params.get('phoneNumber', '').strip()
+
+        if not phone_number:
+            return {"ok": False, "error": "phoneNumber is required"}
+
+        cart_snapshot = session_get('last_order_cart') or session_get('cart', [])
+        if not cart_snapshot:
+            return {"ok": False, "error": "No recent order available to send"}
+
+        total = session_get('last_order_total', session_get('last_total', 0.0))
+        display_order = session_get('last_order_display', '').strip() or '#---'
+        ready_phrase = session_get(
+            'last_ready_phrase',
+            session_get('ready_at_speech', session_get('ready_at_formatted', 'soon')),
+        )
+        customer_name = session_get('last_customer_name', '').strip() or 'Customer'
+
+        cart_summary = "\n\n".join(_format_item_for_sms(item) for item in cart_snapshot)
+
+        message = (
+            f"🥙 {SHOP_NAME.upper()} RECEIPT {display_order}\n\n"
+            f"{cart_summary}\n\n"
+            f"TOTAL: ${float(total):.2f}\n"
+            f"Ready {ready_phrase}\n\n"
+            f"Thanks, {customer_name}!"
+        )
+
+        success, error = _send_sms(phone_number, message)
+        if not success:
+            return {"ok": False, "error": error or "SMS not configured"}
+
+        return {"ok": True, "message": "Receipt sent!", "order": display_order}
+
+    except Exception as e:
+        logger.error(f"Error sending receipt: {e}")
         return {"ok": False, "error": str(e)}
 
 
@@ -1664,6 +1728,7 @@ TOOLS = {
     "estimateReadyTime": tool_estimate_ready_time,
     "createOrder": tool_create_order,
     "sendMenuLink": tool_send_menu_link,
+    "sendReceipt": tool_send_receipt,
     "repeatLastOrder": tool_repeat_last_order,
     "endCall": tool_end_call,
 }

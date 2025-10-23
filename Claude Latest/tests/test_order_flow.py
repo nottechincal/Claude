@@ -14,6 +14,7 @@ from kebabalab.server import (
     tool_get_order_summary,
     tool_price_cart,
     tool_quick_add_item,
+    tool_send_receipt,
     tool_set_pickup_time,
 )
 
@@ -24,6 +25,7 @@ def _start_session(call_id: str):
     ctx.__enter__()
     session_set("cart", [])
     session_set("cart_priced", False)
+    session_set("pickup_confirmed", False)
     return ctx
 
 
@@ -131,10 +133,28 @@ def test_create_order_returns_short_display_number(tmp_path, monkeypatch):
         server_module.DB_FILE = str(temp_db)
         init_database()
 
+        sent_messages = []
+
+        def fake_send_sms(phone, body):
+            sent_messages.append((phone, body))
+            return True, None
+
+        monkeypatch.setattr(server_module, "_send_sms", fake_send_sms)
+
         ctx = _start_session("create-order")
         try:
             tool_quick_add_item({"description": "small chicken kebab with garlic sauce"})
             tool_price_cart({})
+            tool_edit_cart_item({"itemIndex": 0, "properties": {"sauces": ["garlic", "chilli"]}})
+
+            premature = tool_create_order({
+                "customerName": "Tom",
+                "customerPhone": "0423680596",
+            })
+
+            assert premature["ok"] is False
+            assert "Pickup time" in premature["error"]
+
             tool_set_pickup_time({"requestedTime": "in 15 minutes"})
 
             result = tool_create_order({
@@ -147,6 +167,14 @@ def test_create_order_returns_short_display_number(tmp_path, monkeypatch):
             assert result["total"] == pytest.approx(10.0)
             assert "Order #" in result["message"]
             assert "GST" not in result["message"].upper()
+
+            receipt = tool_send_receipt({"phoneNumber": "0423680596"})
+
+            assert receipt["ok"] is True
+            assert receipt["order"] == result["displayOrderNumber"]
+            assert sent_messages, "Expected SMS messages to be recorded"
+            assert "RECEIPT" in sent_messages[-1][1]
+            assert "Garlic, Chilli" in sent_messages[-1][1]
 
         finally:
             _end_session(ctx)

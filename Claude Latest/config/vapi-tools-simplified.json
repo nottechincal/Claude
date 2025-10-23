@@ -353,6 +353,30 @@
     {
       "type": "function",
       "function": {
+        "name": "sendReceipt",
+        "description": "Send an SMS receipt for the most recent order to the specified phone number.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Phone number that should receive the receipt"
+            }
+          },
+          "required": [
+            "phoneNumber"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "createOrder",
         "description": "Create and save the final order to database. Must be called AFTER estimateReadyTime or setPickupTime. Clears the cart after successful creation.",
         "strict": true,

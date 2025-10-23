@@ -155,10 +155,19 @@ def parse_size(text: str) -> Optional[str]:
     """Extract size from text"""
     text = normalize_text(text)
 
-    if any(word in text for word in ['large', 'big', 'l ']):
-        return 'large'
-    if any(word in text for word in ['small', 's ']):
+    if not text:
+        return None
+
+    # Match explicit words first to avoid substring collisions (e.g. "small" containing "l ")
+    if re.search(r"\bsmall\b", text):
         return 'small'
+    if re.search(r"\bs\b", text):
+        return 'small'
+
+    if re.search(r"\blarge\b", text) or re.search(r"\bbig\b", text):
+        return 'large'
+    if re.search(r"\bl\b", text):
+        return 'large'
 
     return None
 
@@ -1203,30 +1212,62 @@ def webhook():
     try:
         data = request.get_json() or {}
         message = data.get('message', {})
-        tool_call = message.get('toolCalls', [{}])[0] if message.get('toolCalls') else {}
-        function_name = tool_call.get('function', {}).get('name', '')
-        arguments = tool_call.get('function', {}).get('arguments', {})
+        tool_calls = message.get('toolCalls', []) or []
 
-        if not function_name:
-            return jsonify({"error": "No function specified"}), 400
+        if not tool_calls:
+            return jsonify({"error": "No tool calls provided"}), 400
 
-        logger.info(f"Tool call: {function_name}({arguments})")
+        results = []
 
-        # Get tool function
-        tool_func = TOOLS.get(function_name)
+        for tool_call in tool_calls:
+            function_data = tool_call.get('function', {})
+            function_name = function_data.get('name', '')
+            raw_arguments = function_data.get('arguments', {})
+            tool_call_id = tool_call.get('id') or tool_call.get('toolCallId')
 
-        if not tool_func:
-            logger.error(f"Unknown tool: {function_name}")
-            return jsonify({"error": f"Unknown tool: {function_name}"}), 404
+            if isinstance(raw_arguments, str):
+                try:
+                    arguments = json.loads(raw_arguments)
+                except json.JSONDecodeError:
+                    logger.warning("Failed to decode tool arguments string; defaulting to empty dict")
+                    arguments = {}
+            else:
+                arguments = raw_arguments or {}
 
-        # Execute tool
-        result = tool_func(arguments)
+            if not function_name:
+                logger.error("Tool call missing function name")
+                results.append({
+                    "toolCallId": tool_call_id,
+                    "result": {"ok": False, "error": "No function specified"}
+                })
+                continue
 
-        logger.info(f"Tool result: {result}")
+            logger.info(f"Tool call: {function_name}({arguments})")
 
-        return jsonify({
-            "results": [result]
-        })
+            tool_func = TOOLS.get(function_name)
+
+            if not tool_func:
+                logger.error(f"Unknown tool: {function_name}")
+                results.append({
+                    "toolCallId": tool_call_id,
+                    "result": {"ok": False, "error": f"Unknown tool: {function_name}"}
+                })
+                continue
+
+            try:
+                result = tool_func(arguments)
+            except Exception as tool_error:
+                logger.error(f"Error executing tool {function_name}: {tool_error}", exc_info=True)
+                result = {"ok": False, "error": str(tool_error)}
+
+            logger.info(f"Tool result: {result}")
+
+            results.append({
+                "toolCallId": tool_call_id,
+                "result": result
+            })
+
+        return jsonify({"results": results})
 
     except Exception as e:
         logger.error(f"Webhook error: {e}", exc_info=True)

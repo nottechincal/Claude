@@ -19,9 +19,11 @@ All deployment scripts have been validated and are ready to use:
 - ✅ `deploy-my-assistant.ps1` (quick deploy with your credentials)
 
 ### Configuration
-- ✅ Assistant ID: 320f76b1-140a-412c-b95f-252032911ca3
-- ✅ Webhook URL: https://surveyable-natisha-unsacred.ngrok-free.dev
-- ✅ API Key: Configured in deploy-my-assistant.ps1
+- ✅ Assistant ID: Set in `.env` file (see `.env.example`)
+- ✅ Webhook URL: Set in `.env` file or deployment script
+- ✅ API Key: Set in `.env` file - **NEVER commit to git!**
+
+**SECURITY NOTE:** All credentials must be stored in `.env` file (not committed to version control) or passed as environment variables. See `.env.example` for required configuration.
 
 ## How to Deploy (Windows)
 

@@ -1,13 +1,20 @@
+import os
+
 import pytest
 
 from server_simplified import (
+    DB_FILE,
     app,
+    init_database,
     session_get,
     session_set,
     tool_convert_items_to_meals,
+    tool_create_order,
     tool_edit_cart_item,
+    tool_get_order_summary,
     tool_price_cart,
     tool_quick_add_item,
+    tool_set_pickup_time,
 )
 
 
@@ -44,7 +51,8 @@ def test_end_to_end_order_flow():
 
         price_snapshot = tool_price_cart({})
         assert price_snapshot["ok"] is True
-        assert price_snapshot["total"] == pytest.approx(11.0)
+        assert price_snapshot["total"] == pytest.approx(10.0)
+        assert "GST" not in price_snapshot["message"].upper()
 
         meal_upgrade = tool_convert_items_to_meals(
             {"drinkBrand": "Coke", "chipsSize": "large", "chipsSalt": "chicken"}
@@ -83,7 +91,66 @@ def test_end_to_end_order_flow():
 
         final_totals = tool_price_cart({})
         assert final_totals["ok"] is True
-        assert final_totals["total"] > 0
+        assert final_totals["total"] == pytest.approx(62.0)
+        assert final_totals["gst"] == 0
+        assert "GST" not in final_totals["message"].upper()
+
+        summary = tool_get_order_summary({})
+        assert summary["ok"] is True
+        assert "GST" not in summary["summary"].upper()
 
     finally:
         _end_session(ctx)
+
+
+def test_set_pickup_time_enforces_minimum():
+    ctx = _start_session("pickup-check")
+
+    try:
+        too_soon = tool_set_pickup_time({"requestedTime": "in 5 minutes"})
+        assert too_soon["ok"] is False
+        assert "10 minutes" in too_soon["error"]
+
+        acceptable = tool_set_pickup_time({"requestedTime": "in 15 minutes"})
+        assert acceptable["ok"] is True
+        assert "15 minutes" in acceptable["message"]
+
+    finally:
+        _end_session(ctx)
+
+
+def test_create_order_returns_short_display_number(tmp_path, monkeypatch):
+    temp_db = tmp_path / "orders.db"
+    monkeypatch.setenv("SHOP_ORDER_TO", "0423680596")
+
+    original_db = DB_FILE
+    try:
+        # Point the module-level DB file to the temporary path
+        import server_simplified
+
+        server_simplified.DB_FILE = str(temp_db)
+        init_database()
+
+        ctx = _start_session("create-order")
+        try:
+            tool_quick_add_item({"description": "small chicken kebab with garlic sauce"})
+            tool_price_cart({})
+            tool_set_pickup_time({"requestedTime": "in 15 minutes"})
+
+            result = tool_create_order({
+                "customerName": "Tom",
+                "customerPhone": "0423680596",
+            })
+
+            assert result["ok"] is True
+            assert result["displayOrderNumber"].startswith("#")
+            assert result["total"] == pytest.approx(10.0)
+            assert "Order #" in result["message"]
+            assert "GST" not in result["message"].upper()
+
+        finally:
+            _end_session(ctx)
+    finally:
+        server_simplified.DB_FILE = original_db
+        if temp_db.exists():
+            os.remove(temp_db)

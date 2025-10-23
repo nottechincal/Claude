@@ -324,8 +324,8 @@ Write-Host "   - Save assistant" -ForegroundColor White
 Write-Host ""
 Write-Host "2. Test the deployment:" -ForegroundColor Yellow
 Write-Host "   - Call your VAPI phone number" -ForegroundColor White
-Write-Host "   - Order: 'Chicken kebab meal with Coke'" -ForegroundColor White
-Write-Host "   - Say: 'Can you make the chips large?'" -ForegroundColor White
+Write-Host "   - Order: Chicken kebab meal with Coke" -ForegroundColor White
+Write-Host "   - Say: Can you make the chips large?" -ForegroundColor White
 Write-Host "   - Expected: Updates in <5 seconds, price = `$25" -ForegroundColor White
 Write-Host ""
 Write-Host "3. Monitor server logs:" -ForegroundColor Yellow

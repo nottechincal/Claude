@@ -1,6 +1,7 @@
 # Runtime files
 *.log
 *.db
+*.db-journal
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,3 +20,15 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Project directories with runtime data
+logs/*.log
+data/orders.db
+data/*.db
+backups/*.db
+backups/*.sql
+
+# Keep directory structure
+!logs/.gitkeep
+!data/.gitkeep
+!backups/.gitkeep

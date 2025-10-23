@@ -222,11 +222,12 @@ class DatabaseConnection:
         return False
 
 def init_database():
-    """Initialize SQLite database for orders"""
+    """Initialize SQLite database for orders with indexes for performance"""
     # Create data directory if it doesn't exist
     os.makedirs(DATA_DIR, exist_ok=True)
 
     with DatabaseConnection() as cursor:
+        # Create orders table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -244,18 +245,44 @@ def init_database():
             )
         ''')
 
-    logger.info("Database initialized")
+        # Create indexes for frequently queried fields (improves order history lookup)
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_customer_phone ON orders(customer_phone)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_created_at ON orders(created_at DESC)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_order_number ON orders(order_number)')
+
+    logger.info("Database initialized with performance indexes")
 
 # ==================== MENU ====================
 
 def load_menu():
-    """Load menu from JSON file"""
+    """Load and validate menu from JSON file"""
     global MENU
     try:
         with open(MENU_FILE, 'r', encoding='utf-8') as f:
             MENU = json.load(f)
-        logger.info(f"Menu loaded successfully from {MENU_FILE}")
+
+        # Validate menu structure
+        if not isinstance(MENU, dict):
+            raise ValueError("Menu must be a dictionary")
+
+        # Validate categories exist
+        required_categories = ['kebabs', 'hsp', 'chips', 'drinks']
+        for category in required_categories:
+            if category not in MENU:
+                logger.warning(f"Menu missing category: {category}")
+
+        # Log menu stats
+        total_items = sum(len(cat.get('items', {})) for cat in MENU.values() if isinstance(cat, dict))
+        logger.info(f"Menu loaded: {len(MENU)} categories, {total_items} items from {MENU_FILE}")
         return True
+
+    except FileNotFoundError:
+        logger.error(f"Menu file not found: {MENU_FILE}")
+        logger.error("Server cannot operate without menu! Please ensure menu.json exists.")
+        return False
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in menu file: {e}")
+        return False
     except Exception as e:
         logger.error(f"Failed to load menu: {e}")
         return False

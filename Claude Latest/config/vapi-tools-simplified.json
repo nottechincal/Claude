@@ -48,7 +48,9 @@
               "description": "Natural language description of the item(s). Examples: 'large lamb kebab with garlic sauce', '2 cokes', 'small chicken hsp no salad'"
             }
           },
-          "required": ["description"]
+          "required": [
+            "description"
+          ]
         }
       },
       "async": false,
@@ -71,21 +73,58 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "category": {"type": "string", "description": "Item category: kebabs, hsp, chips, drinks, gozleme, sweets"},
-                  "size": {"type": "string", "description": "Size: small or large"},
-                  "protein": {"type": "string", "description": "Protein: lamb, chicken, mixed, falafel"},
-                  "salads": {"type": "array", "items": {"type": "string"}},
-                  "sauces": {"type": "array", "items": {"type": "string"}},
-                  "extras": {"type": "array", "items": {"type": "string"}},
-                  "quantity": {"type": "number", "description": "Quantity"},
-                  "brand": {"type": "string", "description": "Drink brand"},
-                  "salt_type": {"type": "string", "description": "Salt type for chips: chicken, normal, none"}
+                  "category": {
+                    "type": "string",
+                    "description": "Item category: kebabs, hsp, chips, drinks, gozleme, sweets"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Size: small or large"
+                  },
+                  "protein": {
+                    "type": "string",
+                    "description": "Protein: lamb, chicken, mixed, falafel"
+                  },
+                  "salads": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sauces": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "extras": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "description": "Quantity"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "Drink brand"
+                  },
+                  "salt_type": {
+                    "type": "string",
+                    "description": "Salt type for chips: chicken, normal, none"
+                  }
                 },
-                "required": ["category"]
+                "required": [
+                  "category"
+                ]
               }
             }
           },
-          "required": ["items"]
+          "required": [
+            "items"
+          ]
         }
       },
       "async": false,
@@ -124,7 +163,9 @@
               "description": "Zero-based index of item to remove (0 = first item, 1 = second, etc.)"
             }
           },
-          "required": ["itemIndex"]
+          "required": [
+            "itemIndex"
+          ]
         }
       },
       "async": false,
@@ -150,7 +191,10 @@
               "description": "Object containing fields to modify and their new values. Can include: size, protein, salads, sauces, extras, cheese, quantity, salt_type, chips_size. Example: {\"chips_size\": \"large\"} or {\"salads\": [\"lettuce\", \"tomato\"], \"sauces\": [\"garlic\"]}"
             }
           },
-          "required": ["itemIndex", "modifications"]
+          "required": [
+            "itemIndex",
+            "modifications"
+          ]
         }
       },
       "async": false,
@@ -186,7 +230,9 @@
           "properties": {
             "itemIndices": {
               "type": "array",
-              "items": {"type": "number"},
+              "items": {
+                "type": "number"
+              },
               "description": "Optional: specific cart item indices to convert (0-based). If not provided, converts ALL kebabs."
             },
             "drinkBrand": {
@@ -197,13 +243,20 @@
             "chipsSize": {
               "type": "string",
               "description": "Chips size: small or large. Default: small",
-              "enum": ["small", "large"],
+              "enum": [
+                "small",
+                "large"
+              ],
               "default": "small"
             },
             "chipsSalt": {
               "type": "string",
               "description": "Salt type for chips: chicken, normal, none. Default: chicken",
-              "enum": ["chicken", "normal", "none"],
+              "enum": [
+                "chicken",
+                "normal",
+                "none"
+              ],
               "default": "chicken"
             }
           },
@@ -246,7 +299,9 @@
               "description": "Customer's requested time. Examples: 'in 30 minutes', '6pm', '6:30 PM'"
             }
           },
-          "required": ["requestedTime"]
+          "required": [
+            "requestedTime"
+          ]
         }
       },
       "async": false,
@@ -264,6 +319,54 @@
           "type": "object",
           "properties": {},
           "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sendMenuLink",
+        "description": "Send the Kebabalab menu link to a phone number via SMS.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Phone number to send the menu link to"
+            }
+          },
+          "required": [
+            "phoneNumber"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sendReceipt",
+        "description": "Send an SMS receipt for the most recent order to the specified phone number.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Phone number that should receive the receipt"
+            }
+          },
+          "required": [
+            "phoneNumber"
+          ]
         }
       },
       "async": false,
@@ -293,7 +396,10 @@
               "description": "Optional special instructions or notes for the order"
             }
           },
-          "required": ["customerName", "customerPhone"]
+          "required": [
+            "customerName",
+            "customerPhone"
+          ]
         }
       },
       "async": false,
@@ -315,7 +421,9 @@
               "description": "Customer's phone number to look up last order"
             }
           },
-          "required": ["phoneNumber"]
+          "required": [
+            "phoneNumber"
+          ]
         }
       },
       "async": false,

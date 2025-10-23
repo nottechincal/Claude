@@ -135,7 +135,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Paths
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+# Get parent directory of kebabalab package (go up one level to project root)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 MENU_FILE = os.path.join(DATA_DIR, 'menu.json')
 DB_FILE = os.path.join(DATA_DIR, 'orders.db')
 
@@ -1147,11 +1149,14 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
                 "error": f"I didn't understand '{description}'. Try saying something like 'large chicken kebab with lettuce and garlic sauce' or '2 cokes' or 'small chips'."
             }
 
-        # Parse size
+        # Parse size - MUST ask customer, never default
         size = parse_size(description)
         if not size and category in ['kebabs', 'hsp', 'chips']:
-            # Default to large for kebabs/hsp, small for chips
-            size = 'large' if category in ['kebabs', 'hsp'] else 'small'
+            # Don't default - ask the customer!
+            return {
+                "ok": False,
+                "error": f"I need to know the size for the {category}. Would you like small or large?"
+            }
 
         # Parse protein (for kebabs/hsp)
         protein = None
@@ -1490,30 +1495,80 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Get the item
         item = cart[item_index]
 
-        logger.info(f"Editing item {item_index}: {modifications}")
+        # Log BEFORE state for debugging
+        logger.info(f"BEFORE EDIT - Item {item_index}: {json.dumps(item)}")
+        logger.info(f"Modifications requested: {json.dumps(modifications)}")
+
+        # Validate salads and sauces lists to prevent corruption
+        VALID_SALADS = ['lettuce', 'tomato', 'onion', 'pickles', 'olives']
+        VALID_SAUCES = ['garlic', 'chilli', 'bbq', 'tomato', 'sweet chilli', 'mayo', 'hummus']
 
         # Apply ALL modifications
         for field, value in modifications.items():
             if field == "size":
+                old_size = item.get("size")
                 item["size"] = value
+
+                # Update name if it starts with size word
                 name = item.get("name", "")
                 if name:
-                    updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
-                    item["name"] = updated
+                    # Replace Small/Large at the beginning of the name
+                    if name.startswith("Small") or name.startswith("Large"):
+                        updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
+                        item["name"] = updated
+                    else:
+                        # If name doesn't start with size, prepend it
+                        item["name"] = f"{value.capitalize()} {name}"
+
+                logger.info(f"Size changed from '{old_size}' to '{value}', name is now '{item['name']}'")
+
             elif field == "protein":
                 item["protein"] = value
+                logger.info(f"Protein changed to '{value}'")
+
             elif field == "salads":
-                item["salads"] = value if isinstance(value, list) else []
+                # Validate salads list
+                if isinstance(value, list):
+                    # Filter out any sauces that got mixed in
+                    valid_salads = [s for s in value if s.lower() not in VALID_SAUCES]
+                    invalid_items = [s for s in value if s.lower() in VALID_SAUCES]
+                    if invalid_items:
+                        logger.warning(f"SALAD CORRUPTION PREVENTED: Removed sauces from salads list: {invalid_items}")
+                    item["salads"] = valid_salads
+                else:
+                    item["salads"] = []
+                logger.info(f"Salads set to: {item['salads']}")
+
             elif field == "sauces":
-                item["sauces"] = value if isinstance(value, list) else []
+                # Validate sauces list
+                if isinstance(value, list):
+                    # Filter out any salads that got mixed in
+                    valid_sauces = [s for s in value if s.lower() not in VALID_SALADS]
+                    invalid_items = [s for s in value if s.lower() in VALID_SALADS]
+                    if invalid_items:
+                        logger.warning(f"SAUCE CORRUPTION PREVENTED: Removed salads from sauces list: {invalid_items}")
+                    item["sauces"] = valid_sauces
+                else:
+                    item["sauces"] = []
+                logger.info(f"Sauces set to: {item['sauces']}")
+
             elif field == "extras":
                 item["extras"] = value if isinstance(value, list) else []
+                logger.info(f"Extras set to: {item['extras']}")
+
             elif field == "cheese":
                 item["cheese"] = bool(value)
+                logger.info(f"Cheese set to: {item['cheese']}")
+
             elif field == "quantity":
+                old_qty = item.get("quantity", 1)
                 item["quantity"] = int(value) if value else 1
+                logger.info(f"Quantity changed from {old_qty} to {item['quantity']}")
+
             elif field == "salt_type":
                 item["salt_type"] = value
+                logger.info(f"Salt type set to: {value}")
+
             elif field == "chips_size":
                 # CRITICAL: Handle meal chips upgrade
                 if item.get('is_combo'):
@@ -1522,15 +1577,16 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
                     item['chips_size'] = new_chips_size
 
-                    # Recalculate combo price
-                    if "Small Kebab Meal" in item.get('name', ''):
+                    # Recalculate combo price based on kebab size and chips size
+                    kebab_size = item.get('size', 'small')
+                    if kebab_size == 'small':
                         if new_chips_size == "large":
                             item['price'] = 20.0
                             item['name'] = "Small Kebab Meal (Large Chips)"
                         else:
                             item['price'] = 17.0
                             item['name'] = "Small Kebab Meal"
-                    elif "Large Kebab Meal" in item.get('name', ''):
+                    else:  # large kebab
                         if new_chips_size == "large":
                             item['price'] = 25.0
                             item['name'] = "Large Kebab Meal (Large Chips)"
@@ -1542,19 +1598,24 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
                 else:
                     logger.warning(f"chips_size can only be modified on combo/meal items")
             else:
-                # Unknown field - just set it
+                # Unknown field - log warning and set it
+                logger.warning(f"Unknown field '{field}' being set to: {value}")
                 item[field] = value
 
-        # Recalculate price if needed
+        # ALWAYS recalculate price after modifications (unless it's a combo with fixed price)
         if not item.get('is_combo'):
+            old_price = item.get('price', 0.0)
             item['price'] = calculate_price(item)
+            if old_price != item['price']:
+                logger.info(f"Price recalculated from ${old_price:.2f} to ${item['price']:.2f}")
 
         # Update cart
         cart[item_index] = item
         session_set('cart', cart)
         session_set('cart_priced', False)
 
-        logger.info(f"Item {item_index} updated successfully: {item}")
+        # Log AFTER state for debugging
+        logger.info(f"AFTER EDIT - Item {item_index}: {json.dumps(item)}")
 
         return {
             "ok": True,

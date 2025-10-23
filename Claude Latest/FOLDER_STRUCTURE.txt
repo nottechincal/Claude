@@ -2,7 +2,10 @@ Claude Latest/
 │
 ├── 📄 README.md                          ⭐ Start here!
 ├── 📄 RUN_THIS.md                        ⭐ Quick deploy guide
-├── 🐍 server_simplified.py               ⭐ Main server (15 tools)
+├── 📦 kebabalab/
+│   ├── __init__.py                      📦 Package exports for simplified server
+│   └── server.py                        ⭐ Main server (15 tools)
+├── 🐍 server_simplified.py               ♻️ Backwards-compatible wrapper
 ├── 📄 requirements.txt
 ├── 📄 .env.example
 ├── 📄 .gitignore

@@ -17,7 +17,7 @@ class MockRequest:
 
 # Import server
 sys.path.insert(0, '.')
-import server_simplified as server
+from kebabalab import server as server
 
 # Mock the request context
 def mock_webhook_call(tool_name, params):

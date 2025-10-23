@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from server_simplified import (
+from kebabalab.server import (
     DB_FILE,
     app,
     init_database,
@@ -126,9 +126,9 @@ def test_create_order_returns_short_display_number(tmp_path, monkeypatch):
     original_db = DB_FILE
     try:
         # Point the module-level DB file to the temporary path
-        import server_simplified
+        from kebabalab import server as server_module
 
-        server_simplified.DB_FILE = str(temp_db)
+        server_module.DB_FILE = str(temp_db)
         init_database()
 
         ctx = _start_session("create-order")
@@ -151,6 +151,8 @@ def test_create_order_returns_short_display_number(tmp_path, monkeypatch):
         finally:
             _end_session(ctx)
     finally:
-        server_simplified.DB_FILE = original_db
+        from kebabalab import server as server_module
+
+        server_module.DB_FILE = original_db
         if temp_db.exists():
             os.remove(temp_db)

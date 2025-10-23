@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from server_simplified import app, session_get, session_set, tool_edit_cart_item
+from kebabalab.server import app, session_get, session_set, tool_edit_cart_item
 
 
 def test_edit_cart_item_accepts_properties_payload():

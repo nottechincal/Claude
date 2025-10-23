@@ -64,7 +64,10 @@ An **automated phone ordering system** for Kebabalab (kebab shop) using VAPI voi
 Claude Latest/
 ├── README.md                      # You are here
 ├── RUN_THIS.md                    # Quick deployment guide
-├── server_simplified.py           # Main server (15 tools)
+├── kebabalab/
+│   ├── __init__.py                # Package exports for the server
+│   └── server.py                  # Main server (15 tools)
+├── server_simplified.py           # Compatibility wrapper -> kebabalab.server
 ├── requirements.txt
 ├── .env.example
 │

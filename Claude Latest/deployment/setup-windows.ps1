@@ -72,36 +72,13 @@ foreach ($package in $packages) {
 
 Write-Host ""
 
-# Copy menu file if needed
-if (-not (Test-Path "data\menu.json")) {
-    if (Test-Path "menu.json") {
-        Write-Host "Copying menu.json to data directory..." -ForegroundColor Yellow
-        Copy-Item "menu.json" "data\menu.json"
-        Write-Host "  ✓ Menu file copied" -ForegroundColor Green
-    } else {
-        Write-Host "  ⚠️  Warning: menu.json not found" -ForegroundColor Yellow
-        Write-Host "  You may need to create it in the data directory" -ForegroundColor Yellow
-    }
+# Check for menu file
+Write-Host "Checking for menu file..." -ForegroundColor Yellow
+if (Test-Path "..\data\menu.json") {
+    Write-Host "  ✓ menu.json found in data directory" -ForegroundColor Green
 } else {
-    Write-Host "  ✓ menu.json exists in data directory" -ForegroundColor Green
-}
-Write-Host ""
-
-# Test database creation
-Write-Host "Testing database initialization..." -ForegroundColor Yellow
-$pythonCode = @"
-import sqlite3
-import os
-os.makedirs('data', exist_ok=True)
-conn = sqlite3.connect('data/orders.db')
-conn.close()
-"@
-
-try {
-    $pythonCode | python 2>&1 | Out-Null
-    Write-Host "  ✓ Database can be created" -ForegroundColor Green
-} catch {
-    Write-Host "  ✗ Database creation failed" -ForegroundColor Red
+    Write-Host "  ⚠  menu.json not found - server will need this file" -ForegroundColor Yellow
+    Write-Host "  Location: data\menu.json" -ForegroundColor Yellow
 }
 Write-Host ""
 
@@ -117,10 +94,13 @@ Write-Host "  backups/   - Database backups" -ForegroundColor White
 Write-Host "  config/    - Configuration files" -ForegroundColor White
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
-Write-Host "  1. Make sure menu.json is in the data/ directory" -ForegroundColor White
-Write-Host "  2. Run: python server_simplified.py" -ForegroundColor White
-Write-Host "  3. Test: python test_chip_upgrade.py" -ForegroundColor White
+Write-Host "  1. Go back to parent directory: cd .." -ForegroundColor White
+Write-Host "  2. Run server: python server_simplified.py" -ForegroundColor White
+Write-Host "  3. Test: python tests\test_chip_upgrade.py" -ForegroundColor White
 Write-Host ""
 Write-Host "To deploy to VAPI:" -ForegroundColor Yellow
-Write-Host "  .\deploy-vapi-tools.ps1 -ApiKey YOUR_KEY -AssistantId YOUR_ID -WebhookUrl YOUR_URL" -ForegroundColor White
+Write-Host "  cd deployment" -ForegroundColor White
+Write-Host "  .\deploy-my-assistant.ps1" -ForegroundColor White
+Write-Host ""
+Write-Host "[SUCCESS] Setup complete!" -ForegroundColor Green
 Write-Host ""

@@ -32,3 +32,7 @@ backups/*.sql
 !logs/.gitkeep
 !data/.gitkeep
 !backups/.gitkeep
+
+# IMPORTANT: Credential files (do not commit!)
+deploy-my-assistant.ps1
+config/vapi-tool-ids.json

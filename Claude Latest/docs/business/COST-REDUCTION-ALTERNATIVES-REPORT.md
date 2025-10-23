@@ -84,17 +84,15 @@ These handle your phone number and text messages.
 
 | Component | Calculation | Cost (AUD) |
 |-----------|-------------|-----------|
-| VAPI platform | 1,000 min × $0.078 | $77.50 |
-| Deepgram STT | 1,000 min × $0.016 | $15.50 |
-| GPT-4o-mini | 1,000 min × $0.016 | $15.50 |
+| VAPI (Platform + STT + LLM) | 1,000 min × $0.215 | $215.00 |
 | ElevenLabs (custom) | $22 USD fixed | $34.10 |
 | Twilio phone# | $6.50 USD | $10.08 |
 | Twilio calls | 1,000 min × $0.031 | $31.00 |
-| Twilio SMS | 300 × $0.079 | $23.70 |
+| Twilio SMS | 300 × $0.08 | $24.00 |
 | Server | Fixed | $15.50 |
-| **TOTAL** | - | **$222.88** |
-| **Per minute** | 1,000 min | **$0.22** |
-| **Per call** | 500 calls (2 min) | **$0.45** |
+| **TOTAL** | - | **$329.68** |
+| **Per minute** | 1,000 min | **$0.33** |
+| **Per call** | 500 calls (2 min) | **$0.66** |
 
 ---
 
@@ -120,7 +118,7 @@ These handle your phone number and text messages.
 | **Per minute** | 1,000 min | **$0.19** |
 | **Per call** | 500 calls (2 min) | **$0.38** |
 
-**Savings:** $33.68/month (15% reduction)
+**Savings:** $140.48/month (43% reduction)
 
 ---
 
@@ -147,7 +145,7 @@ These handle your phone number and text messages.
 | **Per minute** | 1,000 min | **$0.20** |
 | **Per call** | 500 calls (2 min) | **$0.39** |
 
-**Savings:** $26.28/month (12% reduction)
+**Savings:** $133.08/month (40% reduction)
 
 ---
 
@@ -173,9 +171,9 @@ These handle your phone number and text messages.
 | **Per minute** | 1,000 min | **$0.21** |
 | **Per call** | 500 calls (2 min) | **$0.43** |
 
-**Savings:** $10.28/month (5% reduction)
+**Savings:** $117.08/month (36% reduction)
 
-**Why it's not cheaper:** Retell platform cost ($109) is higher than VAPI ($77.50) + Deepgram ($15.50) = $93
+**Why it's not cheapest:** Retell platform cost ($109) is higher than VAPI bundled rate ($215 for platform + STT + LLM)
 
 ---
 
@@ -202,7 +200,7 @@ These handle your phone number and text messages.
 | **Per minute** | 1,000 min | **$0.35** |
 | **Per call** | 500 calls (2 min) | **$0.70** |
 
-**More expensive** - Resemble has high subscription cost
+**Worse than current:** +$21.57/month (7% more expensive) - Resemble has high subscription cost
 
 ---
 
@@ -230,7 +228,9 @@ These handle your phone number and text messages.
 - ❌ NO custom voice (OpenAI doesn't support cloning)
 - ❌ High development time (40-80 hours)
 - ❌ Ongoing maintenance burden
-- ✅ Cheapest IF you exclude dev time
+- ✅ Cheapest per-minute cost IF you exclude dev time
+
+**Savings:** $148.58/month (45% reduction) - but loses custom voice
 
 ---
 
@@ -240,19 +240,19 @@ These handle your phone number and text messages.
 
 **Why this wins:**
 
-1. **Lowest cost with custom voice:** $0.39/call
+1. **Lowest cost with custom voice:** $0.20/min or $0.39/call (40% cheaper)
 2. **Minimal migration effort:** Just swap providers, keep your code
 3. **Keep VAPI:** You know it works, tools are integrated
 4. **Cartesia voice:** Same quality as ElevenLabs, 36% cheaper
 5. **Telnyx telephony:** 50-70% cheaper than Twilio, same quality
 
-**Monthly Savings:**
+**Monthly Savings (Scenario C vs Current):**
 
-| Volume | Current Cost | New Cost | Savings/Month | Savings/Year |
-|--------|-------------|----------|---------------|--------------|
-| 167 calls | $163.85 | $106.68 | **$57.17** | **$686** |
-| 500 calls | $329.68 | $196.60 | **$133.08** | **$1,597** |
-| 1,000 calls | $599.68 | $362.60 | **$237.08** | **$2,845** |
+| Volume (Minutes) | Current Cost | New Cost | Savings/Month | Savings/Year |
+|-----------------|-------------|----------|---------------|--------------|
+| 167 calls (334 min) | $163.85 | $106.68 | **$57.17** (35%) | **$686** |
+| 500 calls (1,000 min) | $329.68 | $196.60 | **$133.08** (40%) | **$1,597** |
+| 1,000 calls (2,000 min) | $599.68 | $362.60 | **$237.08** (40%) | **$2,845** |
 
 ---
 

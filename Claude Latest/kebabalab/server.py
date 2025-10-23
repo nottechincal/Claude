@@ -269,13 +269,14 @@ def load_menu():
 
         # Validate categories exist
         required_categories = ['kebabs', 'hsp', 'chips', 'drinks']
+        categories = MENU.get('categories', {})
         for category in required_categories:
-            if category not in MENU:
+            if category not in categories:
                 logger.warning(f"Menu missing category: {category}")
 
         # Log menu stats
-        total_items = sum(len(cat.get('items', {})) for cat in MENU.values() if isinstance(cat, dict))
-        logger.info(f"Menu loaded: {len(MENU)} categories, {total_items} items from {MENU_FILE}")
+        total_items = sum(len(items) for items in categories.values() if isinstance(items, list))
+        logger.info(f"Menu loaded: {len(categories)} categories, {total_items} items from {MENU_FILE}")
         return True
 
     except FileNotFoundError:
@@ -924,11 +925,18 @@ def calculate_price(item: Dict) -> float:
     for extra in extras:
         if extra in ['haloumi', 'halloumi']:
             price += 2.5
-        elif extra in ['extra meat', 'extra lamb', 'extra chicken']:
-            price += 3.0
+        elif extra in ['extra meat', 'extra lamb', 'extra chicken', 'extra mix']:
+            price += 4.0  # Website shows $4 for extra meat
         elif extra == 'cheese':
-            price += 1.0
+            # Cheese is INCLUDED in HSPs, only charge for kebabs
+            if category == 'kebabs':
+                price += 1.0
+            # For HSPs, cheese is already included in base price, don't add
         elif extra in ['olives', 'jalapenos']:
+            price += 1.0
+        elif extra == 'falafel':
+            price += 1.0
+        elif extra == 'hummus':
             price += 1.0
 
     return price
@@ -964,6 +972,9 @@ def format_cart_item(item: Dict, index: int) -> str:
         cheese_flag = item.get('cheese') or ('cheese' in extras)
         cheese_text = 'yes' if cheese_flag else 'no'
         base = f"{size} {protein} HSP"
+        if item.get('is_combo'):
+            drink = _title_case_phrase(item.get('drink_brand') or 'coke')
+            base = f"{size} {protein} HSP combo with {drink}"
         segments.append(base.strip())
         segments.append(f"cheese: {cheese_text}")
         segments.append(
@@ -1186,7 +1197,9 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
             "extras": extras,
             "quantity": quantity,
             "is_combo": False,
-            "cheese": "cheese" in extras,
+            # HSPs ALWAYS include cheese (it's included in price)
+            # Kebabs only get cheese if explicitly requested as extra
+            "cheese": True if category == 'hsp' else ("cheese" in extras),
         }
 
         # Calculate price
@@ -1224,16 +1237,20 @@ def tool_add_multiple_items_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         added_count = 0
 
         for item_config in items:
+            category = item_config.get('category', '')
+
             # Build item
             item = {
-                "category": item_config.get('category', ''),
+                "category": category,
                 "name": item_config.get('name', ''),
                 "size": item_config.get('size'),
                 "protein": item_config.get('protein'),
                 "salads": item_config.get('salads', []),
                 "sauces": item_config.get('sauces', []),
                 "extras": item_config.get('extras', []),
-                "cheese": item_config.get('cheese', False),
+                # HSPs ALWAYS include cheese (it's included in price)
+                # For other categories, use the provided value or False
+                "cheese": True if category == 'hsp' else item_config.get('cheese', False),
                 "quantity": item_config.get('quantity', 1),
                 "brand": item_config.get('brand'),
                 "salt_type": item_config.get('salt_type', 'chicken'),
@@ -1677,7 +1694,7 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
 
 # Tool 9: convertItemsToMeals
 def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Convert kebabs in cart to meals (kebab + chips + drink)"""
+    """Convert kebabs or HSPs in cart to combo meals"""
     try:
         cart = session_get('cart', [])
         item_indices = params.get('itemIndices')
@@ -1685,9 +1702,9 @@ def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
         chips_size = params.get('chipsSize', 'small')
         chips_salt = params.get('chipsSalt', 'chicken')
 
-        # If no indices specified, convert ALL kebabs
+        # If no indices specified, convert ALL kebabs and HSPs
         if item_indices is None:
-            item_indices = [i for i, item in enumerate(cart) if item.get('category') == 'kebabs']
+            item_indices = [i for i, item in enumerate(cart) if item.get('category') in ['kebabs', 'hsp']]
 
         if not item_indices:
             return {"ok": False, "error": "No items to convert"}
@@ -1699,32 +1716,43 @@ def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
                 continue
 
             item = cart[idx]
+            category = item.get('category')
 
-            # Can only convert kebabs
-            if item.get('category') != 'kebabs':
+            # Can only convert kebabs or HSPs
+            if category not in ['kebabs', 'hsp']:
                 continue
 
             # Skip if already a combo
             if item.get('is_combo'):
                 continue
 
-            # Convert to meal
-            kebab_size = item.get('size', 'small')
+            # Convert to meal/combo
+            item_size = item.get('size', 'small')
 
-            # Determine meal price
-            if kebab_size == 'small':
-                meal_price = 20.0 if chips_size == 'large' else 17.0
-                meal_name = f"Small Kebab Meal{' (Large Chips)' if chips_size == 'large' else ''}"
-            else:
-                meal_price = 25.0 if chips_size == 'large' else 22.0
-                meal_name = f"Large Kebab Meal{' (Large Chips)' if chips_size == 'large' else ''}"
+            if category == 'kebabs':
+                # Kebab combos: kebab + chips + drink
+                # From menu.json: small=$17, large=$22 (small chips), +$3 for large chips
+                if item_size == 'small':
+                    meal_price = 20.0 if chips_size == 'large' else 17.0
+                    meal_name = f"Small Kebab Meal{' (Large Chips)' if chips_size == 'large' else ''}"
+                else:
+                    meal_price = 25.0 if chips_size == 'large' else 22.0
+                    meal_name = f"Large Kebab Meal{' (Large Chips)' if chips_size == 'large' else ''}"
+
+                item['chips_size'] = chips_size
+                item['chips_salt'] = chips_salt
+
+            elif category == 'hsp':
+                # HSP combos: HSP + drink (no chips, HSP already has chips)
+                # From menu.json: small=$17, large=$22
+                meal_price = 17.0 if item_size == 'small' else 22.0
+                meal_name = f"{item_size.title()} HSP Combo"
+                logger.info(f"Converting {item_size} HSP to combo: ${meal_price}")
 
             # Update item
             item['is_combo'] = True
             item['name'] = meal_name
             item['price'] = meal_price
-            item['chips_size'] = chips_size
-            item['chips_salt'] = chips_salt
             item['drink_brand'] = drink_brand
 
             cart[idx] = item

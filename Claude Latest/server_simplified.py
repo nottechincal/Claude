@@ -19,9 +19,71 @@ import os
 import sqlite3
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+try:
+    from flask import Flask, request, jsonify
+    from flask_cors import CORS
+except ModuleNotFoundError:  # pragma: no cover - exercised only in CI without Flask
+    # Minimal fallbacks so tests can run in environments without Flask installed.
+    from types import SimpleNamespace
+
+    class _RequestProxy:
+        def __init__(self):
+            self._stack: List[SimpleNamespace] = []
+
+        def push(self, payload: Dict[str, Any]):
+            self._stack.append(SimpleNamespace(json=payload))
+
+        def pop(self):
+            if self._stack:
+                self._stack.pop()
+
+        def get_json(self, *_, **__):
+            if not self._stack:
+                return {}
+            return self._stack[-1].json or {}
+
+    class _TestRequestContext:
+        def __init__(self, app: "Flask", json: Optional[Dict[str, Any]] = None):
+            self.app = app
+            self.json = json or {}
+
+        def __enter__(self):
+            request.push(self.json)
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            request.pop()
+
+    class Flask:  # type: ignore
+        def __init__(self, name: str):
+            self.name = name
+
+        def route(self, *_args, **_kwargs):
+            def decorator(func):
+                return func
+
+            return decorator
+
+        def get(self, *args, **kwargs):
+            return self.route(*args, **kwargs)
+
+        def post(self, *args, **kwargs):
+            return self.route(*args, **kwargs)
+
+        def test_request_context(self, json: Optional[Dict[str, Any]] = None):
+            return _TestRequestContext(self, json=json)
+
+        def run(self, *_, **__):
+            raise RuntimeError("Flask is not installed in this environment")
+
+    def jsonify(payload: Dict[str, Any]):
+        return payload
+
+    def CORS(_app):  # noqa: N802 - matching Flask extension signature
+        return _app
+
+    request = _RequestProxy()
 
 # ==================== CONFIGURATION ====================
 
@@ -218,6 +280,26 @@ def parse_sauces(text: str) -> List[str]:
         return []
 
     return sauces
+
+
+def parse_extras(text: str) -> List[str]:
+    """Extract extras such as cheese or haloumi from text."""
+    text = normalize_text(text)
+    extras: List[str] = []
+
+    extra_keywords = {
+        "cheese": ["cheese", "extra cheese", "add cheese", "with cheese"],
+        "haloumi": ["haloumi", "halloumi"],
+        "jalapenos": ["jalapeno", "jalapeño", "jalapenos"],
+        "olives": ["olive", "olives"],
+        "extra meat": ["extra meat", "more meat", "double meat"],
+    }
+
+    for extra, keywords in extra_keywords.items():
+        if any(keyword in text for keyword in keywords):
+            extras.append(extra)
+
+    return extras
 
 def parse_quantity(text: str) -> int:
     """Extract quantity from text"""
@@ -533,6 +615,9 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Parse sauces
         sauces = parse_sauces(description)
 
+        # Parse extras/add-ons
+        extras = parse_extras(description)
+
         # Create item
         item = {
             "category": category,
@@ -541,9 +626,10 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
             "protein": protein,
             "salads": salads,
             "sauces": sauces,
-            "extras": [],
+            "extras": extras,
             "quantity": quantity,
-            "is_combo": False
+            "is_combo": False,
+            "cheese": "cheese" in extras,
         }
 
         # Calculate price
@@ -674,6 +760,122 @@ def tool_remove_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 # Tool 7: editCartItem - THE CRITICAL ONE
+_MOD_KEY_CANDIDATES: Tuple[str, ...] = (
+    "property",
+    "name",
+    "field",
+    "key",
+    "attribute",
+    "path",
+    "propertyName",
+    "prop",
+)
+
+_MOD_VALUE_CANDIDATES: Tuple[str, ...] = (
+    "value",
+    "newValue",
+    "new_value",
+    "values",
+    "val",
+    "propertyValue",
+)
+
+
+def _coerce_key_value(entry: Dict[str, Any]) -> Optional[Tuple[str, Any]]:
+    """Extract a key/value pair from a mapping if it stores the data indirectly."""
+    key = None
+    for candidate in _MOD_KEY_CANDIDATES:
+        if candidate in entry and entry[candidate] not in (None, ""):
+            key = str(entry[candidate])
+            break
+
+    if not key:
+        return None
+
+    for candidate in _MOD_VALUE_CANDIDATES:
+        if candidate in entry:
+            return key, entry[candidate]
+
+    # Some payloads provide the value under the derived key
+    if key in entry:
+        return key, entry[key]
+
+    return None
+
+
+def _normalise_mapping(mapping: Dict[str, Any], parent_key: Optional[str] = None) -> Dict[str, Any]:
+    extracted = _coerce_key_value(mapping)
+    if extracted:
+        key, value = extracted
+        return {key: value}
+
+    if parent_key:
+        for candidate in _MOD_VALUE_CANDIDATES:
+            if candidate in mapping:
+                return {parent_key: mapping[candidate]}
+
+    normalised: Dict[str, Any] = {}
+    for key, value in mapping.items():
+        if isinstance(value, dict):
+            extracted_child = _coerce_key_value(value)
+            if extracted_child and extracted_child[0] == key:
+                normalised[key] = extracted_child[1]
+                continue
+            nested = _normalise_mapping(value, parent_key=key)
+            for nested_key, nested_value in nested.items():
+                normalised[nested_key] = nested_value
+        else:
+            normalised[key] = value
+
+    # If the mapping only contained helper keys (like property/value) recurse once more
+    if not normalised:
+        return {}
+
+    # Collapse cases where recursion produced {"value": "large"}
+    extracted_again = _coerce_key_value(normalised)
+    if extracted_again:
+        key, value = extracted_again
+        return {key: value}
+
+    return normalised
+
+
+def _normalise_modifications(raw: Any) -> Dict[str, Any]:
+    """Normalise different modification payload shapes into a dict."""
+    if raw is None:
+        return {}
+
+    if isinstance(raw, dict):
+        return _normalise_mapping(raw)
+
+    if isinstance(raw, str):
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError:
+            logger.warning("Failed to decode modifications string; defaulting to empty dict")
+            return {}
+        return _normalise_modifications(decoded)
+
+    if isinstance(raw, (list, tuple, set)):
+        collected: Dict[str, Any] = {}
+        iterable: Iterable[Any] = list(raw)
+        for entry in iterable:
+            if isinstance(entry, dict):
+                for key, value in _normalise_mapping(entry).items():
+                    collected[key] = value
+            elif isinstance(entry, (list, tuple)) and entry:
+                key = entry[0]
+                if key is None:
+                    continue
+                value = entry[1] if len(entry) > 1 else None
+                collected[str(key)] = value
+            else:
+                continue
+        return collected
+
+    return {}
+
+
 def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Edit ANY property of a cart item in ONE call.
@@ -688,10 +890,37 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     try:
         item_index = params.get('itemIndex')
-        modifications = params.get('modifications', {})
+
+        modifications = _normalise_modifications(params.get('modifications'))
+
+        # Accept VAPI "properties" payloads in all supported shapes
+        if not modifications:
+            modifications = _normalise_modifications(params.get('properties'))
+
+        # Some integrations send {"property": "size", "value": "large"}
+        if not modifications and params.get('property') and 'value' in params:
+            modifications = {str(params['property']): params['value']}
+
+        if not modifications:
+            # Fall back to treating any additional params as modifications
+            fallback = {
+                key: value
+                for key, value in params.items()
+                if key not in {"itemIndex", "modifications", "properties", "property", "value"}
+            }
+            modifications = _normalise_modifications(fallback)
 
         if item_index is None:
             return {"ok": False, "error": "itemIndex is required"}
+
+        if modifications:
+            aux_keys = set(_MOD_KEY_CANDIDATES) | set(_MOD_VALUE_CANDIDATES)
+            cleaned = {}
+            for key, value in modifications.items():
+                if key in aux_keys and any(k not in aux_keys for k in modifications):
+                    continue
+                cleaned[key] = value
+            modifications = cleaned
 
         if not modifications:
             return {"ok": False, "error": "modifications object is required"}
@@ -715,6 +944,10 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         for field, value in modifications.items():
             if field == "size":
                 item["size"] = value
+                name = item.get("name", "")
+                if name:
+                    updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
+                    item["name"] = updated
             elif field == "protein":
                 item["protein"] = value
             elif field == "salads":

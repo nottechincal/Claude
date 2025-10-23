@@ -1256,7 +1256,7 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         # Minimal response for speed (AI doesn't need breakdown)
         return {
             "ok": True,
-            "total": float(grand_total)
+            "grandTotal": float(grand_total)
         }
 
     except Exception as e:

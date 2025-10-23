@@ -149,16 +149,16 @@ def test_5_kebabs_different_modifications():
     # Price cart after upgrade
     price_result = tool_price_cart({})
     assert price_result["ok"], f"Failed to price cart after upgrade: {price_result}"
-    print(f"\n✓ Total after upgrade: ${price_result['total']:.2f}")
+    print(f"\n✓ Total after upgrade: ${price_result['grandTotal']:.2f}")
 
     # Verify pricing is correct
     # 5 large kebab meals = 5 × $22 = $110
     expected_total = 110.0
-    assert abs(price_result["total"] - expected_total) < 0.01, \
-        f"Expected total ${expected_total:.2f}, got ${price_result['total']:.2f}"
+    assert abs(price_result["grandTotal"] - expected_total) < 0.01, \
+        f"Expected total ${expected_total:.2f}, got ${price_result['grandTotal']:.2f}"
 
     print(f"\n✅ Test passed! All 5 kebabs converted to meals correctly")
-    print(f"   Expected: ${expected_total:.2f}, Got: ${price_result['total']:.2f}")
+    print(f"   Expected: ${expected_total:.2f}, Got: ${price_result['grandTotal']:.2f}")
 
 def test_partial_meal_upgrade():
     """Test upgrading only specific kebabs to meals"""

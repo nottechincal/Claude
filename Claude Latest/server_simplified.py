@@ -85,12 +85,6 @@ except ModuleNotFoundError:  # pragma: no cover - exercised only in CI without F
 
     request = _RequestProxy()
 
-# Optional Twilio client for SMS notifications
-try:  # pragma: no cover - optional dependency
-    from twilio.rest import Client  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover - exercised only when Twilio isn't installed
-    Client = None  # type: ignore
-
 # ==================== CONFIGURATION ====================
 
 app = Flask(__name__)

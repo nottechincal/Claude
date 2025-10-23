@@ -20,6 +20,15 @@ import sqlite3
 import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+import pytz
+
+# Fuzzy string matching for typo tolerance
+try:
+    from rapidfuzz import fuzz, process
+    FUZZY_MATCHING_AVAILABLE = True
+except ImportError:
+    FUZZY_MATCHING_AVAILABLE = False
+    logger.warning("rapidfuzz not available, fuzzy matching disabled")
 try:
     from flask import Flask, request, jsonify
     from flask_cors import CORS
@@ -136,6 +145,14 @@ SHOP_NUMBER_DEFAULT = os.getenv('SHOP_ORDER_TO', '0423680596')
 SHOP_NAME = os.getenv('SHOP_NAME', 'Kebabalab')
 SHOP_ADDRESS = os.getenv('SHOP_ADDRESS', 'Melbourne')
 
+# Timezone configuration
+SHOP_TIMEZONE_STR = os.getenv('SHOP_TIMEZONE', 'Australia/Melbourne')
+try:
+    SHOP_TIMEZONE = pytz.timezone(SHOP_TIMEZONE_STR)
+except pytz.exceptions.UnknownTimeZoneError:
+    logger.warning(f"Unknown timezone '{SHOP_TIMEZONE_STR}', falling back to Australia/Melbourne")
+    SHOP_TIMEZONE = pytz.timezone('Australia/Melbourne')
+
 # Global menu
 MENU = {}
 
@@ -145,7 +162,8 @@ SESSIONS = {}
 # Session configuration
 SESSION_TTL = int(os.getenv('SESSION_TTL', '1800'))  # 30 minutes default
 MAX_SESSIONS = int(os.getenv('MAX_SESSIONS', '1000'))  # Max concurrent sessions
-LAST_CLEANUP = datetime.now()
+# Will be initialized after SHOP_TIMEZONE is set
+LAST_CLEANUP = None
 CLEANUP_INTERVAL = timedelta(minutes=5)  # Run cleanup every 5 minutes
 
 # ==================== DATABASE ====================
@@ -261,7 +279,12 @@ def get_session_id() -> str:
 def cleanup_expired_sessions():
     """Remove expired sessions to prevent memory leaks"""
     global LAST_CLEANUP
-    now = datetime.now()
+    now = get_current_time()
+
+    # Initialize LAST_CLEANUP on first run
+    if LAST_CLEANUP is None:
+        LAST_CLEANUP = now
+        return
 
     # Only run cleanup every CLEANUP_INTERVAL
     if now - LAST_CLEANUP < CLEANUP_INTERVAL:
@@ -307,18 +330,20 @@ def session_get(key: str, default=None):
     cleanup_expired_sessions()  # Periodic cleanup
 
     session_id = get_session_id()
+    now = get_current_time()
+
     if session_id not in SESSIONS:
         SESSIONS[session_id] = {
             '_meta': {
-                'created_at': datetime.now(),
-                'last_access': datetime.now()
+                'created_at': now,
+                'last_access': now
             }
         }
     else:
         # Update last access time
         if '_meta' not in SESSIONS[session_id]:
             SESSIONS[session_id]['_meta'] = {}
-        SESSIONS[session_id]['_meta']['last_access'] = datetime.now()
+        SESSIONS[session_id]['_meta']['last_access'] = now
 
     return SESSIONS[session_id].get(key, default)
 
@@ -328,18 +353,20 @@ def session_set(key: str, value: Any):
     enforce_session_limits()  # Enforce max sessions
 
     session_id = get_session_id()
+    now = get_current_time()
+
     if session_id not in SESSIONS:
         SESSIONS[session_id] = {
             '_meta': {
-                'created_at': datetime.now(),
-                'last_access': datetime.now()
+                'created_at': now,
+                'last_access': now
             }
         }
     else:
         # Update last access time
         if '_meta' not in SESSIONS[session_id]:
             SESSIONS[session_id]['_meta'] = {}
-        SESSIONS[session_id]['_meta']['last_access'] = datetime.now()
+        SESSIONS[session_id]['_meta']['last_access'] = now
 
     SESSIONS[session_id][key] = value
 
@@ -468,6 +495,48 @@ def normalize_text(text: str) -> str:
     if not text:
         return ""
     return text.lower().strip()
+
+def fuzzy_match(text: str, choices: List[str], threshold: int = 80) -> Optional[str]:
+    """
+    Find best fuzzy match for text in choices.
+    Returns matched choice if confidence >= threshold, None otherwise.
+    Examples:
+    - fuzzy_match("chiken", ["chicken", "lamb"]) -> "chicken"
+    - fuzzy_match("galic", ["garlic", "chilli"]) -> "garlic"
+    """
+    if not FUZZY_MATCHING_AVAILABLE or not text or not choices:
+        return None
+
+    text = normalize_text(text)
+    # Extract word tokens from text for better matching
+    words = text.split()
+
+    best_match = None
+    best_score = 0
+
+    for word in words:
+        if len(word) < 3:  # Skip very short words
+            continue
+        result = process.extractOne(word, choices, scorer=fuzz.ratio)
+        if result and result[1] >= threshold:
+            if result[1] > best_score:
+                best_score = result[1]
+                best_match = result[0]
+
+    return best_match
+
+def get_current_time() -> datetime:
+    """Get current time in shop's timezone (timezone-aware)"""
+    return datetime.now(SHOP_TIMEZONE)
+
+def get_local_time(dt: Optional[datetime] = None) -> datetime:
+    """Convert datetime to shop's timezone. If None, returns current time."""
+    if dt is None:
+        return get_current_time()
+    if dt.tzinfo is None:
+        # Naive datetime, assume UTC
+        dt = pytz.utc.localize(dt)
+    return dt.astimezone(SHOP_TIMEZONE)
 
 
 def _human_join(items: Iterable[str]) -> str:
@@ -628,9 +697,10 @@ def _send_order_notifications(
         logger.error(f"Shop SMS failed: {error}")
 
 def parse_protein(text: str) -> Optional[str]:
-    """Extract protein type from text"""
+    """Extract protein type from text with fuzzy matching for typo tolerance"""
     text = normalize_text(text)
 
+    # Exact matches first
     if any(word in text for word in ['lamb', 'lamp']):
         return 'lamb'
     if any(word in text for word in ['chicken', 'chiken', 'chkn']):
@@ -639,6 +709,13 @@ def parse_protein(text: str) -> Optional[str]:
         return 'mixed'
     if 'falafel' in text or 'vegan' in text:
         return 'falafel'
+
+    # Fuzzy match if available (handles typos like "chikn", "lamm", "chicen")
+    protein_choices = ['chicken', 'lamb', 'mixed', 'falafel']
+    match = fuzzy_match(text, protein_choices, threshold=75)
+    if match:
+        logger.info(f"Fuzzy matched protein '{text}' to '{match}'")
+        return match
 
     return None
 
@@ -663,50 +740,75 @@ def parse_size(text: str) -> Optional[str]:
     return None
 
 def parse_salads(text: str) -> List[str]:
-    """Extract salads from text"""
+    """Extract salads from text with fuzzy matching for typo tolerance"""
     text = normalize_text(text)
     salads = []
 
-    if 'lettuce' in text:
-        salads.append('lettuce')
-    if 'tomato' in text:
-        salads.append('tomato')
-    if 'onion' in text:
-        salads.append('onion')
-    if 'pickle' in text:
-        salads.append('pickles')
-    if 'olive' in text:
-        salads.append('olives')
-
-    # Check for "no salad"
+    # Check for "no salad" first
     if any(phrase in text for phrase in ['no salad', 'without salad', 'hold salad']):
         return []
+
+    salad_map = {
+        'lettuce': ['lettuce', 'letuce', 'letus'],
+        'tomato': ['tomato', 'tomatos', 'toma'],
+        'onion': ['onion', 'onions', 'onin'],
+        'pickles': ['pickle', 'pickles', 'pickel'],
+        'olives': ['olive', 'olives', 'olivs']
+    }
+
+    # Exact matches first
+    for salad, keywords in salad_map.items():
+        if any(keyword in text for keyword in keywords):
+            salads.append(salad)
+
+    # Fuzzy match for typos if no exact matches found
+    if not salads and FUZZY_MATCHING_AVAILABLE:
+        all_salad_choices = list(salad_map.keys())
+        words = text.split()
+        for word in words:
+            if len(word) >= 4:  # Only check words of reasonable length
+                match = fuzzy_match(word, all_salad_choices, threshold=75)
+                if match and match not in salads:
+                    salads.append(match)
+                    logger.info(f"Fuzzy matched salad '{word}' to '{match}'")
 
     return salads
 
 def parse_sauces(text: str) -> List[str]:
-    """Extract sauces from text"""
+    """Extract sauces from text with fuzzy matching for typo tolerance"""
     text = normalize_text(text)
     sauces = []
 
-    if 'garlic' in text or 'garlek' in text:
-        sauces.append('garlic')
-    if 'chili' in text or 'chilli' in text:
-        sauces.append('chilli')
-    if 'bbq' in text:
-        sauces.append('bbq')
-    if 'tomato sauce' in text or 'ketchup' in text:
-        sauces.append('tomato')
-    if 'sweet chilli' in text or 'sweet chili' in text:
-        sauces.append('sweet chilli')
-    if 'mayo' in text or 'aioli' in text:
-        sauces.append('mayo')
-    if 'hummus' in text:
-        sauces.append('hummus')
-
-    # Check for "no sauce"
+    # Check for "no sauce" first
     if any(phrase in text for phrase in ['no sauce', 'without sauce', 'hold sauce']):
         return []
+
+    sauce_map = {
+        'garlic': ['garlic', 'garlek', 'galic', 'garlick'],
+        'chilli': ['chili', 'chilli', 'chilly', 'chili sauce'],
+        'bbq': ['bbq', 'barbeque', 'barbecue'],
+        'tomato': ['tomato sauce', 'ketchup', 'tomatoe'],
+        'sweet chilli': ['sweet chilli', 'sweet chili', 'sweet chilly'],
+        'mayo': ['mayo', 'aioli', 'mayonnaise'],
+        'hummus': ['hummus', 'humus', 'hummous']
+    }
+
+    # Exact matches first
+    for sauce, keywords in sauce_map.items():
+        if any(keyword in text for keyword in keywords):
+            if sauce not in sauces:
+                sauces.append(sauce)
+
+    # Fuzzy match for typos if no exact matches found
+    if not sauces and FUZZY_MATCHING_AVAILABLE:
+        all_sauce_choices = list(sauce_map.keys())
+        words = text.split()
+        for word in words:
+            if len(word) >= 4:  # Only check words of reasonable length
+                match = fuzzy_match(word, all_sauce_choices, threshold=75)
+                if match and match not in sauces:
+                    sauces.append(match)
+                    logger.info(f"Fuzzy matched sauce '{word}' to '{match}'")
 
     return sauces
 
@@ -862,9 +964,9 @@ def format_cart_item(item: Dict, index: int) -> str:
 
 # Tool 1: checkOpen
 def tool_check_open(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Check if shop is currently open"""
+    """Check if shop is currently open (timezone-aware)"""
     try:
-        now = datetime.now()
+        now = get_current_time()
         day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
         current_time = now.strftime("%H:%M")
 
@@ -1015,7 +1117,7 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         else:
             return {
                 "ok": False,
-                "error": f"Couldn't determine item type from '{description}'. Please be more specific."
+                "error": f"I didn't understand '{description}'. Try saying something like 'large chicken kebab with lettuce and garlic sauce' or '2 cokes' or 'small chips'."
             }
 
         # Parse size
@@ -1683,7 +1785,7 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
         total_minutes = base_time + (len(cart) * per_item_time)
         total_minutes = min(total_minutes, 30)  # Cap at 30 minutes
 
-        ready_time = datetime.now() + timedelta(minutes=total_minutes)
+        ready_time = get_current_time() + timedelta(minutes=total_minutes)
         ready_at_iso = ready_time.isoformat()
         ready_at_formatted = _format_time_for_display(ready_time)
         ready_phrase = f"in about {total_minutes} minutes ({ready_at_formatted})"
@@ -1767,7 +1869,7 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         else:
             send_sms_flag = bool(send_sms_raw)
 
-        today = datetime.now().strftime("%Y%m%d")
+        today = get_current_time().strftime("%Y%m%d")
 
         with DatabaseConnection() as cursor:
             cursor.execute(

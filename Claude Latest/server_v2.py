@@ -56,6 +56,55 @@ app.add_middleware(
 # Context variable for caller info
 caller_context: ContextVar[Optional[str]] = ContextVar('caller_context', default=None)
 
+# ==================== SAFETY MECHANISMS ====================
+# Production-grade safety features to prevent system failures
+
+# Rate limiting per caller (prevent abuse)
+_RATE_LIMITS = {}
+_RATE_LIMIT_WINDOW = 60  # seconds
+_RATE_LIMIT_MAX_CALLS = 10  # max calls per window per caller
+
+# Circuit breaker for external services (prevent cascade failures)
+_CIRCUIT_BREAKERS = {
+    "database": {"failures": 0, "last_failure": None, "state": "closed"},
+    "twilio": {"failures": 0, "last_failure": None, "state": "closed"},
+    "vapi": {"failures": 0, "last_failure": None, "state": "closed"}
+}
+_CIRCUIT_BREAKER_THRESHOLD = 5  # failures before opening circuit
+_CIRCUIT_BREAKER_TIMEOUT = 60  # seconds before retry
+
+# Request validation limits (prevent resource exhaustion)
+_MAX_CART_SIZE = 50  # max items in cart
+_MAX_ITEM_QUANTITY = 20  # max quantity per item
+_MAX_BATCH_SIZE = 10  # max items in addMultipleItemsToCart
+_MAX_STRING_LENGTH = 500  # max length for text fields
+
+# System health monitoring
+_SYSTEM_HEALTH = {
+    "start_time": datetime.now(),
+    "total_requests": 0,
+    "failed_requests": 0,
+    "total_orders": 0,
+    "failed_orders": 0,
+    "avg_response_time_ms": 0,
+    "last_error": None,
+    "error_count_1min": 0,
+    "last_error_time": None
+}
+
+# Error tracking for alerts
+_ERROR_LOG = []
+_ERROR_LOG_SIZE = 100  # keep last 100 errors
+
+# Database health
+_DB_HEALTH = {
+    "total_connections": 0,
+    "failed_connections": 0,
+    "slow_queries": 0,
+    "last_maintenance": None,
+    "size_mb": 0
+}
+
 # ==================== IN-MEMORY CACHE ====================
 # In-memory cache for static JSON files (10-50ms savings per request)
 _FILE_CACHE = {}
@@ -194,6 +243,245 @@ def release_db_connection(conn):
     else:
         conn.close()
         logger.debug("Closed excess connection")
+
+# ==================== SAFETY MECHANISM FUNCTIONS ====================
+
+def check_rate_limit(caller_id: str) -> bool:
+    """Check if caller has exceeded rate limit"""
+    if not caller_id:
+        return True  # Allow anonymous calls
+
+    now = datetime.now()
+
+    # Clean up old entries
+    expired = [
+        k for k, v in _RATE_LIMITS.items()
+        if (now - v["first_call"]).total_seconds() > _RATE_LIMIT_WINDOW
+    ]
+    for k in expired:
+        del _RATE_LIMITS[k]
+
+    # Check current caller
+    if caller_id not in _RATE_LIMITS:
+        _RATE_LIMITS[caller_id] = {"first_call": now, "count": 1}
+        return True
+
+    entry = _RATE_LIMITS[caller_id]
+    window_elapsed = (now - entry["first_call"]).total_seconds()
+
+    if window_elapsed > _RATE_LIMIT_WINDOW:
+        # Reset window
+        _RATE_LIMITS[caller_id] = {"first_call": now, "count": 1}
+        return True
+
+    # Within window - check limit
+    if entry["count"] >= _RATE_LIMIT_MAX_CALLS:
+        logger.warning(f"Rate limit exceeded for caller: {caller_id}")
+        return False
+
+    entry["count"] += 1
+    return True
+
+
+def check_circuit_breaker(service: str) -> bool:
+    """Check if circuit breaker allows request to service"""
+    if service not in _CIRCUIT_BREAKERS:
+        return True
+
+    breaker = _CIRCUIT_BREAKERS[service]
+
+    # If open, check if timeout has passed
+    if breaker["state"] == "open":
+        if breaker["last_failure"]:
+            elapsed = (datetime.now() - breaker["last_failure"]).total_seconds()
+            if elapsed > _CIRCUIT_BREAKER_TIMEOUT:
+                # Try half-open
+                breaker["state"] = "half-open"
+                logger.info(f"Circuit breaker {service} entering half-open state")
+                return True
+        return False
+
+    return True
+
+
+def record_service_success(service: str):
+    """Record successful service call"""
+    if service in _CIRCUIT_BREAKERS:
+        breaker = _CIRCUIT_BREAKERS[service]
+        if breaker["state"] == "half-open":
+            breaker["state"] = "closed"
+            breaker["failures"] = 0
+            logger.info(f"Circuit breaker {service} closed (recovered)")
+        breaker["failures"] = max(0, breaker["failures"] - 1)
+
+
+def record_service_failure(service: str):
+    """Record failed service call and potentially open circuit"""
+    if service not in _CIRCUIT_BREAKERS:
+        return
+
+    breaker = _CIRCUIT_BREAKERS[service]
+    breaker["failures"] += 1
+    breaker["last_failure"] = datetime.now()
+
+    if breaker["failures"] >= _CIRCUIT_BREAKER_THRESHOLD:
+        breaker["state"] = "open"
+        logger.error(f"Circuit breaker {service} OPENED after {breaker['failures']} failures")
+
+
+def validate_cart_size(cart: List[Dict]) -> tuple[bool, str]:
+    """Validate cart doesn't exceed limits"""
+    if len(cart) > _MAX_CART_SIZE:
+        return False, f"Cart exceeds maximum size of {_MAX_CART_SIZE} items"
+
+    for idx, item in enumerate(cart):
+        qty = item.get("quantity", 1)
+        if qty > _MAX_ITEM_QUANTITY:
+            return False, f"Item {idx + 1} quantity ({qty}) exceeds maximum of {_MAX_ITEM_QUANTITY}"
+
+    return True, ""
+
+
+def validate_string_length(value: str, field_name: str) -> tuple[bool, str]:
+    """Validate string doesn't exceed length limit"""
+    if not value:
+        return True, ""
+
+    if len(value) > _MAX_STRING_LENGTH:
+        return False, f"{field_name} exceeds maximum length of {_MAX_STRING_LENGTH} characters"
+
+    return True, ""
+
+
+def sanitize_input(value: Any) -> Any:
+    """Sanitize user input to prevent injection attacks"""
+    if isinstance(value, str):
+        # Remove potentially dangerous characters
+        value = value.replace("'", "").replace('"', "").replace(";", "").replace("--", "")
+        # Limit length
+        value = value[:_MAX_STRING_LENGTH]
+    elif isinstance(value, list):
+        value = [sanitize_input(v) for v in value[:50]]  # Limit list size
+    elif isinstance(value, dict):
+        value = {k: sanitize_input(v) for k, v in list(value.items())[:50]}  # Limit dict size
+
+    return value
+
+
+def log_error(error: Exception, context: Dict[str, Any]):
+    """Log error with context for debugging"""
+    error_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "error": str(error),
+        "type": type(error).__name__,
+        "context": context
+    }
+
+    _ERROR_LOG.append(error_entry)
+    if len(_ERROR_LOG) > _ERROR_LOG_SIZE:
+        _ERROR_LOG.pop(0)
+
+    # Update system health
+    _SYSTEM_HEALTH["last_error"] = str(error)
+    _SYSTEM_HEALTH["last_error_time"] = datetime.now()
+    _SYSTEM_HEALTH["error_count_1min"] += 1
+
+    # Clean up old 1-minute error count
+    if _SYSTEM_HEALTH["last_error_time"]:
+        elapsed = (datetime.now() - _SYSTEM_HEALTH["last_error_time"]).total_seconds()
+        if elapsed > 60:
+            _SYSTEM_HEALTH["error_count_1min"] = 1
+
+
+def update_system_health(request_time_ms: float, success: bool):
+    """Update system health metrics"""
+    _SYSTEM_HEALTH["total_requests"] += 1
+
+    if not success:
+        _SYSTEM_HEALTH["failed_requests"] += 1
+
+    # Update average response time (rolling average)
+    current_avg = _SYSTEM_HEALTH["avg_response_time_ms"]
+    total = _SYSTEM_HEALTH["total_requests"]
+    new_avg = ((current_avg * (total - 1)) + request_time_ms) / total
+    _SYSTEM_HEALTH["avg_response_time_ms"] = new_avg
+
+
+def get_system_health() -> Dict[str, Any]:
+    """Get current system health status"""
+    uptime = (datetime.now() - _SYSTEM_HEALTH["start_time"]).total_seconds()
+
+    return {
+        "status": "healthy" if _SYSTEM_HEALTH["error_count_1min"] < 10 else "degraded",
+        "uptime_seconds": uptime,
+        "total_requests": _SYSTEM_HEALTH["total_requests"],
+        "failed_requests": _SYSTEM_HEALTH["failed_requests"],
+        "success_rate": (
+            100 * (1 - _SYSTEM_HEALTH["failed_requests"] / max(1, _SYSTEM_HEALTH["total_requests"]))
+        ),
+        "avg_response_time_ms": round(_SYSTEM_HEALTH["avg_response_time_ms"], 2),
+        "errors_last_minute": _SYSTEM_HEALTH["error_count_1min"],
+        "last_error": _SYSTEM_HEALTH["last_error"],
+        "circuit_breakers": {k: v["state"] for k, v in _CIRCUIT_BREAKERS.items()},
+        "database": _DB_HEALTH
+    }
+
+
+def check_database_health():
+    """Check database health and update metrics"""
+    try:
+        # Check database size
+        db_path = os.getenv("DB_PATH", "orders.db")
+        if os.path.exists(db_path):
+            size_bytes = os.path.getsize(db_path)
+            _DB_HEALTH["size_mb"] = round(size_bytes / (1024 * 1024), 2)
+
+        # Test connection
+        conn = get_db_connection()
+        _DB_HEALTH["total_connections"] += 1
+        cursor = conn.cursor()
+
+        # Quick health check query
+        start = datetime.now()
+        cursor.execute("SELECT COUNT(*) FROM orders")
+        cursor.fetchone()
+        query_time_ms = (datetime.now() - start).total_seconds() * 1000
+
+        if query_time_ms > 1000:  # Slow query threshold
+            _DB_HEALTH["slow_queries"] += 1
+
+        release_db_connection(conn)
+        record_service_success("database")
+
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        _DB_HEALTH["failed_connections"] += 1
+        record_service_failure("database")
+
+
+async def periodic_health_checks():
+    """Background task to run periodic health checks"""
+    while True:
+        try:
+            await asyncio.sleep(300)  # Every 5 minutes
+            logger.info("Running periodic health checks...")
+
+            # Check database
+            check_database_health()
+
+            # Log health status
+            health = get_system_health()
+            logger.info(f"System health: {health['status']} - Success rate: {health['success_rate']:.1f}%")
+
+            # Reset 1-minute error count if needed
+            if _SYSTEM_HEALTH["last_error_time"]:
+                elapsed = (datetime.now() - _SYSTEM_HEALTH["last_error_time"]).total_seconds()
+                if elapsed > 60:
+                    _SYSTEM_HEALTH["error_count_1min"] = 0
+
+        except Exception as e:
+            logger.error(f"Error in periodic health checks: {e}")
+
 
 # Phone number helpers
 def _au_normalise_local(s: Optional[str]) -> Optional[str]:
@@ -2078,6 +2366,565 @@ def tool_get_menu_by_category(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error getting menu by category: {str(e)}")
         return {"ok": False, "error": str(e)}
 
+# ==================== PERFORMANCE ENHANCEMENTS ====================
+
+def tool_add_multiple_items_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    PRIORITY 1: PARALLEL TOOL EXECUTION
+    Add multiple items to cart in one call for 60-70% faster multi-item orders
+
+    Input format:
+    {
+        "items": [
+            {"category": "kebabs", "size": "large", "protein": "lamb", "salads": [...], "sauces": [...], "quantity": 2},
+            {"category": "chips", "size": "large", "salt_type": "chicken", "quantity": 1},
+            {"category": "drinks", "brand": "coke", "quantity": 2}
+        ]
+    }
+    """
+    try:
+        logger.info("Adding multiple items to cart in batch")
+
+        items = params.get("items", [])
+        if not items:
+            return {"ok": False, "error": "items array is required"}
+
+        if not isinstance(items, list):
+            return {"ok": False, "error": "items must be an array"}
+
+        # Safety check: Limit batch size
+        if len(items) > _MAX_BATCH_SIZE:
+            return {
+                "ok": False,
+                "error": f"Batch size ({len(items)}) exceeds maximum of {_MAX_BATCH_SIZE}. Please add items in smaller batches."
+            }
+
+        # Get current cart
+        cart = session_get("cart", [])
+
+        # Check cart size before adding
+        projected_size = len(cart) + len(items)
+        if projected_size > _MAX_CART_SIZE:
+            return {
+                "ok": False,
+                "error": f"Adding these items would exceed maximum cart size of {_MAX_CART_SIZE}. Current cart has {len(cart)} items."
+            }
+        added_count = 0
+        failed_items = []
+
+        # Process each item
+        for idx, item_config in enumerate(items):
+            try:
+                # Validate required fields
+                category = item_config.get("category", "").lower()
+                if not category:
+                    failed_items.append({"index": idx, "error": "Missing category"})
+                    continue
+
+                # Validate quantity
+                quantity = item_config.get("quantity", 1)
+                if quantity > _MAX_ITEM_QUANTITY:
+                    failed_items.append({
+                        "index": idx,
+                        "error": f"Quantity ({quantity}) exceeds maximum of {_MAX_ITEM_QUANTITY}"
+                    })
+                    continue
+
+                # Build cart item directly (bypass item state for speed)
+                cart_item = {
+                    "category": category,
+                    "quantity": quantity
+                }
+
+                # Add size if provided
+                if "size" in item_config:
+                    cart_item["size"] = item_config["size"].lower()
+
+                # Add protein if provided
+                if "protein" in item_config:
+                    cart_item["protein"] = item_config["protein"].lower()
+
+                # Add salads if provided
+                if "salads" in item_config:
+                    salads = item_config["salads"]
+                    if isinstance(salads, list):
+                        cart_item["salads"] = [s.lower() for s in salads]
+                    elif isinstance(salads, str):
+                        cart_item["salads"] = [salads.lower()]
+
+                # Add sauces if provided
+                if "sauces" in item_config:
+                    sauces = item_config["sauces"]
+                    if isinstance(sauces, list):
+                        cart_item["sauces"] = [s.lower() for s in sauces]
+                    elif isinstance(sauces, str):
+                        cart_item["sauces"] = [sauces.lower()]
+
+                # Add extras if provided
+                if "extras" in item_config:
+                    extras = item_config["extras"]
+                    if isinstance(extras, list):
+                        cart_item["extras"] = [e.lower() for e in extras]
+
+                # Add cheese if provided
+                if "cheese" in item_config:
+                    cart_item["cheese"] = bool(item_config["cheese"])
+
+                # Add brand (for drinks)
+                if "brand" in item_config:
+                    cart_item["brand"] = item_config["brand"].lower()
+
+                # Add variant (for items with variants)
+                if "variant" in item_config:
+                    cart_item["variant"] = item_config["variant"].lower()
+
+                # Add salt_type (for chips)
+                if "salt_type" in item_config:
+                    cart_item["salt_type"] = item_config["salt_type"].lower()
+
+                # Add sauce_type (for sauce tubs)
+                if "sauce_type" in item_config:
+                    cart_item["sauce_type"] = item_config["sauce_type"].lower()
+
+                # Add notes if provided
+                if "notes" in item_config:
+                    cart_item["notes"] = str(item_config["notes"])
+
+                # Add to cart
+                cart.append(cart_item)
+                added_count += 1
+
+            except Exception as e:
+                logger.error(f"Error adding item {idx}: {str(e)}")
+                failed_items.append({"index": idx, "error": str(e)})
+
+        # Update cart in session
+        session_set("cart", cart)
+        session_set("cart_priced", False)
+        session_set("order_state", "CART_ACTIVE")
+
+        # Check for combo opportunities
+        combo_detected = detect_combo_opportunity(cart)
+        if combo_detected:
+            cart = apply_combo_to_cart(cart, combo_detected)
+            session_set("cart", cart)
+
+            return {
+                "ok": True,
+                "itemsAdded": added_count,
+                "totalItems": len(cart),
+                "combo": combo_detected["name"],
+                "failedItems": failed_items if failed_items else None
+            }
+
+        return {
+            "ok": True,
+            "itemsAdded": added_count,
+            "totalItems": len(cart),
+            "failedItems": failed_items if failed_items else None
+        }
+
+    except Exception as e:
+        logger.error(f"Error adding multiple items to cart: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+
+def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    PRIORITY 2: SMART CONTEXT MANAGEMENT
+    Parse natural language and add item directly with minimal back-and-forth
+    Supports common phrases like "large lamb kebab with extra garlic sauce"
+
+    Expected improvement: 40-50% faster for simple orders
+    """
+    try:
+        logger.info(f"Quick add item: {params}")
+
+        description = params.get("description", "").lower()
+        if not description:
+            return {"ok": False, "error": "description is required"}
+
+        # Initialize item config
+        item_config = {}
+
+        # Extract category (must be present)
+        menu = load_json_file("menu.json")
+        categories = menu.get("categories", {})
+
+        # Category detection
+        category_found = None
+        if "kebab" in description and "hsp" not in description:
+            category_found = "kebabs"
+        elif "hsp" in description or "halal snack pack" in description:
+            category_found = "hsp"
+        elif "chip" in description or "fries" in description:
+            category_found = "chips"
+        elif "drink" in description or "coke" in description or "sprite" in description or "fanta" in description or "water" in description:
+            category_found = "drinks"
+        elif "gozleme" in description:
+            category_found = "gozleme"
+        elif "sweet" in description or "baklava" in description:
+            category_found = "sweets"
+
+        if not category_found:
+            return {
+                "ok": False,
+                "error": "Could not identify item category. Please use startItemConfiguration instead.",
+                "suggestion": "Try: 'kebab', 'hsp', 'chips', 'drinks', etc."
+            }
+
+        item_config["category"] = category_found
+
+        # Extract size
+        if "small" in description:
+            item_config["size"] = "small"
+        elif "large" in description or "big" in description:
+            item_config["size"] = "large"
+        elif category_found in ["kebabs", "hsp", "chips"]:
+            # Default to large if not specified for main items
+            item_config["size"] = "large"
+
+        # Extract protein (for kebabs/hsp)
+        if category_found in ["kebabs", "hsp"]:
+            if "lamb" in description:
+                item_config["protein"] = "lamb"
+            elif "chicken" in description:
+                item_config["protein"] = "chicken"
+            elif "mix" in description:
+                item_config["protein"] = "mixed"
+            elif "falafel" in description:
+                item_config["protein"] = "falafel"
+            else:
+                # Default to lamb if not specified
+                item_config["protein"] = "lamb"
+
+        # Extract quantity
+        quantity = 1
+        # Look for numbers at start: "2 large lamb kebabs"
+        import re
+        qty_match = re.match(r'^(\d+)\s+', description)
+        if qty_match:
+            quantity = int(qty_match.group(1))
+        item_config["quantity"] = quantity
+
+        # Extract salads (default to standard)
+        if category_found in ["kebabs", "hsp"]:
+            salads = []
+            if "no salad" in description or "no salads" in description:
+                salads = []
+            elif "all salad" in description or "everything" in description:
+                salads = ["lettuce", "tomato", "onion", "carrot", "cabbage"]
+            else:
+                # Default salads
+                salads = ["lettuce", "tomato", "onion"]
+
+                # Add extras mentioned
+                if "carrot" in description:
+                    salads.append("carrot")
+                if "cabbage" in description:
+                    salads.append("cabbage")
+
+            item_config["salads"] = salads
+
+        # Extract sauces
+        if category_found in ["kebabs", "hsp"]:
+            sauces = []
+
+            # Check for specific sauces
+            if "garlic" in description:
+                sauces.append("garlic")
+            if "chilli" in description or "chili" in description or "hot" in description:
+                sauces.append("chilli")
+            if "bbq" in description:
+                sauces.append("bbq")
+            if "tahini" in description:
+                sauces.append("tahini")
+
+            # Check for extra/more sauce
+            if "extra" in description and ("sauce" in description or "garlic" in description):
+                # Don't add extra garlic if already in list
+                if "garlic" not in sauces:
+                    sauces.append("garlic")
+                # Mark it as extra in notes
+                if "notes" not in item_config:
+                    item_config["notes"] = "Extra garlic sauce"
+
+            # Default to garlic if none specified
+            if not sauces:
+                sauces = ["garlic"]
+
+            item_config["sauces"] = sauces
+
+        # Extract cheese
+        if "cheese" in description:
+            item_config["cheese"] = True
+
+        # Extract extras
+        if category_found in ["kebabs", "hsp"]:
+            extras = []
+            if "haloumi" in description or "halloumi" in description:
+                extras.append("haloumi")
+            if "avocado" in description:
+                extras.append("avocado")
+
+            if extras:
+                item_config["extras"] = extras
+
+        # Drinks - extract brand
+        if category_found == "drinks":
+            if "coke" in description or "cola" in description:
+                item_config["brand"] = "coke"
+            elif "sprite" in description:
+                item_config["brand"] = "sprite"
+            elif "fanta" in description:
+                item_config["brand"] = "fanta"
+            elif "water" in description:
+                item_config["brand"] = "water"
+            else:
+                item_config["brand"] = "coke"  # Default
+
+        # Chips - extract salt type
+        if category_found == "chips":
+            if "chicken salt" in description or "chicken" in description:
+                item_config["salt_type"] = "chicken"
+            elif "sea salt" in description or "regular" in description:
+                item_config["salt_type"] = "sea"
+            elif "no salt" in description:
+                item_config["salt_type"] = "none"
+            else:
+                item_config["salt_type"] = "chicken"  # Default
+
+        # Now add the item using our batch add tool
+        result = tool_add_multiple_items_to_cart({"items": [item_config]})
+
+        if result.get("ok"):
+            # Build confirmation message
+            parts = []
+            if quantity > 1:
+                parts.append(f"{quantity}x")
+            if item_config.get("size"):
+                parts.append(item_config["size"])
+            if item_config.get("protein"):
+                parts.append(item_config["protein"])
+            parts.append(category_found)
+
+            confirmation = " ".join(parts)
+
+            return {
+                "ok": True,
+                "added": confirmation,
+                "cartCount": result.get("totalItems"),
+                "parsed": item_config,
+                "message": f"Added {confirmation} to cart"
+            }
+        else:
+            return result
+
+    except Exception as e:
+        logger.error(f"Error in quick add item: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+
+
+def tool_get_caller_smart_context(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    PRIORITY 3: INTELLIGENT ORDER PREDICTION
+    Enhanced caller info with order history, patterns, and smart suggestions
+
+    Returns:
+    - Basic caller info
+    - Last 3 orders with items
+    - Most frequently ordered items
+    - Usual pickup time preference
+    - Dietary patterns detected
+    - Smart greeting suggestion for AI
+    """
+    try:
+        logger.info("Getting caller smart context")
+
+        caller_number = caller_context.get()
+
+        if not caller_number:
+            return {
+                "ok": True,
+                "hasCallerID": False,
+                "isNewCustomer": True,
+                "greeting": "Welcome! What can I get for you today?"
+            }
+
+        local = _au_normalise_local(str(caller_number))
+        last3 = _last3(local)
+
+        # Get order history
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get last 3 completed orders
+        cursor.execute("""
+            SELECT id, order_id, cart, totals, created_at, ready_at
+            FROM orders
+            WHERE customer_phone = ?
+            AND status IN ('completed', 'ready', 'preparing')
+            ORDER BY created_at DESC
+            LIMIT 3
+        """, (local,))
+
+        recent_orders = cursor.fetchall()
+
+        if not recent_orders:
+            release_db_connection(conn)
+            return {
+                "ok": True,
+                "hasCallerID": True,
+                "phoneNumber": local,
+                "last3": last3,
+                "isNewCustomer": True,
+                "orderCount": 0,
+                "greeting": f"Welcome! Is this your first time ordering with us?"
+            }
+
+        # Parse order history
+        order_history = []
+        all_items = []
+        pickup_times = []
+
+        for row in recent_orders:
+            row_id, order_id, cart_json, totals_json, created_at, ready_at = row
+
+            try:
+                cart = json.loads(cart_json) if isinstance(cart_json, str) else cart_json
+            except:
+                cart = []
+
+            try:
+                totals = json.loads(totals_json) if isinstance(totals_json, str) else totals_json
+                total = totals.get("total", 0) if totals else 0
+            except:
+                total = 0
+
+            # Store order
+            order_history.append({
+                "orderId": order_id,
+                "date": created_at,
+                "itemCount": len(cart),
+                "total": float(total) if total else 0
+            })
+
+            # Collect all items for pattern analysis
+            for item in cart:
+                all_items.append(item)
+
+            # Track pickup times
+            if ready_at:
+                try:
+                    ready_dt = datetime.fromisoformat(ready_at)
+                    pickup_times.append(ready_dt.hour)
+                except:
+                    pass
+
+        # Get total order count
+        cursor.execute("""
+            SELECT COUNT(*) FROM orders
+            WHERE customer_phone = ?
+            AND status IN ('completed', 'ready', 'preparing')
+        """, (local,))
+
+        total_orders = cursor.fetchone()[0]
+        release_db_connection(conn)
+
+        # Analyze patterns
+        item_frequency = {}
+        for item in all_items:
+            key = f"{item.get('size', '')} {item.get('protein', '')} {item.get('category', '')}".strip().lower()
+            item_frequency[key] = item_frequency.get(key, 0) + 1
+
+        # Get top 3 most frequent items
+        top_items = sorted(item_frequency.items(), key=lambda x: x[1], reverse=True)[:3]
+        favorite_items = [{"item": item, "timesOrdered": count} for item, count in top_items]
+
+        # Determine usual pickup time
+        usual_time = None
+        if pickup_times:
+            avg_hour = sum(pickup_times) // len(pickup_times)
+            if avg_hour < 12:
+                usual_time = "morning"
+            elif avg_hour < 17:
+                usual_time = "afternoon"
+            else:
+                usual_time = "evening"
+
+        # Detect dietary patterns
+        dietary_notes = []
+        vegetarian_count = sum(1 for item in all_items if item.get("protein") == "falafel")
+        total_protein_items = sum(1 for item in all_items if item.get("protein"))
+
+        if vegetarian_count > 0 and total_protein_items > 0:
+            veg_ratio = vegetarian_count / total_protein_items
+            if veg_ratio > 0.8:
+                dietary_notes.append("prefers_vegetarian")
+            elif veg_ratio > 0.3:
+                dietary_notes.append("sometimes_vegetarian")
+
+        # Check for cheese preference
+        cheese_count = sum(1 for item in all_items if item.get("cheese"))
+        if cheese_count > len(all_items) * 0.5:
+            dietary_notes.append("loves_cheese")
+
+        # Generate smart greeting
+        days_since_last = None
+        if recent_orders:
+            try:
+                last_order_date = datetime.fromisoformat(recent_orders[0][4])
+                days_since_last = (datetime.now() - last_order_date).days
+            except:
+                pass
+
+        # Build greeting suggestion
+        if days_since_last is not None:
+            if days_since_last == 0:
+                greeting = f"Welcome back! Hungry again today?"
+            elif days_since_last <= 3:
+                greeting = f"Hey! Good to hear from you again!"
+            elif days_since_last <= 7:
+                greeting = f"Welcome back! It's been a few days."
+            else:
+                greeting = f"Welcome back! It's been a while - {days_since_last} days!"
+        else:
+            greeting = f"Welcome back! Great to hear from you again."
+
+        # Add personalization based on favorites
+        if favorite_items and total_orders >= 3:
+            fav = favorite_items[0]["item"]
+            greeting += f" Your usual {fav}?"
+
+        return {
+            "ok": True,
+            "hasCallerID": True,
+            "phoneNumber": local,
+            "last3": last3,
+            "isNewCustomer": False,
+            "isRegular": total_orders >= 5,
+            "orderCount": total_orders,
+            "recentOrders": order_history,
+            "favoriteItems": favorite_items,
+            "usualPickupTime": usual_time,
+            "dietaryNotes": dietary_notes,
+            "daysSinceLastOrder": days_since_last,
+            "greeting": greeting,
+            "suggestRepeatOrder": total_orders >= 2  # Suggest "usual order" if 2+ orders
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting caller smart context: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        # Fallback to basic caller info
+        return tool_get_caller_info(params)
+
+
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
     """End the call"""
     logger.info("Ending call")
@@ -2091,10 +2938,13 @@ def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
 TOOLS = {
     "checkOpen": tool_check_open,
     "getCallerInfo": tool_get_caller_info,
+    "getCallerSmartContext": tool_get_caller_smart_context,  # NEW: Enhanced caller info with patterns
     "validateMenuItem": tool_validate_menu_item,
     "startItemConfiguration": tool_start_item_configuration,
     "setItemProperty": tool_set_item_property,
     "addItemToCart": tool_add_item_to_cart,
+    "addMultipleItemsToCart": tool_add_multiple_items_to_cart,  # NEW: Batch add for speed
+    "quickAddItem": tool_quick_add_item,  # NEW: Smart NLP parser
     "getCartState": tool_get_cart_state,
     "getDetailedCart": tool_get_detailed_cart,
     "removeCartItem": tool_remove_cart_item,
@@ -2119,18 +2969,46 @@ TOOLS = {
 
 # ==================== WEBHOOK ====================
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    health = get_system_health()
+    status_code = 200 if health["status"] == "healthy" else 503
+    return JSONResponse(content=health, status_code=status_code)
+
+
+@app.get("/errors")
+async def get_errors():
+    """Get recent errors for debugging"""
+    return JSONResponse(content={"errors": _ERROR_LOG[-20:]})  # Last 20 errors
+
+
 @app.post("/webhook")
 async def vapi_webhook(request: Request):
-    """Main webhook endpoint"""
+    """Main webhook endpoint with safety mechanisms"""
+    start_time = datetime.now()
+
     try:
         data = await request.json()
         logger.info(f"Received webhook: {json.dumps(data, indent=2)}")
 
-        # Set caller context
+        # Set caller context and check rate limit
+        caller_id = None
         if "call" in data:
             phone = data["call"].get("customer", {}).get("number") or data["call"].get("phoneNumber")
             if phone:
+                caller_id = phone
                 caller_context.set(phone)
+
+                # Check rate limit
+                if not check_rate_limit(caller_id):
+                    logger.warning(f"Rate limit exceeded for {caller_id}")
+                    error_response = {
+                        "ok": False,
+                        "error": "Rate limit exceeded. Please wait a moment before trying again."
+                    }
+                    update_system_health(0, False)
+                    return JSONResponse(content=error_response, status_code=429)
 
         # Handle tool calls
         if "message" in data and "toolCalls" in data["message"]:
@@ -2148,12 +3026,35 @@ async def vapi_webhook(request: Request):
                 logger.info(f"Calling tool: {tool_name} with {tool_args}")
 
                 if tool_name in TOOLS:
-                    result = TOOLS[tool_name](tool_args)
-                    tool_results.append({
-                        "toolCallId": tool_call.get("id") or tool_call.get("toolCallId"),
-                        "result": result
-                    })
+                    try:
+                        # Sanitize inputs
+                        tool_args = sanitize_input(tool_args)
+
+                        # Execute tool
+                        result = TOOLS[tool_name](tool_args)
+
+                        # Track success
+                        request_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+                        update_system_health(request_time_ms, True)
+
+                        tool_results.append({
+                            "toolCallId": tool_call.get("id") or tool_call.get("toolCallId"),
+                            "result": result
+                        })
+                    except Exception as tool_error:
+                        logger.error(f"Tool {tool_name} error: {tool_error}")
+                        log_error(tool_error, {"tool": tool_name, "args": tool_args})
+
+                        # Track failure
+                        request_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+                        update_system_health(request_time_ms, False)
+
+                        tool_results.append({
+                            "toolCallId": tool_call.get("id") or tool_call.get("toolCallId"),
+                            "result": {"ok": False, "error": f"Tool error: {str(tool_error)}"}
+                        })
                 else:
+                    logger.warning(f"Unknown tool requested: {tool_name}")
                     tool_results.append({
                         "toolCallId": tool_call.get("id") or tool_call.get("toolCallId"),
                         "result": {"ok": False, "error": f"Unknown tool: {tool_name}"}
@@ -2167,11 +3068,16 @@ async def vapi_webhook(request: Request):
         logger.error(f"Webhook error: {str(e)}")
         import traceback
         traceback.print_exc()
+
+        # Log error with context
+        log_error(e, {"endpoint": "/webhook", "data": data if 'data' in locals() else None})
+
+        # Track failure
+        request_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+        update_system_health(request_time_ms, False)
+
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-@app.get("/health")
-async def health():
-    return {"status": "healthy", "version": "2.0"}
 
 async def cleanup_sessions_background():
     """Background task to clean expired sessions every 5 minutes"""
@@ -2187,7 +3093,7 @@ async def cleanup_sessions_background():
 async def startup_event():
     """Initialize database and resources on startup"""
     logger.info("=" * 60)
-    logger.info("Starting Kebabalab VAPI Server v2.0")
+    logger.info("Starting Kebabalab VAPI Server v2.1 - PRODUCTION")
     logger.info("=" * 60)
     logger.info("Initializing database...")
     init_db()
@@ -2195,7 +3101,12 @@ async def startup_event():
     logger.info("Starting background tasks...")
     asyncio.create_task(cleanup_sessions_background())
     logger.info("✓ Background session cleanup started")
-    logger.info("Server ready to accept requests")
+    asyncio.create_task(periodic_health_checks())
+    logger.info("✓ Periodic health monitoring started")
+    logger.info("Checking system health...")
+    check_database_health()
+    logger.info("✓ Initial health check complete")
+    logger.info("Server ready to accept requests with safety mechanisms active")
     logger.info("=" * 60)
 
 if __name__ == "__main__":

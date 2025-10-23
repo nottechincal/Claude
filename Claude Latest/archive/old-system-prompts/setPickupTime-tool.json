@@ -1,0 +1,22 @@
+{
+  "type": "function",
+  "function": {
+    "name": "setPickupTime",
+    "description": "Set custom pickup time when customer requests specific time. Minimum 10 minutes. Use when customer says 'in X minutes', 'in 1 hour', 'in 2 hours', etc. Convert to minutes: 15 mins=15, 1 hour=60, 2 hours=120. ALWAYS repeat back the pickup time to customer for confirmation.",
+    "strict": false,
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "minutes": {
+          "type": "number",
+          "description": "How many minutes from now for pickup. Must be at least 10."
+        }
+      },
+      "required": ["minutes"]
+    }
+  },
+  "async": false,
+  "server": {
+    "url": "YOUR_WEBHOOK_URL_HERE/webhook"
+  }
+}

@@ -8,13 +8,39 @@ This directory contains old/deprecated code from previous versions of the system
 
 ### old-servers/
 - **server_v2.py** - Previous 22-tool server (had the chip upgrade loop bug)
+- **server.py** - Historical server backup
 
-### Old Scripts
-- PowerShell scripts from previous deployment attempts
-- Tool setup scripts for old system
+### old-scripts/ (Newly Archived - Oct 2025)
+PowerShell scripts from the 22-tool era:
+- `add-cart-tools-fixed.ps1` - Cart tool deployment
+- `add-cart-tools.ps1` - Original cart tools
+- `deploy-performance-tools.ps1` - Performance-focused deployment
+- `deploy_vapi_tools.ps1` - Old main deployment script
+- `fix-missing-tools.ps1` - Tool troubleshooting
+- `vapi-complete-setup.ps1` - Complete setup automation
+- `vapi-deploy-all-tools.ps1` - Deploy all 22 tools
+- `vapi-diagnostic.ps1` - System diagnostics
+- `verify-tools.ps1` - Tool verification
 
-### Old System Prompt
+### old-system-prompts/ (Newly Archived - Oct 2025)
+System prompt configurations from the 22-tool system:
+- `vapi-tools-definitions.json` - Old 22-tool definitions
+- `system-prompt-UPDATED-OCT-22.md` - System prompt from Oct 22
+- `system-prompt-enterprise.md` - Enterprise variant
+- `system-prompt-optimized.md` - Optimization attempt
+- `system-prompt-production.md` - Production variant
+- `system-prompt-speed-optimized.md` - Speed optimization
+- `NEW-TOOLS-FOR-VAPI.md` - Tool change documentation
+- `setPickupTime-tool.json` - Single tool definition
+
+### Root Archive Files
 - `system-prompt.md` - Original system prompt
+- `setup-tools-simple.ps1` - Simple tool setup
+- `vapi-setup-tools-fixed.ps1` - Fixed setup script
+- `vapi-setup-tools.ps1` - Setup script
+- `vapi-tools-create-final.ps1` - Tool creation script
+- `fix-setItemProperty.ps1` - Property fix script
+- `kebabalab_server.txt` - Server dump/log
 
 ## Why These Were Replaced
 

@@ -1,5 +1,11 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-python-dotenv==1.0.0
-twilio==8.10.0
-pytz==2023.3
+# Flask web framework (required)
+flask>=2.3.0
+
+# CORS support for Flask (required)
+flask-cors>=4.0.0
+
+# Environment variable management (required)
+python-dotenv>=1.0.0
+
+# Twilio for SMS notifications (optional)
+twilio>=8.10.0

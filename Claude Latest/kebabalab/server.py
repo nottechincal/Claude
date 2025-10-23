@@ -94,7 +94,22 @@ except ModuleNotFoundError:  # pragma: no cover - exercised only when Twilio isn
 # ==================== CONFIGURATION ====================
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS configuration - restrict to VAPI domains for security
+allowed_origins_str = os.getenv('ALLOWED_ORIGINS', 'https://api.vapi.ai,https://vapi.ai')
+allowed_origins = [origin.strip() for origin in allowed_origins_str.split(',')]
+
+CORS(app, resources={
+    r"/webhook": {
+        "origins": allowed_origins,
+        "methods": ["POST"],
+        "allow_headers": ["Content-Type"]
+    },
+    r"/health": {
+        "origins": "*",  # Health check can be public
+        "methods": ["GET"]
+    }
+})
 
 # Logging
 # Create logs directory if it doesn't exist
@@ -127,35 +142,90 @@ MENU = {}
 # In-memory sessions (in production, use Redis)
 SESSIONS = {}
 
+# Session configuration
+SESSION_TTL = int(os.getenv('SESSION_TTL', '1800'))  # 30 minutes default
+MAX_SESSIONS = int(os.getenv('MAX_SESSIONS', '1000'))  # Max concurrent sessions
+LAST_CLEANUP = datetime.now()
+CLEANUP_INTERVAL = timedelta(minutes=5)  # Run cleanup every 5 minutes
+
 # ==================== DATABASE ====================
+
+class DatabaseConnection:
+    """Context manager for database connections with automatic cleanup"""
+
+    def __init__(self, db_path: str = DB_FILE):
+        self.db_path = db_path
+        self.conn = None
+        self.cursor = None
+
+    def __enter__(self):
+        """Open database connection"""
+        try:
+            self.conn = sqlite3.connect(self.db_path, timeout=10.0)
+            self.conn.row_factory = sqlite3.Row  # Enable column access by name
+            self.cursor = self.conn.cursor()
+            return self.cursor
+        except sqlite3.Error as e:
+            logger.error(f"Database connection error: {e}")
+            raise
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close connection and handle errors"""
+        if exc_type is not None:
+            # Exception occurred, rollback transaction
+            if self.conn:
+                try:
+                    self.conn.rollback()
+                    logger.warning(f"Transaction rolled back due to: {exc_val}")
+                except sqlite3.Error as e:
+                    logger.error(f"Rollback error: {e}")
+        else:
+            # No exception, commit transaction
+            if self.conn:
+                try:
+                    self.conn.commit()
+                except sqlite3.Error as e:
+                    logger.error(f"Commit error: {e}")
+                    raise
+
+        # Always close the connection
+        if self.cursor:
+            try:
+                self.cursor.close()
+            except sqlite3.Error:
+                pass
+        if self.conn:
+            try:
+                self.conn.close()
+            except sqlite3.Error:
+                pass
+
+        # Don't suppress the exception
+        return False
 
 def init_database():
     """Initialize SQLite database for orders"""
     # Create data directory if it doesn't exist
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
+    with DatabaseConnection() as cursor:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_number TEXT UNIQUE NOT NULL,
+                customer_name TEXT NOT NULL,
+                customer_phone TEXT NOT NULL,
+                cart_json TEXT NOT NULL,
+                subtotal REAL NOT NULL,
+                gst REAL NOT NULL,
+                total REAL NOT NULL,
+                ready_at TEXT,
+                notes TEXT,
+                status TEXT DEFAULT 'pending',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_number TEXT UNIQUE NOT NULL,
-            customer_name TEXT NOT NULL,
-            customer_phone TEXT NOT NULL,
-            cart_json TEXT NOT NULL,
-            subtotal REAL NOT NULL,
-            gst REAL NOT NULL,
-            total REAL NOT NULL,
-            ready_at TEXT,
-            notes TEXT,
-            status TEXT DEFAULT 'pending',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-
-    conn.commit()
-    conn.close()
     logger.info("Database initialized")
 
 # ==================== MENU ====================
@@ -188,19 +258,208 @@ def get_session_id() -> str:
     call_id = message.get('call', {}).get('id', 'default')
     return call_id
 
+def cleanup_expired_sessions():
+    """Remove expired sessions to prevent memory leaks"""
+    global LAST_CLEANUP
+    now = datetime.now()
+
+    # Only run cleanup every CLEANUP_INTERVAL
+    if now - LAST_CLEANUP < CLEANUP_INTERVAL:
+        return
+
+    LAST_CLEANUP = now
+    expired = []
+
+    for session_id, session_data in SESSIONS.items():
+        if '_meta' in session_data:
+            last_access = session_data['_meta'].get('last_access')
+            if last_access and (now - last_access).total_seconds() > SESSION_TTL:
+                expired.append(session_id)
+
+    for session_id in expired:
+        del SESSIONS[session_id]
+
+    if expired:
+        logger.info(f"Cleaned up {len(expired)} expired sessions")
+
+def enforce_session_limits():
+    """Enforce maximum session count by removing oldest sessions"""
+    if len(SESSIONS) <= MAX_SESSIONS:
+        return
+
+    # Sort sessions by last access time
+    sessions_by_access = []
+    for session_id, session_data in SESSIONS.items():
+        last_access = session_data.get('_meta', {}).get('last_access', datetime.min)
+        sessions_by_access.append((session_id, last_access))
+
+    sessions_by_access.sort(key=lambda x: x[1])
+
+    # Remove oldest sessions to get under limit
+    to_remove = len(SESSIONS) - MAX_SESSIONS
+    for session_id, _ in sessions_by_access[:to_remove]:
+        del SESSIONS[session_id]
+
+    logger.warning(f"Session limit reached. Removed {to_remove} oldest sessions")
+
 def session_get(key: str, default=None):
-    """Get value from session"""
+    """Get value from session with TTL tracking"""
+    cleanup_expired_sessions()  # Periodic cleanup
+
     session_id = get_session_id()
     if session_id not in SESSIONS:
-        SESSIONS[session_id] = {}
+        SESSIONS[session_id] = {
+            '_meta': {
+                'created_at': datetime.now(),
+                'last_access': datetime.now()
+            }
+        }
+    else:
+        # Update last access time
+        if '_meta' not in SESSIONS[session_id]:
+            SESSIONS[session_id]['_meta'] = {}
+        SESSIONS[session_id]['_meta']['last_access'] = datetime.now()
+
     return SESSIONS[session_id].get(key, default)
 
 def session_set(key: str, value: Any):
-    """Set value in session"""
+    """Set value in session with TTL tracking"""
+    cleanup_expired_sessions()  # Periodic cleanup
+    enforce_session_limits()  # Enforce max sessions
+
     session_id = get_session_id()
     if session_id not in SESSIONS:
-        SESSIONS[session_id] = {}
+        SESSIONS[session_id] = {
+            '_meta': {
+                'created_at': datetime.now(),
+                'last_access': datetime.now()
+            }
+        }
+    else:
+        # Update last access time
+        if '_meta' not in SESSIONS[session_id]:
+            SESSIONS[session_id]['_meta'] = {}
+        SESSIONS[session_id]['_meta']['last_access'] = datetime.now()
+
     SESSIONS[session_id][key] = value
+
+def session_clear(session_id: Optional[str] = None):
+    """Clear a specific session or current session"""
+    if session_id is None:
+        session_id = get_session_id()
+    if session_id in SESSIONS:
+        del SESSIONS[session_id]
+        logger.info(f"Session cleared: {session_id}")
+
+# ==================== INPUT VALIDATION ====================
+
+def sanitize_for_sms(text: str) -> str:
+    """Sanitize text for SMS to prevent injection attacks"""
+    if not text:
+        return ""
+    # Remove control characters and limit to printable ASCII + common punctuation
+    sanitized = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', str(text))
+    # Remove potential SMS command characters
+    sanitized = sanitized.replace('\n', ' ').replace('\r', ' ')
+    # Limit length
+    return sanitized[:500].strip()
+
+def validate_customer_name(name: str) -> Tuple[bool, str]:
+    """Validate customer name"""
+    if not name or not isinstance(name, str):
+        return False, "Customer name is required"
+
+    name = name.strip()
+
+    if len(name) < 2:
+        return False, "Customer name must be at least 2 characters"
+
+    if len(name) > 100:
+        return False, "Customer name must be less than 100 characters"
+
+    # Allow letters, spaces, hyphens, apostrophes
+    if not re.match(r"^[a-zA-Z\s\-']+$", name):
+        return False, "Customer name can only contain letters, spaces, hyphens and apostrophes"
+
+    return True, name
+
+def validate_phone_number(phone: str) -> Tuple[bool, str]:
+    """Validate Australian phone number"""
+    if not phone or not isinstance(phone, str):
+        return False, "Phone number is required"
+
+    # Normalize to digits only
+    digits = re.sub(r'\D', '', phone)
+
+    # Check valid Australian formats
+    # 04XXXXXXXX (10 digits) or 614XXXXXXXX (11 digits with country code)
+    if len(digits) == 10 and digits.startswith('04'):
+        return True, digits
+    elif len(digits) == 11 and digits.startswith('614'):
+        return True, '0' + digits[2:]  # Convert to local format
+    elif len(digits) == 11 and digits.startswith('610'):
+        return True, '0' + digits[2:]  # Convert landline to local format
+    else:
+        return False, "Phone number must be a valid Australian number (e.g., 04XX XXX XXX)"
+
+def validate_quantity(quantity: Any) -> Tuple[bool, int]:
+    """Validate item quantity"""
+    try:
+        qty = int(quantity)
+        if qty < 1:
+            return False, 1
+        if qty > 99:
+            return False, 99
+        return True, qty
+    except (ValueError, TypeError):
+        return False, 1
+
+def validate_menu_item(category: str, item_name: str, size: Optional[str] = None) -> Tuple[bool, str]:
+    """Validate that menu item exists"""
+    if not MENU:
+        return False, "Menu not loaded"
+
+    if category not in MENU:
+        return False, f"Category '{category}' not found in menu"
+
+    category_items = MENU[category].get('items', {})
+    if item_name not in category_items:
+        return False, f"Item '{item_name}' not found in category '{category}'"
+
+    # Validate size if provided
+    if size:
+        item_data = category_items[item_name]
+        available_sizes = item_data.get('sizes', ['regular'])
+        if size not in available_sizes:
+            return False, f"Size '{size}' not available for '{item_name}'. Available sizes: {', '.join(available_sizes)}"
+
+    return True, "Valid"
+
+def validate_customization(text: str) -> Tuple[bool, str]:
+    """Validate customization text"""
+    if not text:
+        return True, ""
+
+    text = str(text).strip()
+
+    if len(text) > 200:
+        return False, "Customization text too long (max 200 characters)"
+
+    # Sanitize for SMS/database
+    sanitized = sanitize_for_sms(text)
+    return True, sanitized
+
+def validate_price(price: Any) -> Tuple[bool, float]:
+    """Validate price value"""
+    try:
+        price_float = float(price)
+        if price_float < 0:
+            return False, 0.0
+        if price_float > 10000:  # Sanity check - no order over $10k
+            return False, 10000.0
+        return True, round(price_float, 2)
+    except (ValueError, TypeError):
+        return False, 0.0
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -647,19 +906,16 @@ def tool_get_caller_smart_context(params: Dict[str, Any]) -> Dict[str, Any]:
         phone = customer.get('number', 'unknown')
 
         # Get order history from database
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
+        with DatabaseConnection() as cursor:
+            cursor.execute('''
+                SELECT order_number, cart_json, total, created_at
+                FROM orders
+                WHERE customer_phone = ?
+                ORDER BY created_at DESC
+                LIMIT 5
+            ''', (phone,))
 
-        cursor.execute('''
-            SELECT order_number, cart_json, total, created_at
-            FROM orders
-            WHERE customer_phone = ?
-            ORDER BY created_at DESC
-            LIMIT 5
-        ''', (phone,))
-
-        orders = cursor.fetchall()
-        conn.close()
+            orders = cursor.fetchall()
 
         order_history = []
         favorite_items = {}
@@ -1455,16 +1711,28 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
 def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
     """Create and save final order to database"""
     try:
-        customer_name = params.get('customerName', '').strip()
-        customer_phone = _normalize_au_local(params.get('customerPhone', '').strip())
-        notes = params.get('notes', '').strip()
+        # Validate and sanitize customer name
+        customer_name_raw = params.get('customerName', '').strip()
+        name_valid, name_result = validate_customer_name(customer_name_raw)
+        if not name_valid:
+            return {"ok": False, "error": name_result}
+        customer_name = sanitize_for_sms(name_result)
+
+        # Validate and normalize phone number
+        customer_phone_raw = params.get('customerPhone', '').strip()
+        phone_valid, phone_result = validate_phone_number(customer_phone_raw)
+        if not phone_valid:
+            return {"ok": False, "error": phone_result}
+        customer_phone = phone_result
+
+        # Validate and sanitize notes
+        notes_raw = params.get('notes', '').strip()
+        notes_valid, notes_result = validate_customization(notes_raw)
+        if not notes_valid:
+            return {"ok": False, "error": f"Notes validation failed: {notes_result}"}
+        notes = notes_result
+
         send_sms_raw = params.get('sendSMS', True)
-
-        if not customer_name:
-            return {"ok": False, "error": "customerName is required"}
-
-        if not customer_phone:
-            return {"ok": False, "error": "customerPhone is required"}
 
         cart = session_get('cart', [])
 
@@ -1500,44 +1768,40 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
             send_sms_flag = bool(send_sms_raw)
 
         today = datetime.now().strftime("%Y%m%d")
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
 
-        cursor.execute(
-            '''
-            SELECT COUNT(*) FROM orders WHERE order_number LIKE ?
-            ''',
-            (f"{today}-%",),
-        )
+        with DatabaseConnection() as cursor:
+            cursor.execute(
+                '''
+                SELECT COUNT(*) FROM orders WHERE order_number LIKE ?
+                ''',
+                (f"{today}-%",),
+            )
 
-        count = cursor.fetchone()[0]
-        order_number = f"{today}-{count + 1:03d}"
-        display_order = f"#{count + 1:03d}"
+            count = cursor.fetchone()[0]
+            order_number = f"{today}-{count + 1:03d}"
+            display_order = f"#{count + 1:03d}"
 
-        cursor.execute(
-            '''
-            INSERT INTO orders (
-                order_number, customer_name, customer_phone,
-                cart_json, subtotal, gst, total,
-                ready_at, notes, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''',
-            (
-                order_number,
-                customer_name,
-                customer_phone,
-                json.dumps(cart),
-                float(subtotal),
-                gst,
-                float(total),
-                ready_at_iso,
-                notes,
-                'pending',
-            ),
-        )
-
-        conn.commit()
-        conn.close()
+            cursor.execute(
+                '''
+                INSERT INTO orders (
+                    order_number, customer_name, customer_phone,
+                    cart_json, subtotal, gst, total,
+                    ready_at, notes, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''',
+                (
+                    order_number,
+                    customer_name,
+                    customer_phone,
+                    json.dumps(cart),
+                    float(subtotal),
+                    gst,
+                    float(total),
+                    ready_at_iso,
+                    notes,
+                    'pending',
+                ),
+            )
 
         logger.info(f"Order {order_number} created for {customer_name}")
 
@@ -1658,19 +1922,16 @@ def tool_repeat_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": "phoneNumber is required"}
 
         # Get last order from database
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
+        with DatabaseConnection() as cursor:
+            cursor.execute('''
+                SELECT cart_json, total
+                FROM orders
+                WHERE customer_phone = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            ''', (phone_number,))
 
-        cursor.execute('''
-            SELECT cart_json, total
-            FROM orders
-            WHERE customer_phone = ?
-            ORDER BY created_at DESC
-            LIMIT 1
-        ''', (phone_number,))
-
-        result = cursor.fetchone()
-        conn.close()
+            result = cursor.fetchone()
 
         if not result:
             return {"ok": False, "error": "No previous orders found"}
@@ -1695,12 +1956,13 @@ def tool_repeat_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
 
 # Tool 15: endCall
 def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
-    """End the phone call gracefully"""
+    """End the phone call gracefully and clear session"""
     try:
-        # Clean up session
+        # Clean up session to free memory
         session_id = get_session_id()
         if session_id in SESSIONS:
-            logger.info(f"Ending call for session {session_id}")
+            logger.info(f"Ending call and clearing session: {session_id}")
+            session_clear(session_id)
 
         return {
             "ok": True,
@@ -1709,7 +1971,7 @@ def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error ending call: {e}")
-        return {"ok": False, "error": str(e)}
+        return {"ok": False, "error": "Failed to end call"}
 
 # ==================== TOOL REGISTRY ====================
 
@@ -1737,12 +1999,11 @@ TOOLS = {
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint"""
+    """Health check endpoint - minimal information for security"""
     return jsonify({
         "status": "healthy",
-        "server": "kebabalab-simplified",
-        "tools": len(TOOLS),
-        "sessions": len(SESSIONS)
+        "server": "kebabalab",
+        "version": "2.0"
     })
 
 @app.post("/webhook")

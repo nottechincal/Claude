@@ -1,6 +1,9 @@
 # 🚀 QUICK START - Deploy Now!
 
-Your credentials are saved in `deployment/deploy-my-assistant.ps1`
+**First Time Setup:**
+1. Copy `.env.example` to `.env`
+2. Fill in your VAPI credentials in `.env`
+3. Run the deployment script
 
 ## Run This One Command:
 
@@ -28,16 +31,16 @@ python server_simplified.py
 ngrok http 8000
 ```
 
-Verify ngrok URL is: `https://surveyable-natisha-unsacred.ngrok-free.dev`
+Verify your ngrok URL matches what's in your `.env` file (NGROK_URL variable).
 
-If ngrok URL changed, update it in `deployment/deploy-my-assistant.ps1`
+If ngrok URL changed, update it in `.env` file.
 
 ---
 
 ## After Deployment
 
 1. Go to https://dashboard.vapi.ai
-2. Open assistant: `320f76b1-140a-412c-b95f-252032911ca3`
+2. Open your assistant (Assistant ID from your `.env` file)
 3. Update system prompt:
    - Copy ALL of: `config\system-prompt-simplified.md`
    - Paste into system prompt field
@@ -47,13 +50,14 @@ If ngrok URL changed, update it in `deployment/deploy-my-assistant.ps1`
 
 ---
 
-## Your Credentials
+## Configuration
 
-**Assistant ID:** `320f76b1-140a-412c-b95f-252032911ca3`
+All credentials are stored in `.env` file:
+- **VAPI_ASSISTANT_ID** - Your VAPI assistant ID
+- **NGROK_URL** - Your ngrok webhook URL
+- **VAPI_API_KEY** - Your VAPI API key
 
-**Webhook URL:** `https://surveyable-natisha-unsacred.ngrok-free.dev`
-
-**API Key:** Saved in `deployment/deploy-my-assistant.ps1`
+**SECURITY:** Never commit `.env` to version control! See `.env.example` for template.
 
 ---
 

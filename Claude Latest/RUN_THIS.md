@@ -1,11 +1,11 @@
 # 🚀 QUICK START - Deploy Now!
 
-Your credentials are saved in `deploy-my-assistant.ps1`
+Your credentials are saved in `deployment/deploy-my-assistant.ps1`
 
 ## Run This One Command:
 
 ```powershell
-.\deploy-my-assistant.ps1
+.\deployment\deploy-my-assistant.ps1
 ```
 
 That's it! This will:
@@ -30,7 +30,7 @@ ngrok http 8000
 
 Verify ngrok URL is: `https://surveyable-natisha-unsacred.ngrok-free.dev`
 
-If ngrok URL changed, update it in `deploy-my-assistant.ps1`
+If ngrok URL changed, update it in `deployment/deploy-my-assistant.ps1`
 
 ---
 
@@ -53,8 +53,8 @@ If ngrok URL changed, update it in `deploy-my-assistant.ps1`
 
 **Webhook URL:** `https://surveyable-natisha-unsacred.ngrok-free.dev`
 
-**API Key:** Saved in `deploy-my-assistant.ps1`
+**API Key:** Saved in `deployment/deploy-my-assistant.ps1`
 
 ---
 
-**Ready? Run: `.\deploy-my-assistant.ps1`** 🚀
+**Ready? Run: `.\deployment\deploy-my-assistant.ps1`** 🚀

@@ -1,0 +1,93 @@
+Claude Latest/
+│
+├── 📄 README.md                          ⭐ Start here!
+├── 📄 RUN_THIS.md                        ⭐ Quick deploy guide
+├── 🐍 server_simplified.py               ⭐ Main server (15 tools)
+├── 📄 requirements.txt
+├── 📄 .env.example
+├── 📄 .gitignore
+│
+├── 🚀 deployment/                        ⭐ DEPLOY FROM HERE
+│   ├── 📄 README.md
+│   ├── 📄 QUICK_START.md                (5-minute guide)
+│   ├── 📄 DEPLOYMENT_PRODUCTION.md      (Full production guide)
+│   ├── 📄 DEPLOYMENT_CHECKLIST.md       (Checklist)
+│   ├── 📄 WINDOWS_DEPLOYMENT.md         (Windows-specific)
+│   ├── 💻 deploy-my-assistant.ps1       (Quick deploy - your credentials)
+│   ├── 💻 deploy-vapi-tools.ps1         (Main deployment script)
+│   ├── 💻 setup-windows.ps1             (Environment setup)
+│   ├── 💻 start_production.sh           (Production startup)
+│   └── 🐍 upload_tools_to_vapi.py       (Python upload script)
+│
+├── ⚙️  config/                           ⭐ CONFIGURATION
+│   ├── 📄 README.md
+│   ├── 📄 vapi-tools-simplified.json    ⭐ CURRENT (15 tools)
+│   ├── 📄 system-prompt-simplified.md   ⭐ CURRENT (AI prompt)
+│   ├── 📄 .env.production.example
+│   └── 📁 archive/                      (Old 22-tool configs)
+│       ├── vapi-tools-definitions.json  (old)
+│       ├── system-prompt-*.md           (old prompts)
+│       └── ...
+│
+├── 📚 docs/                              Documentation
+│   ├── 📄 README.md
+│   ├── 📄 SIMPLIFICATION_SUMMARY.md     (What changed)
+│   ├── 📄 SIMPLIFICATION_DESIGN.md      (Why we simplified)
+│   ├── 📄 PROJECT-STRUCTURE.md
+│   ├── 📄 DEPLOYMENT_GUIDE.md
+│   ├── 📄 TESTING_SCENARIOS.md
+│   ├── 📄 TROUBLESHOOTING.md
+│   └── ...
+│
+├── 🧪 tests/                            ⭐ ALL TESTS
+│   ├── 📄 README.md
+│   ├── 🐍 test_chip_upgrade.py          ⭐ CRITICAL TEST
+│   ├── 🐍 test_tools.py
+│   ├── 🐍 test_cart_modifications.py
+│   └── ... (other tests)
+│
+├── 💾 data/                             Runtime data
+│   ├── 📄 menu.json
+│   ├── 📄 business.json
+│   ├── 📄 hours.json
+│   ├── 📄 rules.json
+│   └── 🗄️  orders.db                   (auto-created)
+│
+├── 📝 logs/                             Log files
+│   └── (gitignored)
+│
+├── 💾 backups/                          Database backups
+│   └── (gitignored)
+│
+├── 💻 scripts/                          Old scripts
+│   └── 📁 archive/                      (Old deployment scripts)
+│
+└── 🗃️  archive/                         ⚠️  DEPRECATED CODE
+    ├── 📄 README.md
+    └── 📁 old-servers/
+        └── 🐍 server_v2.py              (Old 22-tool server - buggy)
+
+═══════════════════════════════════════════════════════════════
+
+⭐ KEY DIRECTORIES:
+
+1. deployment/     → Everything to deploy the system
+2. config/         → VAPI tools and system prompt (CURRENT versions)
+3. tests/          → Test before deploying
+4. docs/           → Full documentation
+
+═══════════════════════════════════════════════════════════════
+
+🚀 TO DEPLOY:
+
+Windows:
+   .\deployment\deploy-my-assistant.ps1
+
+Linux/Mac:
+   python deployment/upload_tools_to_vapi.py YOUR_KEY YOUR_URL
+
+Then update system prompt in VAPI dashboard.
+
+═══════════════════════════════════════════════════════════════
+
+✅ ORGANIZED & READY TO DEPLOY!

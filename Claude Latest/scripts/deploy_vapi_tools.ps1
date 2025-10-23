@@ -14,6 +14,36 @@ param(
   [switch]$UpdatePrompt
 )
 
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+$repoRoot  = Split-Path -Parent $scriptDir
+
+function Resolve-RepoPath {
+  param(
+    [string]$Path
+  )
+
+  if ([string]::IsNullOrWhiteSpace($Path)) { return $null }
+  if ([System.IO.Path]::IsPathRooted($Path)) {
+    return (Resolve-Path -LiteralPath $Path -ErrorAction SilentlyContinue)
+  }
+
+  $candidates = @(
+    Join-Path -Path (Get-Location) -ChildPath $Path,
+    Join-Path -Path $scriptDir -ChildPath $Path,
+    Join-Path -Path $repoRoot -ChildPath $Path
+  ) | Where-Object { $_ }
+
+  foreach ($candidate in $candidates) {
+    $resolved = Resolve-Path -LiteralPath $candidate -ErrorAction SilentlyContinue
+    if ($resolved) { return $resolved }
+  }
+
+  return $null
+}
+
+$toolsPathResolved  = Resolve-RepoPath -Path $ToolsJsonPath
+$promptPathResolved = Resolve-RepoPath -Path $PromptPath
+
 $ApiKey      = "4000447a-37e5-4aa6-b7b3-e692bec2706f"
 $AssistantId = "320f76b1-140a-412c-b95f-252032911ca3"
 $WebhookUrl  = "https://surveyable-natisha-unsacred.ngrok-free.dev"
@@ -29,6 +59,9 @@ Write-Host "============================================================" -Foreg
 Write-Host "  VAPI Tools Deployer (curl-based, v3) " -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Info  ("Assistant: " + $AssistantId)
+if ($toolsPathResolved) { $ToolsJsonPath = $toolsPathResolved.Path }
+if ($promptPathResolved) { $PromptPath = $promptPathResolved.Path }
+
 Info  ("Tools JSON: " + $ToolsJsonPath)
 Info  ("Webhook   : " + $WebhookUrl)
 if ($UpdatePrompt) { Info ("Prompt    : " + $PromptPath) }

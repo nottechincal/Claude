@@ -269,13 +269,14 @@ def load_menu():
 
         # Validate categories exist
         required_categories = ['kebabs', 'hsp', 'chips', 'drinks']
+        categories = MENU.get('categories', {})
         for category in required_categories:
-            if category not in MENU:
+            if category not in categories:
                 logger.warning(f"Menu missing category: {category}")
 
         # Log menu stats
-        total_items = sum(len(cat.get('items', {})) for cat in MENU.values() if isinstance(cat, dict))
-        logger.info(f"Menu loaded: {len(MENU)} categories, {total_items} items from {MENU_FILE}")
+        total_items = sum(len(items) for items in categories.values() if isinstance(items, list))
+        logger.info(f"Menu loaded: {len(categories)} categories, {total_items} items from {MENU_FILE}")
         return True
 
     except FileNotFoundError:
@@ -924,11 +925,18 @@ def calculate_price(item: Dict) -> float:
     for extra in extras:
         if extra in ['haloumi', 'halloumi']:
             price += 2.5
-        elif extra in ['extra meat', 'extra lamb', 'extra chicken']:
-            price += 3.0
+        elif extra in ['extra meat', 'extra lamb', 'extra chicken', 'extra mix']:
+            price += 4.0  # Website shows $4 for extra meat
         elif extra == 'cheese':
-            price += 1.0
+            # Cheese is INCLUDED in HSPs, only charge for kebabs
+            if category == 'kebabs':
+                price += 1.0
+            # For HSPs, cheese is already included in base price, don't add
         elif extra in ['olives', 'jalapenos']:
+            price += 1.0
+        elif extra == 'falafel':
+            price += 1.0
+        elif extra == 'hummus':
             price += 1.0
 
     return price
@@ -1186,7 +1194,9 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
             "extras": extras,
             "quantity": quantity,
             "is_combo": False,
-            "cheese": "cheese" in extras,
+            # HSPs ALWAYS include cheese (it's included in price)
+            # Kebabs only get cheese if explicitly requested as extra
+            "cheese": True if category == 'hsp' else ("cheese" in extras),
         }
 
         # Calculate price
@@ -1224,16 +1234,20 @@ def tool_add_multiple_items_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         added_count = 0
 
         for item_config in items:
+            category = item_config.get('category', '')
+
             # Build item
             item = {
-                "category": item_config.get('category', ''),
+                "category": category,
                 "name": item_config.get('name', ''),
                 "size": item_config.get('size'),
                 "protein": item_config.get('protein'),
                 "salads": item_config.get('salads', []),
                 "sauces": item_config.get('sauces', []),
                 "extras": item_config.get('extras', []),
-                "cheese": item_config.get('cheese', False),
+                # HSPs ALWAYS include cheese (it's included in price)
+                # For other categories, use the provided value or False
+                "cheese": True if category == 'hsp' else item_config.get('cheese', False),
                 "quantity": item_config.get('quantity', 1),
                 "brand": item_config.get('brand'),
                 "salt_type": item_config.get('salt_type', 'chicken'),

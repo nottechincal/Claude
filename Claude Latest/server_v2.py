@@ -251,6 +251,11 @@ def check_rate_limit(caller_id: str) -> bool:
     if not caller_id:
         return True  # Allow anonymous calls
 
+    # Bypass rate limiting for test phone numbers
+    TEST_NUMBERS = ["+61412345678", "anon"]
+    if caller_id in TEST_NUMBERS:
+        return True
+
     now = datetime.now()
 
     # Clean up old entries
@@ -1256,7 +1261,7 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         # Minimal response for speed (AI doesn't need breakdown)
         return {
             "ok": True,
-            "total": float(grand_total)
+            "grandTotal": float(grand_total)
         }
 
     except Exception as e:

@@ -9,3 +9,9 @@ python-dotenv>=1.0.0
 
 # Twilio for SMS notifications (optional)
 twilio>=8.10.0
+
+# Fuzzy string matching for NLP improvements (required)
+rapidfuzz>=3.0.0
+
+# Timezone support (required)
+pytz>=2023.3

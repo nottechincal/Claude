@@ -20,6 +20,15 @@ import sqlite3
 import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+import pytz
+
+# Fuzzy string matching for typo tolerance
+try:
+    from rapidfuzz import fuzz, process
+    FUZZY_MATCHING_AVAILABLE = True
+except ImportError:
+    FUZZY_MATCHING_AVAILABLE = False
+    logger.warning("rapidfuzz not available, fuzzy matching disabled")
 try:
     from flask import Flask, request, jsonify
     from flask_cors import CORS
@@ -126,7 +135,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Paths
-DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+# Get parent directory of kebabalab package (go up one level to project root)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 MENU_FILE = os.path.join(DATA_DIR, 'menu.json')
 DB_FILE = os.path.join(DATA_DIR, 'orders.db')
 
@@ -135,6 +146,14 @@ MENU_LINK_URL = os.getenv('MENU_LINK_URL', 'https://www.kebabalab.com.au/menu.ht
 SHOP_NUMBER_DEFAULT = os.getenv('SHOP_ORDER_TO', '0423680596')
 SHOP_NAME = os.getenv('SHOP_NAME', 'Kebabalab')
 SHOP_ADDRESS = os.getenv('SHOP_ADDRESS', 'Melbourne')
+
+# Timezone configuration
+SHOP_TIMEZONE_STR = os.getenv('SHOP_TIMEZONE', 'Australia/Melbourne')
+try:
+    SHOP_TIMEZONE = pytz.timezone(SHOP_TIMEZONE_STR)
+except pytz.exceptions.UnknownTimeZoneError:
+    logger.warning(f"Unknown timezone '{SHOP_TIMEZONE_STR}', falling back to Australia/Melbourne")
+    SHOP_TIMEZONE = pytz.timezone('Australia/Melbourne')
 
 # Global menu
 MENU = {}
@@ -145,7 +164,8 @@ SESSIONS = {}
 # Session configuration
 SESSION_TTL = int(os.getenv('SESSION_TTL', '1800'))  # 30 minutes default
 MAX_SESSIONS = int(os.getenv('MAX_SESSIONS', '1000'))  # Max concurrent sessions
-LAST_CLEANUP = datetime.now()
+# Will be initialized after SHOP_TIMEZONE is set
+LAST_CLEANUP = None
 CLEANUP_INTERVAL = timedelta(minutes=5)  # Run cleanup every 5 minutes
 
 # ==================== DATABASE ====================
@@ -204,11 +224,12 @@ class DatabaseConnection:
         return False
 
 def init_database():
-    """Initialize SQLite database for orders"""
+    """Initialize SQLite database for orders with indexes for performance"""
     # Create data directory if it doesn't exist
     os.makedirs(DATA_DIR, exist_ok=True)
 
     with DatabaseConnection() as cursor:
+        # Create orders table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -226,18 +247,44 @@ def init_database():
             )
         ''')
 
-    logger.info("Database initialized")
+        # Create indexes for frequently queried fields (improves order history lookup)
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_customer_phone ON orders(customer_phone)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_created_at ON orders(created_at DESC)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_order_number ON orders(order_number)')
+
+    logger.info("Database initialized with performance indexes")
 
 # ==================== MENU ====================
 
 def load_menu():
-    """Load menu from JSON file"""
+    """Load and validate menu from JSON file"""
     global MENU
     try:
         with open(MENU_FILE, 'r', encoding='utf-8') as f:
             MENU = json.load(f)
-        logger.info(f"Menu loaded successfully from {MENU_FILE}")
+
+        # Validate menu structure
+        if not isinstance(MENU, dict):
+            raise ValueError("Menu must be a dictionary")
+
+        # Validate categories exist
+        required_categories = ['kebabs', 'hsp', 'chips', 'drinks']
+        for category in required_categories:
+            if category not in MENU:
+                logger.warning(f"Menu missing category: {category}")
+
+        # Log menu stats
+        total_items = sum(len(cat.get('items', {})) for cat in MENU.values() if isinstance(cat, dict))
+        logger.info(f"Menu loaded: {len(MENU)} categories, {total_items} items from {MENU_FILE}")
         return True
+
+    except FileNotFoundError:
+        logger.error(f"Menu file not found: {MENU_FILE}")
+        logger.error("Server cannot operate without menu! Please ensure menu.json exists.")
+        return False
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON in menu file: {e}")
+        return False
     except Exception as e:
         logger.error(f"Failed to load menu: {e}")
         return False
@@ -261,7 +308,12 @@ def get_session_id() -> str:
 def cleanup_expired_sessions():
     """Remove expired sessions to prevent memory leaks"""
     global LAST_CLEANUP
-    now = datetime.now()
+    now = get_current_time()
+
+    # Initialize LAST_CLEANUP on first run
+    if LAST_CLEANUP is None:
+        LAST_CLEANUP = now
+        return
 
     # Only run cleanup every CLEANUP_INTERVAL
     if now - LAST_CLEANUP < CLEANUP_INTERVAL:
@@ -307,18 +359,20 @@ def session_get(key: str, default=None):
     cleanup_expired_sessions()  # Periodic cleanup
 
     session_id = get_session_id()
+    now = get_current_time()
+
     if session_id not in SESSIONS:
         SESSIONS[session_id] = {
             '_meta': {
-                'created_at': datetime.now(),
-                'last_access': datetime.now()
+                'created_at': now,
+                'last_access': now
             }
         }
     else:
         # Update last access time
         if '_meta' not in SESSIONS[session_id]:
             SESSIONS[session_id]['_meta'] = {}
-        SESSIONS[session_id]['_meta']['last_access'] = datetime.now()
+        SESSIONS[session_id]['_meta']['last_access'] = now
 
     return SESSIONS[session_id].get(key, default)
 
@@ -328,18 +382,20 @@ def session_set(key: str, value: Any):
     enforce_session_limits()  # Enforce max sessions
 
     session_id = get_session_id()
+    now = get_current_time()
+
     if session_id not in SESSIONS:
         SESSIONS[session_id] = {
             '_meta': {
-                'created_at': datetime.now(),
-                'last_access': datetime.now()
+                'created_at': now,
+                'last_access': now
             }
         }
     else:
         # Update last access time
         if '_meta' not in SESSIONS[session_id]:
             SESSIONS[session_id]['_meta'] = {}
-        SESSIONS[session_id]['_meta']['last_access'] = datetime.now()
+        SESSIONS[session_id]['_meta']['last_access'] = now
 
     SESSIONS[session_id][key] = value
 
@@ -468,6 +524,48 @@ def normalize_text(text: str) -> str:
     if not text:
         return ""
     return text.lower().strip()
+
+def fuzzy_match(text: str, choices: List[str], threshold: int = 80) -> Optional[str]:
+    """
+    Find best fuzzy match for text in choices.
+    Returns matched choice if confidence >= threshold, None otherwise.
+    Examples:
+    - fuzzy_match("chiken", ["chicken", "lamb"]) -> "chicken"
+    - fuzzy_match("galic", ["garlic", "chilli"]) -> "garlic"
+    """
+    if not FUZZY_MATCHING_AVAILABLE or not text or not choices:
+        return None
+
+    text = normalize_text(text)
+    # Extract word tokens from text for better matching
+    words = text.split()
+
+    best_match = None
+    best_score = 0
+
+    for word in words:
+        if len(word) < 3:  # Skip very short words
+            continue
+        result = process.extractOne(word, choices, scorer=fuzz.ratio)
+        if result and result[1] >= threshold:
+            if result[1] > best_score:
+                best_score = result[1]
+                best_match = result[0]
+
+    return best_match
+
+def get_current_time() -> datetime:
+    """Get current time in shop's timezone (timezone-aware)"""
+    return datetime.now(SHOP_TIMEZONE)
+
+def get_local_time(dt: Optional[datetime] = None) -> datetime:
+    """Convert datetime to shop's timezone. If None, returns current time."""
+    if dt is None:
+        return get_current_time()
+    if dt.tzinfo is None:
+        # Naive datetime, assume UTC
+        dt = pytz.utc.localize(dt)
+    return dt.astimezone(SHOP_TIMEZONE)
 
 
 def _human_join(items: Iterable[str]) -> str:
@@ -628,9 +726,10 @@ def _send_order_notifications(
         logger.error(f"Shop SMS failed: {error}")
 
 def parse_protein(text: str) -> Optional[str]:
-    """Extract protein type from text"""
+    """Extract protein type from text with fuzzy matching for typo tolerance"""
     text = normalize_text(text)
 
+    # Exact matches first
     if any(word in text for word in ['lamb', 'lamp']):
         return 'lamb'
     if any(word in text for word in ['chicken', 'chiken', 'chkn']):
@@ -639,6 +738,13 @@ def parse_protein(text: str) -> Optional[str]:
         return 'mixed'
     if 'falafel' in text or 'vegan' in text:
         return 'falafel'
+
+    # Fuzzy match if available (handles typos like "chikn", "lamm", "chicen")
+    protein_choices = ['chicken', 'lamb', 'mixed', 'falafel']
+    match = fuzzy_match(text, protein_choices, threshold=75)
+    if match:
+        logger.info(f"Fuzzy matched protein '{text}' to '{match}'")
+        return match
 
     return None
 
@@ -663,50 +769,75 @@ def parse_size(text: str) -> Optional[str]:
     return None
 
 def parse_salads(text: str) -> List[str]:
-    """Extract salads from text"""
+    """Extract salads from text with fuzzy matching for typo tolerance"""
     text = normalize_text(text)
     salads = []
 
-    if 'lettuce' in text:
-        salads.append('lettuce')
-    if 'tomato' in text:
-        salads.append('tomato')
-    if 'onion' in text:
-        salads.append('onion')
-    if 'pickle' in text:
-        salads.append('pickles')
-    if 'olive' in text:
-        salads.append('olives')
-
-    # Check for "no salad"
+    # Check for "no salad" first
     if any(phrase in text for phrase in ['no salad', 'without salad', 'hold salad']):
         return []
+
+    salad_map = {
+        'lettuce': ['lettuce', 'letuce', 'letus'],
+        'tomato': ['tomato', 'tomatos', 'toma'],
+        'onion': ['onion', 'onions', 'onin'],
+        'pickles': ['pickle', 'pickles', 'pickel'],
+        'olives': ['olive', 'olives', 'olivs']
+    }
+
+    # Exact matches first
+    for salad, keywords in salad_map.items():
+        if any(keyword in text for keyword in keywords):
+            salads.append(salad)
+
+    # Fuzzy match for typos if no exact matches found
+    if not salads and FUZZY_MATCHING_AVAILABLE:
+        all_salad_choices = list(salad_map.keys())
+        words = text.split()
+        for word in words:
+            if len(word) >= 4:  # Only check words of reasonable length
+                match = fuzzy_match(word, all_salad_choices, threshold=75)
+                if match and match not in salads:
+                    salads.append(match)
+                    logger.info(f"Fuzzy matched salad '{word}' to '{match}'")
 
     return salads
 
 def parse_sauces(text: str) -> List[str]:
-    """Extract sauces from text"""
+    """Extract sauces from text with fuzzy matching for typo tolerance"""
     text = normalize_text(text)
     sauces = []
 
-    if 'garlic' in text or 'garlek' in text:
-        sauces.append('garlic')
-    if 'chili' in text or 'chilli' in text:
-        sauces.append('chilli')
-    if 'bbq' in text:
-        sauces.append('bbq')
-    if 'tomato sauce' in text or 'ketchup' in text:
-        sauces.append('tomato')
-    if 'sweet chilli' in text or 'sweet chili' in text:
-        sauces.append('sweet chilli')
-    if 'mayo' in text or 'aioli' in text:
-        sauces.append('mayo')
-    if 'hummus' in text:
-        sauces.append('hummus')
-
-    # Check for "no sauce"
+    # Check for "no sauce" first
     if any(phrase in text for phrase in ['no sauce', 'without sauce', 'hold sauce']):
         return []
+
+    sauce_map = {
+        'garlic': ['garlic', 'garlek', 'galic', 'garlick'],
+        'chilli': ['chili', 'chilli', 'chilly', 'chili sauce'],
+        'bbq': ['bbq', 'barbeque', 'barbecue'],
+        'tomato': ['tomato sauce', 'ketchup', 'tomatoe'],
+        'sweet chilli': ['sweet chilli', 'sweet chili', 'sweet chilly'],
+        'mayo': ['mayo', 'aioli', 'mayonnaise'],
+        'hummus': ['hummus', 'humus', 'hummous']
+    }
+
+    # Exact matches first
+    for sauce, keywords in sauce_map.items():
+        if any(keyword in text for keyword in keywords):
+            if sauce not in sauces:
+                sauces.append(sauce)
+
+    # Fuzzy match for typos if no exact matches found
+    if not sauces and FUZZY_MATCHING_AVAILABLE:
+        all_sauce_choices = list(sauce_map.keys())
+        words = text.split()
+        for word in words:
+            if len(word) >= 4:  # Only check words of reasonable length
+                match = fuzzy_match(word, all_sauce_choices, threshold=75)
+                if match and match not in sauces:
+                    sauces.append(match)
+                    logger.info(f"Fuzzy matched sauce '{word}' to '{match}'")
 
     return sauces
 
@@ -862,9 +993,9 @@ def format_cart_item(item: Dict, index: int) -> str:
 
 # Tool 1: checkOpen
 def tool_check_open(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Check if shop is currently open"""
+    """Check if shop is currently open (timezone-aware)"""
     try:
-        now = datetime.now()
+        now = get_current_time()
         day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
         current_time = now.strftime("%H:%M")
 
@@ -1015,14 +1146,17 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         else:
             return {
                 "ok": False,
-                "error": f"Couldn't determine item type from '{description}'. Please be more specific."
+                "error": f"I didn't understand '{description}'. Try saying something like 'large chicken kebab with lettuce and garlic sauce' or '2 cokes' or 'small chips'."
             }
 
-        # Parse size
+        # Parse size - MUST ask customer, never default
         size = parse_size(description)
         if not size and category in ['kebabs', 'hsp', 'chips']:
-            # Default to large for kebabs/hsp, small for chips
-            size = 'large' if category in ['kebabs', 'hsp'] else 'small'
+            # Don't default - ask the customer!
+            return {
+                "ok": False,
+                "error": f"I need to know the size for the {category}. Would you like small or large?"
+            }
 
         # Parse protein (for kebabs/hsp)
         protein = None
@@ -1361,30 +1495,80 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Get the item
         item = cart[item_index]
 
-        logger.info(f"Editing item {item_index}: {modifications}")
+        # Log BEFORE state for debugging
+        logger.info(f"BEFORE EDIT - Item {item_index}: {json.dumps(item)}")
+        logger.info(f"Modifications requested: {json.dumps(modifications)}")
+
+        # Validate salads and sauces lists to prevent corruption
+        VALID_SALADS = ['lettuce', 'tomato', 'onion', 'pickles', 'olives']
+        VALID_SAUCES = ['garlic', 'chilli', 'bbq', 'tomato', 'sweet chilli', 'mayo', 'hummus']
 
         # Apply ALL modifications
         for field, value in modifications.items():
             if field == "size":
+                old_size = item.get("size")
                 item["size"] = value
+
+                # Update name if it starts with size word
                 name = item.get("name", "")
                 if name:
-                    updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
-                    item["name"] = updated
+                    # Replace Small/Large at the beginning of the name
+                    if name.startswith("Small") or name.startswith("Large"):
+                        updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
+                        item["name"] = updated
+                    else:
+                        # If name doesn't start with size, prepend it
+                        item["name"] = f"{value.capitalize()} {name}"
+
+                logger.info(f"Size changed from '{old_size}' to '{value}', name is now '{item['name']}'")
+
             elif field == "protein":
                 item["protein"] = value
+                logger.info(f"Protein changed to '{value}'")
+
             elif field == "salads":
-                item["salads"] = value if isinstance(value, list) else []
+                # Validate salads list
+                if isinstance(value, list):
+                    # Filter out any sauces that got mixed in
+                    valid_salads = [s for s in value if s.lower() not in VALID_SAUCES]
+                    invalid_items = [s for s in value if s.lower() in VALID_SAUCES]
+                    if invalid_items:
+                        logger.warning(f"SALAD CORRUPTION PREVENTED: Removed sauces from salads list: {invalid_items}")
+                    item["salads"] = valid_salads
+                else:
+                    item["salads"] = []
+                logger.info(f"Salads set to: {item['salads']}")
+
             elif field == "sauces":
-                item["sauces"] = value if isinstance(value, list) else []
+                # Validate sauces list
+                if isinstance(value, list):
+                    # Filter out any salads that got mixed in
+                    valid_sauces = [s for s in value if s.lower() not in VALID_SALADS]
+                    invalid_items = [s for s in value if s.lower() in VALID_SALADS]
+                    if invalid_items:
+                        logger.warning(f"SAUCE CORRUPTION PREVENTED: Removed salads from sauces list: {invalid_items}")
+                    item["sauces"] = valid_sauces
+                else:
+                    item["sauces"] = []
+                logger.info(f"Sauces set to: {item['sauces']}")
+
             elif field == "extras":
                 item["extras"] = value if isinstance(value, list) else []
+                logger.info(f"Extras set to: {item['extras']}")
+
             elif field == "cheese":
                 item["cheese"] = bool(value)
+                logger.info(f"Cheese set to: {item['cheese']}")
+
             elif field == "quantity":
+                old_qty = item.get("quantity", 1)
                 item["quantity"] = int(value) if value else 1
+                logger.info(f"Quantity changed from {old_qty} to {item['quantity']}")
+
             elif field == "salt_type":
                 item["salt_type"] = value
+                logger.info(f"Salt type set to: {value}")
+
             elif field == "chips_size":
                 # CRITICAL: Handle meal chips upgrade
                 if item.get('is_combo'):
@@ -1393,15 +1577,16 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
                     item['chips_size'] = new_chips_size
 
-                    # Recalculate combo price
-                    if "Small Kebab Meal" in item.get('name', ''):
+                    # Recalculate combo price based on kebab size and chips size
+                    kebab_size = item.get('size', 'small')
+                    if kebab_size == 'small':
                         if new_chips_size == "large":
                             item['price'] = 20.0
                             item['name'] = "Small Kebab Meal (Large Chips)"
                         else:
                             item['price'] = 17.0
                             item['name'] = "Small Kebab Meal"
-                    elif "Large Kebab Meal" in item.get('name', ''):
+                    else:  # large kebab
                         if new_chips_size == "large":
                             item['price'] = 25.0
                             item['name'] = "Large Kebab Meal (Large Chips)"
@@ -1413,19 +1598,24 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
                 else:
                     logger.warning(f"chips_size can only be modified on combo/meal items")
             else:
-                # Unknown field - just set it
+                # Unknown field - log warning and set it
+                logger.warning(f"Unknown field '{field}' being set to: {value}")
                 item[field] = value
 
-        # Recalculate price if needed
+        # ALWAYS recalculate price after modifications (unless it's a combo with fixed price)
         if not item.get('is_combo'):
+            old_price = item.get('price', 0.0)
             item['price'] = calculate_price(item)
+            if old_price != item['price']:
+                logger.info(f"Price recalculated from ${old_price:.2f} to ${item['price']:.2f}")
 
         # Update cart
         cart[item_index] = item
         session_set('cart', cart)
         session_set('cart_priced', False)
 
-        logger.info(f"Item {item_index} updated successfully: {item}")
+        # Log AFTER state for debugging
+        logger.info(f"AFTER EDIT - Item {item_index}: {json.dumps(item)}")
 
         return {
             "ok": True,
@@ -1683,7 +1873,7 @@ def tool_estimate_ready_time(params: Dict[str, Any]) -> Dict[str, Any]:
         total_minutes = base_time + (len(cart) * per_item_time)
         total_minutes = min(total_minutes, 30)  # Cap at 30 minutes
 
-        ready_time = datetime.now() + timedelta(minutes=total_minutes)
+        ready_time = get_current_time() + timedelta(minutes=total_minutes)
         ready_at_iso = ready_time.isoformat()
         ready_at_formatted = _format_time_for_display(ready_time)
         ready_phrase = f"in about {total_minutes} minutes ({ready_at_formatted})"
@@ -1767,7 +1957,7 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         else:
             send_sms_flag = bool(send_sms_raw)
 
-        today = datetime.now().strftime("%Y%m%d")
+        today = get_current_time().strftime("%Y%m%d")
 
         with DatabaseConnection() as cursor:
             cursor.execute(

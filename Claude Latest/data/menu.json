@@ -109,7 +109,9 @@
             "chilli"
           ],
           "cheese": true
-        }
+        },
+        "cheese_included": true,
+        "description": "Chips with meat, cheese included, and your choice of sauces"
       },
       {
         "id": "HSP_CHKN",
@@ -125,7 +127,9 @@
             "chilli"
           ],
           "cheese": true
-        }
+        },
+        "cheese_included": true,
+        "description": "Chips with meat, cheese included, and your choice of sauces"
       },
       {
         "id": "HSP_MIX",
@@ -141,7 +145,9 @@
             "chilli"
           ],
           "cheese": true
-        }
+        },
+        "cheese_included": true,
+        "description": "Chips with meat, cheese included, and your choice of sauces"
       },
       {
         "id": "HSP_FAL",
@@ -158,7 +164,9 @@
           ],
           "cheese": true
         },
-        "vegetarian": true
+        "cheese_included": true,
+        "vegetarian": true,
+        "description": "Chips with falafel, cheese included, and your choice of sauces"
       }
     ],
     "gozleme": [
@@ -289,7 +297,8 @@
           "sauces": [
             "garlic"
           ]
-        }
+        },
+        "description": "Kebab with small chips and 375ml can"
       },
       {
         "id": "CMB_KEB_LCHP_CAN",
@@ -311,15 +320,14 @@
           "sauces": [
             "garlic"
           ]
-        }
+        },
+        "description": "Large kebab with large chips and 375ml can"
       },
       {
-        "id": "CMB_HSP_CAN",
-        "name": "HSP & Soft Drink Can",
-        "sizes": {
-          "small": 17.0,
-          "large": 22.0
-        },
+        "id": "CMB_HSP_CAN_L",
+        "name": "HSP (Large) & Can",
+        "price": 22.0,
+        "size": "large",
         "includes": {
           "hsp": 1,
           "drink_can": 1
@@ -330,7 +338,8 @@
             "chilli"
           ],
           "cheese": true
-        }
+        },
+        "description": "Large HSP with 375ml can (cheese included)"
       },
       {
         "id": "CMB_GOZ_SCHP_CAN",
@@ -340,7 +349,8 @@
           "gozleme": 1,
           "chips_small": 1,
           "drink_can": 1
-        }
+        },
+        "description": "Gozleme with small chips and 375ml can"
       }
     ],
     "drinks": [
@@ -398,7 +408,7 @@
     "sweets": [
       {
         "id": "SWT_BAK_EA",
-        "name": "Baklava (each)",
+        "name": "Baklava",
         "price": 3.0,
         "description": "A traditional sweet that'll always hit the spot..."
       },
@@ -413,11 +423,6 @@
         "name": "Turkish Delight",
         "price": 1.0,
         "description": "Rose or Vanilla Flavours Available..."
-      },
-      {
-        "id": "SWT_RICE",
-        "name": "Rice Pudding (225g)",
-        "price": 5.0
       }
     ],
     "meat_containers": [
@@ -578,15 +583,20 @@
         "price": 1.0,
         "allergens": [
           "dairy"
-        ]
+        ],
+        "applies_to": [
+          "kebab"
+        ],
+        "note": "Cheese is INCLUDED in HSPs, only charge for kebabs"
       },
       {
         "name": "extra meat",
-        "price": 4.0
+        "price": 4.0,
+        "description": "Extra Meat (Lamb/Chicken/Mix)"
       },
       {
         "name": "extra lamb",
-        "price": 3.0,
+        "price": 4.0,
         "applies_to": [
           "kebab",
           "hsp"
@@ -594,7 +604,7 @@
       },
       {
         "name": "extra chicken",
-        "price": 3.0,
+        "price": 4.0,
         "applies_to": [
           "kebab",
           "hsp"
@@ -602,7 +612,7 @@
       },
       {
         "name": "extra mix",
-        "price": 3.0,
+        "price": 4.0,
         "applies_to": [
           "kebab",
           "hsp"

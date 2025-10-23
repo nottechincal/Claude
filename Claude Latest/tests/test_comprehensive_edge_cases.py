@@ -60,7 +60,16 @@ class ComprehensiveTestSuite:
         }
 
         response = requests.post(f"{BASE_URL}/webhook", json=payload)
-        return response.json()
+        response_data = response.json()
+
+        # Extract the actual tool result from the webhook response
+        # Webhook returns: {"results": [{"toolCallId": "...", "result": {...}}]}
+        # We want just the "result" part
+        if "results" in response_data and len(response_data["results"]) > 0:
+            return response_data["results"][0]["result"]
+
+        # Fallback for direct responses
+        return response_data
 
     def clear_session(self):
         """Clear cart for fresh test"""

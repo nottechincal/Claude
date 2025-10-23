@@ -150,33 +150,82 @@ CLEANUP_INTERVAL = timedelta(minutes=5)  # Run cleanup every 5 minutes
 
 # ==================== DATABASE ====================
 
+class DatabaseConnection:
+    """Context manager for database connections with automatic cleanup"""
+
+    def __init__(self, db_path: str = DB_FILE):
+        self.db_path = db_path
+        self.conn = None
+        self.cursor = None
+
+    def __enter__(self):
+        """Open database connection"""
+        try:
+            self.conn = sqlite3.connect(self.db_path, timeout=10.0)
+            self.conn.row_factory = sqlite3.Row  # Enable column access by name
+            self.cursor = self.conn.cursor()
+            return self.cursor
+        except sqlite3.Error as e:
+            logger.error(f"Database connection error: {e}")
+            raise
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close connection and handle errors"""
+        if exc_type is not None:
+            # Exception occurred, rollback transaction
+            if self.conn:
+                try:
+                    self.conn.rollback()
+                    logger.warning(f"Transaction rolled back due to: {exc_val}")
+                except sqlite3.Error as e:
+                    logger.error(f"Rollback error: {e}")
+        else:
+            # No exception, commit transaction
+            if self.conn:
+                try:
+                    self.conn.commit()
+                except sqlite3.Error as e:
+                    logger.error(f"Commit error: {e}")
+                    raise
+
+        # Always close the connection
+        if self.cursor:
+            try:
+                self.cursor.close()
+            except sqlite3.Error:
+                pass
+        if self.conn:
+            try:
+                self.conn.close()
+            except sqlite3.Error:
+                pass
+
+        # Don't suppress the exception
+        return False
+
 def init_database():
     """Initialize SQLite database for orders"""
     # Create data directory if it doesn't exist
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
+    with DatabaseConnection() as cursor:
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                order_number TEXT UNIQUE NOT NULL,
+                customer_name TEXT NOT NULL,
+                customer_phone TEXT NOT NULL,
+                cart_json TEXT NOT NULL,
+                subtotal REAL NOT NULL,
+                gst REAL NOT NULL,
+                total REAL NOT NULL,
+                ready_at TEXT,
+                notes TEXT,
+                status TEXT DEFAULT 'pending',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_number TEXT UNIQUE NOT NULL,
-            customer_name TEXT NOT NULL,
-            customer_phone TEXT NOT NULL,
-            cart_json TEXT NOT NULL,
-            subtotal REAL NOT NULL,
-            gst REAL NOT NULL,
-            total REAL NOT NULL,
-            ready_at TEXT,
-            notes TEXT,
-            status TEXT DEFAULT 'pending',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-
-    conn.commit()
-    conn.close()
     logger.info("Database initialized")
 
 # ==================== MENU ====================
@@ -857,19 +906,16 @@ def tool_get_caller_smart_context(params: Dict[str, Any]) -> Dict[str, Any]:
         phone = customer.get('number', 'unknown')
 
         # Get order history from database
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
+        with DatabaseConnection() as cursor:
+            cursor.execute('''
+                SELECT order_number, cart_json, total, created_at
+                FROM orders
+                WHERE customer_phone = ?
+                ORDER BY created_at DESC
+                LIMIT 5
+            ''', (phone,))
 
-        cursor.execute('''
-            SELECT order_number, cart_json, total, created_at
-            FROM orders
-            WHERE customer_phone = ?
-            ORDER BY created_at DESC
-            LIMIT 5
-        ''', (phone,))
-
-        orders = cursor.fetchall()
-        conn.close()
+            orders = cursor.fetchall()
 
         order_history = []
         favorite_items = {}
@@ -1722,44 +1768,40 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
             send_sms_flag = bool(send_sms_raw)
 
         today = datetime.now().strftime("%Y%m%d")
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
 
-        cursor.execute(
-            '''
-            SELECT COUNT(*) FROM orders WHERE order_number LIKE ?
-            ''',
-            (f"{today}-%",),
-        )
+        with DatabaseConnection() as cursor:
+            cursor.execute(
+                '''
+                SELECT COUNT(*) FROM orders WHERE order_number LIKE ?
+                ''',
+                (f"{today}-%",),
+            )
 
-        count = cursor.fetchone()[0]
-        order_number = f"{today}-{count + 1:03d}"
-        display_order = f"#{count + 1:03d}"
+            count = cursor.fetchone()[0]
+            order_number = f"{today}-{count + 1:03d}"
+            display_order = f"#{count + 1:03d}"
 
-        cursor.execute(
-            '''
-            INSERT INTO orders (
-                order_number, customer_name, customer_phone,
-                cart_json, subtotal, gst, total,
-                ready_at, notes, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''',
-            (
-                order_number,
-                customer_name,
-                customer_phone,
-                json.dumps(cart),
-                float(subtotal),
-                gst,
-                float(total),
-                ready_at_iso,
-                notes,
-                'pending',
-            ),
-        )
-
-        conn.commit()
-        conn.close()
+            cursor.execute(
+                '''
+                INSERT INTO orders (
+                    order_number, customer_name, customer_phone,
+                    cart_json, subtotal, gst, total,
+                    ready_at, notes, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''',
+                (
+                    order_number,
+                    customer_name,
+                    customer_phone,
+                    json.dumps(cart),
+                    float(subtotal),
+                    gst,
+                    float(total),
+                    ready_at_iso,
+                    notes,
+                    'pending',
+                ),
+            )
 
         logger.info(f"Order {order_number} created for {customer_name}")
 
@@ -1880,19 +1922,16 @@ def tool_repeat_last_order(params: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": "phoneNumber is required"}
 
         # Get last order from database
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
+        with DatabaseConnection() as cursor:
+            cursor.execute('''
+                SELECT cart_json, total
+                FROM orders
+                WHERE customer_phone = ?
+                ORDER BY created_at DESC
+                LIMIT 1
+            ''', (phone_number,))
 
-        cursor.execute('''
-            SELECT cart_json, total
-            FROM orders
-            WHERE customer_phone = ?
-            ORDER BY created_at DESC
-            LIMIT 1
-        ''', (phone_number,))
-
-        result = cursor.fetchone()
-        conn.close()
+            result = cursor.fetchone()
 
         if not result:
             return {"ok": False, "error": "No previous orders found"}

@@ -927,40 +927,40 @@ def apply_combo_to_cart(cart: List[Dict], combo_info: Dict) -> List[Dict]:
 def calculate_item_price(item: Dict, menu: Dict) -> Decimal:
     """Calculate price for a single item"""
 
-    # Handle combo items
-    if item.get("is_combo") and item.get("price"):
-        return Decimal(str(item["price"]))
-
     category = item.get("category", "").lower()
     size = item.get("size", "").lower()
 
-    base_price = Decimal("0")
+    # Handle combo items - start with combo price
+    if item.get("is_combo") and item.get("price"):
+        base_price = Decimal(str(item["price"]))
+    else:
+        base_price = Decimal("0")
 
-    # Standard pricing by category (protein type doesn't affect price)
-    if category in ["kebabs", "kebab"]:
-        # All kebabs same price by size
-        if size == "small":
-            base_price = Decimal("10.0")
-        elif size == "large":
-            base_price = Decimal("15.0")
+        # Standard pricing by category (protein type doesn't affect price)
+        if category in ["kebabs", "kebab"]:
+            # All kebabs same price by size
+            if size == "small":
+                base_price = Decimal("10.0")
+            elif size == "large":
+                base_price = Decimal("15.0")
 
-    elif category in ["hsp", "hsps"]:
-        # All HSPs same price by size
-        if size == "small":
-            base_price = Decimal("15.0")
-        elif size == "large":
-            base_price = Decimal("20.0")
+        elif category in ["hsp", "hsps"]:
+            # All HSPs same price by size
+            if size == "small":
+                base_price = Decimal("15.0")
+            elif size == "large":
+                base_price = Decimal("20.0")
 
-    elif category == "chips":
-        # Chips pricing by size
-        if size == "small":
-            base_price = Decimal("5.0")
-        elif size == "large":
-            base_price = Decimal("9.0")  # FIXED: Was $8.00, now correct $9.00
+        elif category == "chips":
+            # Chips pricing by size
+            if size == "small":
+                base_price = Decimal("5.0")
+            elif size == "large":
+                base_price = Decimal("9.0")  # FIXED: Was $8.00, now correct $9.00
 
-    elif category in ["drinks", "drink"]:
-        # All cans are $3.50
-        base_price = Decimal("3.5")  # FIXED: Was $3.00, now correct $3.50
+        elif category in ["drinks", "drink"]:
+            # All cans are $3.50
+            base_price = Decimal("3.5")  # FIXED: Was $3.00, now correct $3.50
 
     # Add extras pricing
     extras = item.get("extras", [])
@@ -1099,6 +1099,21 @@ def tool_set_item_property(params: Dict[str, Any]) -> Dict[str, Any]:
                 logger.info(f"Set quantity to: {item_state.quantity}")
             except (ValueError, TypeError):
                 item_state.quantity = 1
+        elif field == "extra_meat":
+            # Handle extra_meat as a boolean that adds to extras array
+            if isinstance(parsed_value, str):
+                should_add = parsed_value.lower() in ["true", "1", "yes"]
+            else:
+                should_add = bool(parsed_value)
+
+            if should_add:
+                if "extra_meat" not in item_state.extras:
+                    item_state.extras.append("extra_meat")
+            else:
+                # Remove if it exists
+                if "extra_meat" in item_state.extras:
+                    item_state.extras.remove("extra_meat")
+            logger.info(f"Set extra_meat to: {should_add}, extras now: {item_state.extras}")
         else:
             return {"ok": False, "error": f"Unknown field: {field}"}
 
@@ -2015,7 +2030,8 @@ def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
                     "sauces": item.get("sauces", []),
                     "extras": item.get("extras", []),
                     "drink_brand": drink_brand,
-                    "chips_salt": chips_salt
+                    "chips_salt": chips_salt,
+                    "chips_size": chips_size
                 }
 
                 if item.get("cheese") is not None:
@@ -2131,6 +2147,49 @@ def tool_modify_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
                     item["quantity"] = int(parsed_value) if parsed_value else 1
                 except (ValueError, TypeError):
                     item["quantity"] = 1
+            elif field == "chips_size":
+                # Handle meal chips upgrade
+                if item.get("is_combo"):
+                    new_chips_size = str(parsed_value).lower()
+                    item["chips_size"] = new_chips_size
+
+                    # Recalculate combo price based on chips size
+                    if "Small Kebab Meal" in item.get("name", ""):
+                        item["price"] = 20.0 if new_chips_size == "large" else 17.0
+                        if new_chips_size == "large":
+                            item["name"] = "Small Kebab Meal (Large Chips)"
+                            item["combo_id"] = "CMB_KEB_SCHP_L_CAN"
+                        else:
+                            item["name"] = "Small Kebab Meal"
+                            item["combo_id"] = "CMB_KEB_SCHP_CAN"
+                    elif "Large Kebab Meal" in item.get("name", ""):
+                        if new_chips_size == "large":
+                            item["price"] = 25.0
+                            item["name"] = "Large Kebab Meal (Large Chips)"
+                            item["combo_id"] = "CMB_KEB_LCHP_L_CAN"
+                        else:
+                            item["price"] = 22.0
+                            item["name"] = "Large Kebab Meal"
+                            item["combo_id"] = "CMB_KEB_LCHP_S_CAN"
+                    logger.info(f"Updated chips size to {new_chips_size}, new price: ${item['price']}")
+                else:
+                    logger.warning(f"chips_size can only be modified on combo/meal items")
+            elif field == "extra_meat":
+                # Handle extra_meat modification (add to extras array)
+                if isinstance(parsed_value, str):
+                    should_add = parsed_value.lower() in ["true", "1", "yes"]
+                else:
+                    should_add = bool(parsed_value)
+
+                if "extras" not in item:
+                    item["extras"] = []
+
+                if should_add:
+                    if "extra_meat" not in item["extras"]:
+                        item["extras"].append("extra_meat")
+                else:
+                    if "extra_meat" in item["extras"]:
+                        item["extras"].remove("extra_meat")
             else:
                 logger.warning(f"Unknown field in modifications: {field}")
 

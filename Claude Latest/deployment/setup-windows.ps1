@@ -89,8 +89,16 @@ Write-Host ""
 
 # Test database creation
 Write-Host "Testing database initialization..." -ForegroundColor Yellow
+$pythonCode = @"
+import sqlite3
+import os
+os.makedirs('data', exist_ok=True)
+conn = sqlite3.connect('data/orders.db')
+conn.close()
+"@
+
 try {
-    python -c "import sqlite3; import os; os.makedirs('data', exist_ok=True); conn = sqlite3.connect('data/orders.db'); conn.close()" 2>&1 | Out-Null
+    $pythonCode | python 2>&1 | Out-Null
     Write-Host "  ✓ Database can be created" -ForegroundColor Green
 } catch {
     Write-Host "  ✗ Database creation failed" -ForegroundColor Red

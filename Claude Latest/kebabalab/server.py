@@ -872,7 +872,7 @@ def parse_sauces(text: str) -> List[str]:
 
 
 def parse_extras(text: str) -> List[str]:
-    """Extract extras such as cheese or haloumi from text."""
+    """Extract extras such as cheese or haloumi from text with exclusion detection."""
     text = normalize_text(text)
     extras: List[str] = []
 
@@ -884,7 +884,22 @@ def parse_extras(text: str) -> List[str]:
         "extra meat": ["extra meat", "more meat", "double meat"],
     }
 
+    # Check for specific exclusions ("no cheese", "without haloumi", "hold cheese")
+    excluded_extras = []
     for extra, keywords in extra_keywords.items():
+        for keyword in keywords:
+            if any(phrase in text for phrase in [
+                f'no {keyword}', f'without {keyword}', f'hold {keyword}',
+                f'hold the {keyword}', f'without the {keyword}'
+            ]):
+                excluded_extras.append(extra)
+                logger.info(f"Excluding extra: {extra}")
+                break
+
+    # Add extras only if not excluded
+    for extra, keywords in extra_keywords.items():
+        if extra in excluded_extras:
+            continue  # Skip excluded items
         if any(keyword in text for keyword in keywords):
             extras.append(extra)
 
@@ -1215,6 +1230,12 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Parse extras/add-ons
         extras = parse_extras(description)
 
+        # Check if cheese was explicitly excluded (for HSPs)
+        desc_normalized = normalize_text(description)
+        cheese_excluded = any(phrase in desc_normalized for phrase in [
+            'no cheese', 'without cheese', 'hold cheese', 'hold the cheese', 'without the cheese'
+        ])
+
         # Create item
         item = {
             "category": category,
@@ -1226,9 +1247,9 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
             "extras": extras,
             "quantity": quantity,
             "is_combo": False,
-            # HSPs ALWAYS include cheese (it's included in price)
+            # HSPs include cheese by default UNLESS explicitly excluded
             # Kebabs only get cheese if explicitly requested as extra
-            "cheese": True if category == 'hsp' else ("cheese" in extras),
+            "cheese": (not cheese_excluded) if category == 'hsp' else ("cheese" in extras),
         }
 
         # Calculate price
@@ -1565,6 +1586,15 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
                     else:
                         # If name doesn't start with size, prepend it
                         item["name"] = f"{value.capitalize()} {name}"
+
+                # CRITICAL: Recalculate price for HSP combos when size changes
+                if item.get('is_combo') and item.get('category') == 'hsp':
+                    if value == 'small':
+                        item['price'] = 17.0
+                        logger.info(f"HSP combo size changed to small, price set to $17.00")
+                    else:  # large
+                        item['price'] = 22.0
+                        logger.info(f"HSP combo size changed to large, price set to $22.00")
 
                 logger.info(f"Size changed from '{old_size}' to '{value}', name is now '{item['name']}'")
 

@@ -774,7 +774,7 @@ def parse_salads(text: str) -> List[str]:
     text = normalize_text(text)
     salads = []
 
-    # Check for "no salad" first
+    # Check for "no salad" first (all salads excluded)
     if any(phrase in text for phrase in ['no salad', 'without salad', 'hold salad']):
         return []
 
@@ -786,8 +786,22 @@ def parse_salads(text: str) -> List[str]:
         'olives': ['olive', 'olives', 'olivs']
     }
 
+    # Check for specific exclusions ("no onion", "without pickles", "hold lettuce")
+    excluded_salads = []
+    for salad, keywords in salad_map.items():
+        for keyword in keywords:
+            if any(phrase in text for phrase in [
+                f'no {keyword}', f'without {keyword}', f'hold {keyword}',
+                f'hold the {keyword}', f'without the {keyword}'
+            ]):
+                excluded_salads.append(salad)
+                logger.info(f"Excluding salad: {salad}")
+                break
+
     # Exact matches first
     for salad, keywords in salad_map.items():
+        if salad in excluded_salads:
+            continue  # Skip excluded items
         if any(keyword in text for keyword in keywords):
             salads.append(salad)
 
@@ -798,7 +812,7 @@ def parse_salads(text: str) -> List[str]:
         for word in words:
             if len(word) >= 4:  # Only check words of reasonable length
                 match = fuzzy_match(word, all_salad_choices, threshold=75)
-                if match and match not in salads:
+                if match and match not in salads and match not in excluded_salads:
                     salads.append(match)
                     logger.info(f"Fuzzy matched salad '{word}' to '{match}'")
 
@@ -809,7 +823,7 @@ def parse_sauces(text: str) -> List[str]:
     text = normalize_text(text)
     sauces = []
 
-    # Check for "no sauce" first
+    # Check for "no sauce" first (all sauces excluded)
     if any(phrase in text for phrase in ['no sauce', 'without sauce', 'hold sauce']):
         return []
 
@@ -823,8 +837,22 @@ def parse_sauces(text: str) -> List[str]:
         'hummus': ['hummus', 'humus', 'hummous']
     }
 
+    # Check for specific exclusions ("no garlic", "without chilli", "hold bbq")
+    excluded_sauces = []
+    for sauce, keywords in sauce_map.items():
+        for keyword in keywords:
+            if any(phrase in text for phrase in [
+                f'no {keyword}', f'without {keyword}', f'hold {keyword}',
+                f'hold the {keyword}', f'without the {keyword}'
+            ]):
+                excluded_sauces.append(sauce)
+                logger.info(f"Excluding sauce: {sauce}")
+                break
+
     # Exact matches first
     for sauce, keywords in sauce_map.items():
+        if sauce in excluded_sauces:
+            continue  # Skip excluded items
         if any(keyword in text for keyword in keywords):
             if sauce not in sauces:
                 sauces.append(sauce)
@@ -836,7 +864,7 @@ def parse_sauces(text: str) -> List[str]:
         for word in words:
             if len(word) >= 4:  # Only check words of reasonable length
                 match = fuzzy_match(word, all_sauce_choices, threshold=75)
-                if match and match not in sauces:
+                if match and match not in sauces and match not in excluded_sauces:
                     sauces.append(match)
                     logger.info(f"Fuzzy matched sauce '{word}' to '{match}'")
 
@@ -997,7 +1025,8 @@ def format_cart_item(item: Dict, index: int) -> str:
         )
 
     price = calculate_price(item) * qty
-    line = f"{index}. {qty_prefix}{' | '.join(segments)} - ${price:.2f}"
+    # Use comma separation for speech-friendly output (not " | " which gets read as "vertical bar")
+    line = f"{index}. {qty_prefix}{', '.join(segments)} - ${price:.2f}"
     return line.strip()
 
 # ==================== TOOL IMPLEMENTATIONS ====================
@@ -1757,6 +1786,36 @@ def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
 
             cart[idx] = item
             converted_count += 1
+
+        # CRITICAL FIX: Remove duplicate drinks if they match the meal drinks
+        # If user said "2 kebabs and 2 cokes" then "make them meals with cokes"
+        # We need to remove the separate 2 cokes since they're now in the meals
+        if converted_count > 0:
+            drinks_needed = converted_count  # One drink per meal
+            drink_brand_normalized = drink_brand.lower()
+
+            # Find separate drink items that match
+            for i in range(len(cart) - 1, -1, -1):  # Iterate backwards for safe removal
+                item = cart[i]
+                if item.get('category') == 'drinks' and not item.get('is_combo'):
+                    item_name = item.get('name', '').lower()
+                    # Check if this drink matches the meal drink
+                    if drink_brand_normalized in item_name or item_name in drink_brand_normalized:
+                        item_qty = item.get('quantity', 1)
+
+                        if item_qty <= drinks_needed:
+                            # Remove entire item
+                            logger.info(f"Removing duplicate drink item (qty {item_qty}): {item.get('name')}")
+                            cart.pop(i)
+                            drinks_needed -= item_qty
+                        else:
+                            # Reduce quantity
+                            item['quantity'] = item_qty - drinks_needed
+                            logger.info(f"Reduced drink quantity from {item_qty} to {item['quantity']}")
+                            drinks_needed = 0
+
+                        if drinks_needed == 0:
+                            break
 
         session_set('cart', cart)
         session_set('cart_priced', False)

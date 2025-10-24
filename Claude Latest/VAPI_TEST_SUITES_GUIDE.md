@@ -35,10 +35,19 @@ Each test suite contains:
 **Rubric:** Lists specific criteria an LLM will use to evaluate if the test passed. This is where you define success conditions.
 
 **Type:**
-- `"chat"` - Text-based testing (faster, recommended for initial testing)
-- `"voice"` - Actual voice call (slower but tests real voice experience)
+- `"chat"` - Text-based testing (faster, cheaper, **NO PHONE NUMBER REQUIRED**) ✅ **RECOMMENDED**
+- `"voice"` - Actual voice call (slower, more expensive, requires phone number configuration)
 
 **Attempts:** Number of times to run this test (1-5). Use 1 for most tests, use 3-5 for flaky scenarios.
+
+**⚠️ IMPORTANT:** All tests in `VAPI_TEST_SUITES.json` default to `"chat"` type. This means:
+- ✅ No phone number configuration needed
+- ✅ Tests run immediately without setup
+- ✅ Faster results (30-60 seconds vs 3-5 minutes)
+- ✅ Cheaper (~$0.05 vs ~$0.30 per test)
+- ✅ Tests all webhook functionality
+
+To run voice tests later, change `"type": "chat"` to `"type": "voice"` and configure a phone number in VAPI dashboard.
 
 ---
 
@@ -52,12 +61,14 @@ Each test suite contains:
 4. **Fill in the fields:**
    - Name: Copy the `name` field
    - Description: Copy the `description` field
-   - Type: Select "Voice" or "Chat"
+   - Type: Select **"Chat"** (default, no phone needed) ✅
    - Script: Copy the entire `script` field
    - Rubric: Copy the entire `rubric` field
    - Attempts: Set to 1 (or higher for repeated testing)
 5. **Select your assistant** from the dropdown
 6. **Click "Run Test"**
+
+**Note:** All tests default to `"chat"` type so you can run them immediately without phone number configuration!
 
 ### Method 2: VAPI API
 
@@ -142,23 +153,25 @@ These tests verify the bugs we fixed in your live testing:
 
 ## 💰 Cost Estimation
 
-### Voice Tests:
-- **Per test:** ~2-4 minutes of call time
-- **Cost per test:** ~$0.20 - $0.50
-- **All 14 tests:** ~$3-7 total
-
-### Chat Tests (Recommended First):
+### Chat Tests (Default - No Phone Number Needed):
 - **Per test:** ~30 seconds - 1 minute
 - **Cost per test:** ~$0.05 - $0.15
 - **All 14 tests:** ~$1-2 total
+- **Setup required:** None! Just run the tests
+
+### Voice Tests (Optional - Requires Phone Number):
+- **Per test:** ~2-4 minutes of call time
+- **Cost per test:** ~$0.20 - $0.50
+- **All 14 tests:** ~$3-7 total
+- **Setup required:** Buy/configure phone number in VAPI dashboard
 
 ### Recommended Approach:
-1. **Start with Chat type** for all 14 tests (~$1-2)
+1. **Run all tests as Chat type** (default in JSON) (~$1-2, no setup needed) ✅
 2. **Fix any failures** found
-3. **Re-run failed tests** as Voice to verify (~$1-2)
-4. **Run critical tests** as Voice for final validation (~$1-2)
+3. **Re-run failed tests** as Chat to verify
+4. **(Optional) Run critical tests as Voice** for final validation (~$1-2, requires phone setup)
 
-**Total estimated cost:** $3-6 (well within $10 free credits)
+**Total estimated cost:** $1-4 (well within $10 free credits)
 
 ---
 

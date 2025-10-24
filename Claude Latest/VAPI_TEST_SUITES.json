@@ -2,7 +2,7 @@
   {
     "name": "Test 1: Basic Order with Exclusions",
     "description": "Tests item parsing, 'no X' exclusions, salad/sauce detection",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are a customer calling Kebabalab to order food. Follow this exact sequence:\n\n1. When greeted, say: 'Hi, I'd like to order please'\n2. When asked what you'd like, say: 'I'll have a large chicken kebab with lettuce, tomato, but no onion please, with garlic sauce and chilli sauce'\n3. When the order is confirmed, listen carefully to how the order is repeated\n4. If the order is correct (large chicken kebab, lettuce, tomato, NO onion, garlic and chilli sauce), say: 'Yes that's correct'\n5. If asked about checkout, say: 'Actually just cancel that order, thanks'",
     "rubric": "Evaluate this call based on the following criteria:\n\n1. Did the assistant correctly identify this as a LARGE chicken kebab? (not small)\n2. Did the assistant include lettuce and tomato in the order?\n3. Did the assistant EXCLUDE onion from the order? (customer said 'no onion')\n4. Did the assistant include both garlic sauce AND chilli sauce?\n5. When repeating the order back, did the assistant use natural language (commas) instead of saying 'vertical bar' or 'pipe'?\n6. Was the price correct at $17.00 for a large kebab?\n7. Did the assistant clearly confirm all customizations?\n\nThe test PASSES if:\n- All 7 criteria are met\n- The order explicitly excludes onion\n- The speech output is natural\n\nThe test FAILS if:\n- Onion is included in the order\n- Size is wrong (small instead of large)\n- Any sauces are missing\n- Assistant says 'vertical bar' when reading the order"
@@ -10,7 +10,7 @@
   {
     "name": "Test 2: HSP with No Cheese",
     "description": "Tests HSP parsing and cheese exclusion (Bug #1 fix from Round 2)",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are a customer calling Kebabalab. Follow this sequence:\n\n1. When greeted, say: 'Hi there'\n2. When asked what you'd like, say: 'I want a large chicken HSP with no cheese, just barbecue sauce please'\n3. Listen carefully to the order confirmation\n4. If the assistant confirms NO cheese on the HSP with BBQ sauce, say: 'That's right'\n5. If asked about checkout, say: 'Cancel the order please'",
     "rubric": "Evaluate this call based on:\n\n1. Did the assistant correctly identify this as a LARGE chicken HSP?\n2. Did the assistant EXCLUDE cheese from the order? (customer said 'no cheese')\n3. Did the assistant include ONLY barbecue sauce (no other sauces)?\n4. Was the price correct at $20.00 for a large HSP?\n5. Did the assistant explicitly mention that there is NO cheese on this HSP?\n\nThe test PASSES if:\n- HSP is created WITHOUT cheese\n- Only BBQ sauce is included\n- Price is $20.00\n\nThe test FAILS if:\n- Cheese is included on the HSP (CRITICAL BUG)\n- Wrong size\n- Wrong sauce\n- Wrong price"
@@ -18,7 +18,7 @@
   {
     "name": "Test 3: Multiple Items with Quantities",
     "description": "Tests quantity parsing and multiple items in cart",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are a customer ordering multiple items:\n\n1. When greeted, say: 'Hello'\n2. When asked what you'd like, say: 'I'd like 2 small lamb kebabs and 3 Cokes please'\n3. Listen to the order confirmation\n4. If the order shows 2 kebabs and 3 Cokes with correct pricing, say: 'Yep, sounds good'\n5. If asked about checkout, say: 'Actually cancel that'",
     "rubric": "Evaluate based on:\n\n1. Did the assistant correctly parse the quantity as TWO lamb kebabs (not 1)?\n2. Did the assistant correctly parse THREE Cokes (not 1 or 2)?\n3. Did the assistant specify SMALL size for the kebabs?\n4. Were the lamb kebabs priced at $15.00 each (total $30.00)?\n5. Were the Cokes priced at $3.50 each (total $10.50)?\n6. Was the total price $40.50?\n\nThe test PASSES if:\n- Exactly 2 lamb kebabs in cart\n- Exactly 3 Cokes in cart\n- Pricing is correct: $40.50 total\n\nThe test FAILS if:\n- Wrong quantities (1 kebab or 1 coke)\n- Wrong total price\n- Wrong size or protein"
@@ -26,7 +26,7 @@
   {
     "name": "Test 4: Meal Conversion and Duplicate Drink Removal",
     "description": "Tests converting items to meals and removing duplicate drinks (Bug #2 fix from Round 1)",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering kebabs and drinks, then converting to meals:\n\n1. When greeted, say: 'Hi'\n2. When asked what you'd like, say: 'I want 2 small chicken kebabs and 2 Cokes'\n3. Wait for confirmation\n4. Then say: 'Actually, can you make those into meals please?'\n5. Listen carefully to the new order and pricing\n6. If the total is $34.00 (not $41.00), say: 'Yes perfect'\n7. If asked about checkout, say: 'Cancel please'",
     "rubric": "Evaluate this critical test:\n\n1. Did the assistant initially create 2 chicken kebabs and 2 separate Cokes?\n2. When asked to convert to meals, did the assistant create 2 KEBAB MEALS with Cokes?\n3. After conversion, are there still separate Coke items in the cart? (should be REMOVED)\n4. Is the total price $34.00 (2 x $17.00 small kebab meals)?\n5. Did the assistant clearly explain what happened during the conversion?\n\nThe test PASSES if:\n- Final cart has 2 small kebab meals with Coke\n- NO separate/duplicate Coke items remain\n- Total is exactly $34.00\n\nThe test FAILS if:\n- Total is $41.00 (means duplicate cokes NOT removed - CRITICAL BUG)\n- Cart shows 4 Cokes instead of 2\n- Meals not created properly"
@@ -34,7 +34,7 @@
   {
     "name": "Test 5: Complex Order with Multiple Customizations",
     "description": "Tests multiple exclusions and different customizations on different items",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering 2 kebabs with different customizations:\n\n1. When greeted, say: 'Hello'\n2. When asked what you'd like, say: 'I'd like 2 chicken kebabs - one with lettuce, tomato, and garlic sauce, and the other with no onion, no pickles, with chilli sauce and BBQ sauce'\n3. Listen carefully to how the assistant handles the two different customizations\n4. If both kebabs are correctly customized, say: 'That's correct'\n5. If asked about checkout, say: 'Cancel that order'",
     "rubric": "Evaluate the assistant's ability to handle complex orders:\n\n1. Did the assistant create TWO separate chicken kebabs?\n2. First kebab: Does it have lettuce, tomato, and garlic sauce?\n3. Second kebab: Does it EXCLUDE onion and pickles?\n4. Second kebab: Does it have chilli sauce AND BBQ sauce?\n5. Did the assistant clearly distinguish between the two kebabs when confirming?\n6. Did the assistant handle the exclusions ('no onion', 'no pickles') correctly?\n\nThe test PASSES if:\n- Two distinct kebabs with different customizations\n- All exclusions honored\n- All additions correct\n\nThe test FAILS if:\n- Both kebabs have same customizations\n- Exclusions ignored\n- Assistant confused about which kebab has what"
@@ -42,7 +42,7 @@
   {
     "name": "Test 6: Edit Cart - Change Size",
     "description": "Tests editCartItem tool and size change functionality",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering then changing the size:\n\n1. When greeted, say: 'Hi'\n2. When asked what you'd like, say: 'I want a small chicken kebab with garlic sauce'\n3. Wait for confirmation\n4. Then say: 'Actually, can you make that large instead?'\n5. Listen for price update\n6. If size changed and price updated to $17.00, say: 'Yes, that's good'\n7. If asked about checkout, say: 'Cancel please'",
     "rubric": "Evaluate cart editing functionality:\n\n1. Did the assistant initially create a SMALL chicken kebab at $12.00?\n2. When asked to change to large, did the assistant UPDATE the existing item (not add a new one)?\n3. After the change, is the size LARGE?\n4. Did the price update from $12.00 to $17.00?\n5. Did the assistant confirm the change clearly?\n6. Is there only ONE kebab in the cart after the change?\n\nThe test PASSES if:\n- Size changed from small to large\n- Price updated to $17.00\n- Only 1 item in cart (edited, not added)\n\nThe test FAILS if:\n- Two kebabs in cart (added instead of edited)\n- Price stayed at $12.00\n- Size didn't change"
@@ -50,7 +50,7 @@
   {
     "name": "Test 7: HSP Combo Size Change with Price Recalculation",
     "description": "Tests HSP combo size change pricing (Bug #2 fix from Round 2) - CRITICAL",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering an HSP, converting to combo, then changing size:\n\n1. When greeted, say: 'Hi there'\n2. When asked what you'd like, say: 'Small chicken HSP please'\n3. Wait for confirmation (should be $15.00)\n4. Then say: 'Can I make that a combo with Coke?'\n5. Wait for confirmation (should be $17.00)\n6. Then say: 'Actually, change that HSP to large please'\n7. Listen VERY carefully to the price update - it should change to $22.00\n8. If price is $22.00, say: 'Perfect'\n9. If price stayed at $17.00, say: 'Wait, what's the price now?'\n10. If asked about checkout, say: 'Cancel the order'",
     "rubric": "Evaluate this CRITICAL bug fix:\n\n1. Did the assistant initially create a small chicken HSP at $15.00?\n2. When converted to combo, did the price become $17.00?\n3. When the size was changed to large, did the price UPDATE to $22.00? (CRITICAL)\n4. Did the assistant explicitly mention the new price of $22.00?\n5. Did the size change from small to large?\n\nThe test PASSES if:\n- Initial small HSP: $15.00 ✓\n- Small HSP combo: $17.00 ✓\n- Large HSP combo: $22.00 ✓ (MUST UPDATE)\n\nThe test FAILS if:\n- Price stays at $17.00 after changing to large (CRITICAL BUG #2)\n- Price is any value other than $22.00\n- Size doesn't change\n\nNOTE: This is the exact bug found in user testing logs at 22:11:19. If this fails, the bug fix didn't work."
@@ -58,7 +58,7 @@
   {
     "name": "Test 8: Remove Cart Item",
     "description": "Tests removeCartItem tool functionality",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering multiple items then removing one:\n\n1. When greeted, say: 'Hello'\n2. When asked what you'd like, say: 'I want a large chicken kebab, a small lamb kebab, and 2 Cokes'\n3. Wait for confirmation\n4. Then say: 'Actually, remove the lamb kebab please'\n5. Listen to the updated order\n6. If only the large chicken kebab and 2 Cokes remain, say: 'Yes that's right'\n7. If asked about checkout, say: 'Cancel'",
     "rubric": "Evaluate item removal:\n\n1. Did the assistant initially create 3 items (2 kebabs + 2 Cokes)?\n2. When asked to remove the lamb kebab, did the assistant remove the correct item?\n3. After removal, is the lamb kebab gone from the cart?\n4. After removal, do the large chicken kebab and 2 Cokes remain?\n5. Did the total price update correctly after removal?\n6. Did the assistant confirm what was removed?\n\nThe test PASSES if:\n- Lamb kebab successfully removed\n- Large chicken kebab and 2 Cokes remain\n- Price updated correctly\n\nThe test FAILS if:\n- Wrong item removed\n- All items removed\n- Item still in cart"
@@ -66,7 +66,7 @@
   {
     "name": "Test 9: Edit Customizations - Protein and Sauce",
     "description": "Tests editing protein and adding sauces to existing order",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering then changing customizations:\n\n1. When greeted, say: 'Hi'\n2. When asked what you'd like, say: 'Large chicken kebab with lettuce and garlic sauce'\n3. Wait for confirmation\n4. Then say: 'Can you change the protein to lamb please?'\n5. Wait for confirmation\n6. Then say: 'And add chilli sauce as well'\n7. Listen to final order\n8. If it's a large LAMB kebab with lettuce, garlic sauce AND chilli sauce, say: 'Perfect'\n9. If asked about checkout, say: 'Cancel'",
     "rubric": "Evaluate editing customizations:\n\n1. Did the assistant initially create a chicken kebab?\n2. When asked to change protein to lamb, did it update (not create new item)?\n3. After protein change, is it a LAMB kebab?\n4. When adding chilli sauce, was garlic sauce kept? (should have both)\n5. Final order: Large lamb kebab with lettuce, garlic sauce, and chilli sauce?\n6. Only ONE kebab in cart (edited, not duplicated)?\n\nThe test PASSES if:\n- Protein changed from chicken to lamb\n- Both garlic and chilli sauce present\n- Only 1 item in cart\n\nThe test FAILS if:\n- Two kebabs in cart\n- Garlic sauce removed when adding chilli\n- Protein didn't change"
@@ -74,7 +74,7 @@
   {
     "name": "Test 10: Complex Real-World Order with Meal Conversion",
     "description": "Tests complex scenario with multiple items, customizations, and meal conversion",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are placing a large, complex order:\n\n1. When greeted, say: 'Hi, I have a big order'\n2. When asked what you'd like, say: 'I want 2 large chicken kebabs - both with lettuce, tomato, no onion, with garlic and chilli sauce. Then I want a small lamb HSP with no cheese, just BBQ sauce. And 3 Cokes and one large chips with chicken salt please'\n3. Wait for full confirmation\n4. Then say: 'Actually, can you make those 2 kebabs into meals with the Cokes?'\n5. Wait for conversion\n6. Then say: 'Yes, and the rest is separate. That's correct.'\n7. Listen to final order and total\n8. If total is around $71.50, say: 'Perfect'\n9. If asked about checkout, say: 'Cancel the order'",
     "rubric": "Evaluate this complex scenario:\n\n1. Were 2 large chicken kebabs created with correct customizations (lettuce, tomato, NO onion, garlic + chilli)?\n2. Was the small lamb HSP created WITHOUT cheese with only BBQ sauce?\n3. Were 3 Cokes and 1 large chips with chicken salt added?\n4. When converting kebabs to meals, were 2 kebab meals created?\n5. After conversion, are there only 3 total Cokes (2 in meals + 1 separate)? NOT 5!\n6. Final cart: 2 kebab meals, 1 HSP, 1 Coke, 1 chips?\n7. Is the total approximately $71.50? (2x$22 + $15 + $3.50 + $9)\n\nThe test PASSES if:\n- All items correct with customizations\n- No duplicate Cokes (only 3 total)\n- Total is $71.50\n- No cheese on HSP\n- No onion on kebabs\n\nThe test FAILS if:\n- Duplicate Cokes (5 instead of 3)\n- Cheese on HSP\n- Onion on kebabs\n- Wrong total"
@@ -82,7 +82,7 @@
   {
     "name": "Test 11: Size Confirmation - Never Default",
     "description": "Tests that assistant asks for size when not specified (never defaults)",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are ordering without specifying size:\n\n1. When greeted, say: 'Hello'\n2. When asked what you'd like, say: 'I want a chicken kebab' (do NOT specify size)\n3. The assistant should ask 'Would you like small or large?'\n4. If asked, say: 'Large please'\n5. Wait for confirmation\n6. If it's a large kebab at $17.00, say: 'Yes that's right'\n7. If asked about checkout, say: 'Cancel'",
     "rubric": "Evaluate size confirmation workflow:\n\n1. When the customer didn't specify size, did the assistant ASK for it?\n2. Did the assistant say something like 'Would you like small or large?'\n3. Did the assistant wait for the customer's response?\n4. After the customer said 'large', was a large kebab created?\n5. Was the price $17.00 for the large kebab?\n6. Did the assistant NEVER default to small automatically?\n\nThe test PASSES if:\n- Assistant explicitly asked for size\n- Waited for customer response\n- Created large kebab after confirmation\n\nThe test FAILS if:\n- Assistant defaulted to small (CRITICAL - should never default)\n- Assistant didn't ask for size\n- Wrong size created"
@@ -90,7 +90,7 @@
   {
     "name": "Test 12: Edge Case - Multiple Sequential Edits",
     "description": "Stress tests the system with many edits to same item",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are making many changes to test system stability:\n\n1. When greeted, say: 'Hi'\n2. When asked what you'd like, say: 'Small chicken kebab with lettuce and garlic sauce'\n3. Wait for confirmation\n4. Say: 'Change it to large'\n5. Wait for update\n6. Say: 'Actually make it lamb'\n7. Wait for update\n8. Say: 'Add chilli sauce too'\n9. Wait for update\n10. Say: 'Remove the lettuce'\n11. Wait for update\n12. Say: 'Make it a combo with Sprite'\n13. Wait for final confirmation\n14. If everything was updated correctly, say: 'Perfect, that's it'\n15. If asked about checkout, say: 'Cancel'",
     "rubric": "Evaluate system stability with multiple edits:\n\n1. After all edits, is the final item a LARGE lamb kebab meal with Sprite?\n2. Does it have garlic sauce AND chilli sauce?\n3. Does it NOT have lettuce (was removed)?\n4. Is it a combo/meal (not separate kebab + drink)?\n5. Did the price update correctly through all changes?\n6. Was there only ever ONE item being edited (not multiple items created)?\n7. Did the assistant handle all edits without confusion or errors?\n\nThe test PASSES if:\n- Final: Large lamb kebab meal with Sprite, garlic + chilli, no lettuce\n- Only 1 item in cart\n- All edits processed correctly\n\nThe test FAILS if:\n- Multiple items in cart (edits created new items)\n- Any edit was lost\n- Assistant confused or made errors"
@@ -98,7 +98,7 @@
   {
     "name": "Test 13: Complete Checkout Flow",
     "description": "Tests end-to-end checkout and payment processing",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are completing a full order with checkout:\n\n1. When greeted, say: 'Hello'\n2. When asked what you'd like, say: 'I want a large chicken kebab with garlic sauce'\n3. Wait for confirmation\n4. Say: 'Yes, I'm ready to checkout'\n5. Listen for total price (should be $17.00)\n6. When asked for payment method, say: 'Cash please'\n7. Wait for final confirmation\n8. If you receive an order number and ETA, the test is complete",
     "rubric": "Evaluate complete checkout flow:\n\n1. Was the order total correctly stated as $17.00?\n2. Did the assistant ask for payment method?\n3. When customer said 'cash', was it recorded correctly?\n4. Did the assistant provide an order number or confirmation?\n5. Did the assistant mention an estimated time (ETA) for the order?\n6. Was the order successfully saved to the database?\n7. Did the flow feel smooth and professional?\n\nThe test PASSES if:\n- Correct total provided ($17.00)\n- Payment method recorded (cash)\n- Order number provided\n- ETA mentioned (typically 20-25 minutes)\n- Order confirmed\n\nThe test FAILS if:\n- Wrong total\n- Payment method not captured\n- No order confirmation\n- No ETA provided"
@@ -106,7 +106,7 @@
   {
     "name": "Test 14: Cancel Order and Start Fresh",
     "description": "Tests clearing cart and starting new order",
-    "type": "voice",
+    "type": "chat",
     "attempts": 1,
     "script": "You are cancelling an order and starting over:\n\n1. When greeted, say: 'Hi'\n2. When asked what you'd like, say: 'I want 2 large chicken kebabs'\n3. Wait for confirmation\n4. Then say: 'Actually, cancel that order please'\n5. Wait for cancellation confirmation\n6. Then say: 'Start a new order - I want a small lamb HSP'\n7. Wait for new order confirmation\n8. If the new order only has the HSP (no kebabs), say: 'Yes that's right'\n9. If asked about checkout, say: 'Cancel that too'",
     "rubric": "Evaluate cart clearing and new orders:\n\n1. Were the 2 chicken kebabs initially added to the cart?\n2. When customer requested cancellation, was the cart cleared?\n3. Did the assistant confirm the cancellation?\n4. When starting the new order, was a fresh cart created?\n5. Does the new cart contain ONLY the small lamb HSP (no old kebabs)?\n6. Is the price correct for just the HSP ($15.00)?\n7. Did the assistant handle the transition smoothly?\n\nThe test PASSES if:\n- First order cancelled completely\n- Cart cleared\n- New order contains only HSP\n- No remnants of first order\n\nThe test FAILS if:\n- Old kebabs still in cart\n- Cart not cleared\n- Confusion between old and new order"

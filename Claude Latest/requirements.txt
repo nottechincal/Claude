@@ -7,6 +7,9 @@ flask-cors>=4.0.0
 # Environment variable management (required)
 python-dotenv>=1.0.0
 
+# Redis for session storage (recommended for production)
+redis>=5.0.0
+
 # Twilio for SMS notifications (optional)
 twilio>=8.10.0
 

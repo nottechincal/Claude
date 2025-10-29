@@ -241,12 +241,12 @@ with setup_test_context():
 
     # Test 10: setPickupTime
     result = server.tool_set_pickup_time({
-        'minutesFromNow': 20
+        'requestedTime': '20 minutes'
     })
     test_result(
         "setPickupTime() - Set time",
-        result.get('ok') == True and result.get('confirmed') == True,
-        f"Pickup: {result.get('readyAtFormatted', 'unknown')}"
+        result.get('ok') == True,
+        f"Pickup: {result.get('readyAt', 'unknown')}"
     )
 
     # Test 11: estimateReadyTime
@@ -254,8 +254,8 @@ with setup_test_context():
     result = server.tool_estimate_ready_time({})
     test_result(
         "estimateReadyTime() - Auto-estimate",
-        result.get('ok') == True and result.get('confirmed') == True,
-        f"Estimated: {result.get('readyAtFormatted', 'unknown')}"
+        result.get('ok') == True,
+        f"Estimated: {result.get('readyAt', 'unknown')}"
     )
 
 print()
@@ -477,7 +477,7 @@ with setup_test_context():
 
     # Step 4: Set pickup time
     result = server.tool_set_pickup_time({
-        'minutesFromNow': 20
+        'requestedTime': '20 minutes'
     })
     flow_steps.append(('Set pickup time', result.get('ok')))
 

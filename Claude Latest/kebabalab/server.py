@@ -1044,60 +1044,96 @@ def parse_quantity(text: str) -> int:
     return 1
 
 def calculate_price(item: Dict) -> float:
-    """Calculate price for a single item"""
+    """
+    Calculate price for a single item by looking up prices in menu.json.
+    No hardcoded prices - all prices come from MENU data structure.
+    """
     price = 0.0
 
-    # If it's a combo/meal, use combo price
+    # If it's a combo/meal, use existing combo price
     if item.get('is_combo'):
         return item.get('price', 0.0)
 
-    # Base price from category
     category = item.get('category', '')
     size = item.get('size', 'small')
+    protein = item.get('protein', '')
+    item_name = item.get('name', '').lower()
 
-    if category == 'kebabs':
-        price = 10.0 if size == 'small' else 15.0
-    elif category == 'hsp':
-        price = 15.0 if size == 'small' else 20.0
-    elif category == 'chips':
-        price = 5.0 if size == 'small' else 9.0
-    elif category == 'drinks':
-        price = 3.5
-    elif category == 'gozleme':
-        price = 15.0
-    elif category == 'sweets':
-        # Specific sweet items
-        name = item.get('name', '').lower()
-        if 'baklava' in name:
-            if 'pack' in name or '4' in name:
-                price = 10.0
+    # Get categories from loaded menu
+    categories = MENU.get('categories', {})
+    category_items = categories.get(category, [])
+
+    # Find base price from menu
+    if category_items:
+        # For items with protein (kebabs, hsp), match by protein
+        if protein:
+            for menu_item in category_items:
+                menu_name_lower = menu_item.get('name', '').lower()
+                if protein.lower() in menu_name_lower:
+                    # Check if item has size-based pricing
+                    sizes = menu_item.get('sizes', {})
+                    if sizes and size:
+                        price = sizes.get(size, sizes.get('small', 0.0))
+                    else:
+                        price = menu_item.get('price', 0.0)
+                    break
+        else:
+            # For items without protein (drinks, chips, etc), match first or by name
+            if category == 'drinks':
+                # All drink cans are same price
+                for menu_item in category_items:
+                    if 'can' in menu_item.get('name', '').lower():
+                        price = menu_item.get('price', 0.0)
+                        break
+            elif category == 'chips':
+                # Chips have sizes
+                for menu_item in category_items:
+                    if 'chip' in menu_item.get('name', '').lower():
+                        sizes = menu_item.get('sizes', {})
+                        price = sizes.get(size, 0.0)
+                        break
+            elif category == 'sweets':
+                # Match by name for sweets
+                for menu_item in category_items:
+                    menu_name_lower = menu_item.get('name', '').lower()
+                    if any(word in item_name for word in menu_name_lower.split()):
+                        price = menu_item.get('price', 0.0)
+                        break
             else:
-                price = 3.0
-        elif 'turkish delight' in name:
-            price = 1.0
-        elif 'rice pudding' in name:
-            price = 5.0
-    elif category == 'sauce_tubs':
-        price = 1.0
+                # Generic: try first item or match by name
+                for menu_item in category_items:
+                    sizes = menu_item.get('sizes', {})
+                    if sizes:
+                        price = sizes.get(size, sizes.get('small', 0.0))
+                    else:
+                        price = menu_item.get('price', 0.0)
+                    break
 
-    # Add extras
+    # Add extras pricing from menu modifiers
+    modifiers = MENU.get('modifiers', {})
+    extras_pricing = modifiers.get('extras', [])
+
     extras = item.get('extras', [])
     for extra in extras:
-        if extra in ['haloumi', 'halloumi']:
-            price += 2.5
-        elif extra in ['extra meat', 'extra lamb', 'extra chicken', 'extra mix']:
-            price += 4.0  # Website shows $4 for extra meat
-        elif extra == 'cheese':
-            # Cheese is INCLUDED in HSPs, only charge for kebabs
-            if category == 'kebabs':
-                price += 1.0
-            # For HSPs, cheese is already included in base price, don't add
-        elif extra in ['olives', 'jalapenos']:
-            price += 1.0
-        elif extra == 'falafel':
-            price += 1.0
-        elif extra == 'hummus':
-            price += 1.0
+        extra_lower = extra.lower()
+
+        # Look up extra price in modifiers
+        for modifier in extras_pricing:
+            modifier_name = modifier.get('name', '').lower()
+
+            if extra_lower == modifier_name or extra_lower in modifier_name:
+                # Check if this modifier applies to this category
+                applies_to = modifier.get('applies_to', [])
+                if not applies_to or category in applies_to:
+                    extra_price = modifier.get('price', 0.0)
+
+                    # Special case: cheese is included in HSPs
+                    if extra_lower == 'cheese' and category == 'hsp':
+                        # Don't charge for cheese on HSP (already included)
+                        continue
+
+                    price += extra_price
+                break
 
     return price
 

@@ -28,7 +28,8 @@ try:
     FUZZY_MATCHING_AVAILABLE = True
 except ImportError:
     FUZZY_MATCHING_AVAILABLE = False
-    logger.warning("rapidfuzz not available, fuzzy matching disabled")
+    # Logger not yet initialized, will log this later after setup
+    print("WARNING: rapidfuzz not available, fuzzy matching disabled")
 try:
     from flask import Flask, request, jsonify
     from flask_cors import CORS
@@ -100,25 +101,22 @@ try:  # pragma: no cover - optional dependency
 except ModuleNotFoundError:  # pragma: no cover - exercised only when Twilio isn't installed
     Client = None  # type: ignore
 
+# Redis for session storage (with fallback to in-memory)
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    print("WARNING: redis-py not available, using in-memory session storage (not production-ready)")
+
 # ==================== CONFIGURATION ====================
 
 app = Flask(__name__)
 
-# CORS configuration - restrict to VAPI domains for security
-allowed_origins_str = os.getenv('ALLOWED_ORIGINS', 'https://api.vapi.ai,https://vapi.ai')
-allowed_origins = [origin.strip() for origin in allowed_origins_str.split(',')]
-
-CORS(app, resources={
-    r"/webhook": {
-        "origins": allowed_origins,
-        "methods": ["POST"],
-        "allow_headers": ["Content-Type"]
-    },
-    r"/health": {
-        "origins": "*",  # Health check can be public
-        "methods": ["GET"]
-    }
-})
+# CORS configuration - allow broader access for testing
+# CORS(app) allows all origins, methods, and headers (good for testing)
+# For production, set ALLOWED_ORIGINS in .env and configure CORS more restrictively
+CORS(app)
 
 # Logging
 # Create logs directory if it doesn't exist
@@ -147,6 +145,10 @@ SHOP_NUMBER_DEFAULT = os.getenv('SHOP_ORDER_TO', '0423680596')
 SHOP_NAME = os.getenv('SHOP_NAME', 'Kebabalab')
 SHOP_ADDRESS = os.getenv('SHOP_ADDRESS', 'Melbourne')
 
+# Tax configuration (Australian GST)
+# Menu prices are GST-inclusive, so we calculate GST component from total
+GST_RATE = float(os.getenv('GST_RATE', '0.10'))  # 10% Australian GST
+
 # Timezone configuration
 SHOP_TIMEZONE_STR = os.getenv('SHOP_TIMEZONE', 'Australia/Melbourne')
 try:
@@ -158,15 +160,44 @@ except pytz.exceptions.UnknownTimeZoneError:
 # Global menu
 MENU = {}
 
-# In-memory sessions (in production, use Redis)
-SESSIONS = {}
+# Session storage: Redis (production) or in-memory (fallback)
+SESSIONS = {}  # Fallback in-memory storage if Redis unavailable
+REDIS_CLIENT = None
 
 # Session configuration
 SESSION_TTL = int(os.getenv('SESSION_TTL', '1800'))  # 30 minutes default
-MAX_SESSIONS = int(os.getenv('MAX_SESSIONS', '1000'))  # Max concurrent sessions
+MAX_SESSIONS = int(os.getenv('MAX_SESSIONS', '1000'))  # Max concurrent sessions (in-memory only)
 # Will be initialized after SHOP_TIMEZONE is set
 LAST_CLEANUP = None
 CLEANUP_INTERVAL = timedelta(minutes=5)  # Run cleanup every 5 minutes
+
+# Initialize Redis connection
+if REDIS_AVAILABLE:
+    try:
+        redis_host = os.getenv('REDIS_HOST', 'localhost')
+        redis_port = int(os.getenv('REDIS_PORT', '6379'))
+        redis_db = int(os.getenv('REDIS_DB', '0'))
+        redis_password = os.getenv('REDIS_PASSWORD', None)
+
+        REDIS_CLIENT = redis.Redis(
+            host=redis_host,
+            port=redis_port,
+            db=redis_db,
+            password=redis_password if redis_password else None,
+            decode_responses=True,  # Automatically decode responses to strings
+            socket_connect_timeout=5,
+            socket_timeout=5
+        )
+
+        # Test connection
+        REDIS_CLIENT.ping()
+        print(f"✓ Redis connected: {redis_host}:{redis_port} (db={redis_db})")
+    except (redis.ConnectionError, redis.TimeoutError) as e:
+        print(f"WARNING: Redis connection failed ({e}), falling back to in-memory sessions")
+        REDIS_CLIENT = None
+    except Exception as e:
+        print(f"WARNING: Redis initialization error ({e}), falling back to in-memory sessions")
+        REDIS_CLIENT = None
 
 # ==================== DATABASE ====================
 
@@ -307,7 +338,11 @@ def get_session_id() -> str:
     return call_id
 
 def cleanup_expired_sessions():
-    """Remove expired sessions to prevent memory leaks"""
+    """Remove expired sessions to prevent memory leaks (in-memory only, Redis uses TTL)"""
+    # Redis handles expiration automatically via TTL
+    if REDIS_CLIENT:
+        return
+
     global LAST_CLEANUP
     now = get_current_time()
 
@@ -336,7 +371,11 @@ def cleanup_expired_sessions():
         logger.info(f"Cleaned up {len(expired)} expired sessions")
 
 def enforce_session_limits():
-    """Enforce maximum session count by removing oldest sessions"""
+    """Enforce maximum session count by removing oldest sessions (in-memory only)"""
+    # Redis doesn't need manual limit enforcement, uses TTL and memory policies
+    if REDIS_CLIENT:
+        return
+
     if len(SESSIONS) <= MAX_SESSIONS:
         return
 
@@ -356,10 +395,31 @@ def enforce_session_limits():
     logger.warning(f"Session limit reached. Removed {to_remove} oldest sessions")
 
 def session_get(key: str, default=None):
-    """Get value from session with TTL tracking"""
+    """Get value from session with TTL tracking (Redis or in-memory)"""
+    session_id = get_session_id()
+
+    # Redis implementation
+    if REDIS_CLIENT:
+        try:
+            redis_key = f"session:{session_id}:{key}"
+            value = REDIS_CLIENT.get(redis_key)
+
+            if value is None:
+                return default
+
+            # Try to deserialize JSON if it's a complex type
+            try:
+                return json.loads(value)
+            except (json.JSONDecodeError, TypeError):
+                return value
+
+        except redis.RedisError as e:
+            logger.error(f"Redis get error: {e}, falling back to in-memory")
+            # Fall through to in-memory fallback
+
+    # In-memory fallback
     cleanup_expired_sessions()  # Periodic cleanup
 
-    session_id = get_session_id()
     now = get_current_time()
 
     if session_id not in SESSIONS:
@@ -378,11 +438,32 @@ def session_get(key: str, default=None):
     return SESSIONS[session_id].get(key, default)
 
 def session_set(key: str, value: Any):
-    """Set value in session with TTL tracking"""
+    """Set value in session with TTL tracking (Redis or in-memory)"""
+    session_id = get_session_id()
+
+    # Redis implementation
+    if REDIS_CLIENT:
+        try:
+            redis_key = f"session:{session_id}:{key}"
+
+            # Serialize complex types to JSON
+            if isinstance(value, (dict, list, tuple)):
+                serialized_value = json.dumps(value)
+            else:
+                serialized_value = str(value)
+
+            # Store with TTL
+            REDIS_CLIENT.setex(redis_key, SESSION_TTL, serialized_value)
+            return
+
+        except redis.RedisError as e:
+            logger.error(f"Redis set error: {e}, falling back to in-memory")
+            # Fall through to in-memory fallback
+
+    # In-memory fallback
     cleanup_expired_sessions()  # Periodic cleanup
     enforce_session_limits()  # Enforce max sessions
 
-    session_id = get_session_id()
     now = get_current_time()
 
     if session_id not in SESSIONS:
@@ -401,12 +482,29 @@ def session_set(key: str, value: Any):
     SESSIONS[session_id][key] = value
 
 def session_clear(session_id: Optional[str] = None):
-    """Clear a specific session or current session"""
+    """Clear a specific session or current session (Redis or in-memory)"""
     if session_id is None:
         session_id = get_session_id()
+
+    # Redis implementation
+    if REDIS_CLIENT:
+        try:
+            # Delete all keys for this session
+            pattern = f"session:{session_id}:*"
+            keys = REDIS_CLIENT.keys(pattern)
+            if keys:
+                REDIS_CLIENT.delete(*keys)
+                logger.info(f"Session cleared from Redis: {session_id} ({len(keys)} keys)")
+            return
+
+        except redis.RedisError as e:
+            logger.error(f"Redis clear error: {e}, falling back to in-memory")
+            # Fall through to in-memory fallback
+
+    # In-memory fallback
     if session_id in SESSIONS:
         del SESSIONS[session_id]
-        logger.info(f"Session cleared: {session_id}")
+        logger.info(f"Session cleared from memory: {session_id}")
 
 # ==================== INPUT VALIDATION ====================
 
@@ -567,6 +665,25 @@ def get_local_time(dt: Optional[datetime] = None) -> datetime:
         # Naive datetime, assume UTC
         dt = pytz.utc.localize(dt)
     return dt.astimezone(SHOP_TIMEZONE)
+
+def calculate_gst_from_inclusive(total: float) -> Tuple[float, float]:
+    """
+    Calculate GST component from GST-inclusive total.
+
+    Formula: GST = Total × (GST_RATE / (1 + GST_RATE))
+    Example: For $110 with 10% GST:
+        - GST = $110 × (0.10 / 1.10) = $10.00
+        - Subtotal = $110 - $10 = $100.00
+
+    Returns: (subtotal_ex_gst, gst_amount)
+    """
+    if GST_RATE <= 0:
+        return (total, 0.0)
+
+    gst_amount = total * (GST_RATE / (1 + GST_RATE))
+    subtotal = total - gst_amount
+
+    return (round(subtotal, 2), round(gst_amount, 2))
 
 
 def _human_join(items: Iterable[str]) -> str:
@@ -1718,33 +1835,36 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
                 "message": "Cart is empty"
             }
 
-        subtotal = 0.0
+        # Calculate total from cart (GST-inclusive prices)
+        total_inclusive = 0.0
 
         for item in cart:
             item_price = item.get('price', 0.0)
             quantity = item.get('quantity', 1)
-            subtotal += item_price * quantity
+            total_inclusive += item_price * quantity
 
-        total = round(subtotal, 2)
-        gst = 0.0
+        total_inclusive = round(total_inclusive, 2)
+
+        # Calculate GST component from inclusive total
+        subtotal_ex_gst, gst = calculate_gst_from_inclusive(total_inclusive)
 
         session_set('cart_priced', True)
-        session_set('last_subtotal', subtotal)
+        session_set('last_subtotal', subtotal_ex_gst)
         session_set('last_gst', gst)
-        session_set('last_total', total)
+        session_set('last_total', total_inclusive)
         session_set('last_totals', {
-            'subtotal': round(subtotal, 2),
+            'subtotal': subtotal_ex_gst,
             'gst': gst,
-            'grand_total': total,
+            'grand_total': total_inclusive,
         })
 
         return {
             "ok": True,
-            "subtotal": round(subtotal, 2),
+            "subtotal": subtotal_ex_gst,
             "gst": gst,
-            "total": total,
+            "total": total_inclusive,
             "itemCount": len(cart),
-            "message": f"Total: ${total:.2f}"
+            "message": f"Total: ${total_inclusive:.2f} (inc. ${gst:.2f} GST)"
         }
 
     except Exception as e:
@@ -2052,7 +2172,7 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         totals_snapshot = session_get('last_totals', {})
         subtotal = totals_snapshot.get('subtotal', session_get('last_subtotal', 0.0))
         total = totals_snapshot.get('grand_total', session_get('last_total', 0.0))
-        gst = 0.0
+        gst = totals_snapshot.get('gst', session_get('last_gst', 0.0))
 
         if not session_get('pickup_confirmed', False):
             return {

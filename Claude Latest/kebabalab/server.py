@@ -2477,10 +2477,16 @@ def webhook():
     try:
         data = request.get_json() or {}
         message = data.get('message', {})
+        message_type = message.get('type', 'unknown')
         tool_calls = message.get('toolCalls', []) or []
 
+        # Accept all webhook messages with 200 OK (reduces latency)
+        # but only process tool-calls
         if not tool_calls:
-            return jsonify({"error": "No tool calls provided"}), 400
+            # VAPI sends many message types: conversation-update, speech-update, transcript, etc.
+            # Return 200 OK to acknowledge receipt without causing retries or lag
+            logger.debug(f"Webhook received non-tool message type: {message_type}")
+            return jsonify({"status": "acknowledged", "message": "No tool calls to process"}), 200
 
         results = []
 

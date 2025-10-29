@@ -1086,12 +1086,14 @@ def calculate_price(item: Dict) -> float:
                         price = menu_item.get('price', 0.0)
                         break
             elif category == 'chips':
-                # Chips have sizes
+                # Chips have separate menu entries for each size
                 for menu_item in category_items:
                     if 'chip' in menu_item.get('name', '').lower():
-                        sizes = menu_item.get('sizes', {})
-                        price = sizes.get(size, 0.0)
-                        break
+                        # Match by size field in menu item
+                        item_size = menu_item.get('size', '')
+                        if item_size == size:
+                            price = menu_item.get('price', 0.0)
+                            break
             elif category == 'sweets':
                 # Match by name for sweets
                 for menu_item in category_items:

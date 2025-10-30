@@ -176,6 +176,23 @@
     {
       "type": "function",
       "function": {
+        "name": "clearCart",
+        "description": "Clear all items from the cart. Use when customer wants to start over completely. Confirms action by returning the number of items that were removed.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
         "name": "editCartItem",
         "description": "Edit ANY property of a cart item in ONE call. Can change size, protein, salads, sauces, chips_size, quantity, anything. This is the ONLY tool for editing items. Example: editCartItem(0, {chips_size: 'large'}) to upgrade meal chips.",
         "strict": false,

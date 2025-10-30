@@ -891,6 +891,10 @@ def parse_salads(text: str) -> List[str]:
     text = normalize_text(text)
     salads = []
 
+    # Check for "the lot" - adds all salads
+    if any(phrase in text for phrase in ['the lot', 'with the lot', 'everything', 'all salads', 'with everything']):
+        return ['lettuce', 'tomato', 'onion', 'pickles', 'olives']
+
     # Check for "no salad" first (all salads excluded)
     if any(phrase in text for phrase in ['no salad', 'without salad', 'hold salad']):
         return []
@@ -944,19 +948,20 @@ def parse_sauces(text: str) -> List[str]:
     if any(phrase in text for phrase in ['no sauce', 'without sauce', 'hold sauce']):
         return []
 
-    sauce_map = {
-        'garlic': ['garlic', 'garlek', 'galic', 'garlick'],
-        'chilli': ['chili', 'chilli', 'chilly', 'chili sauce'],
-        'bbq': ['bbq', 'barbeque', 'barbecue'],
-        'tomato': ['tomato sauce', 'ketchup', 'tomatoe'],
-        'sweet chilli': ['sweet chilli', 'sweet chili', 'sweet chilly'],
-        'mayo': ['mayo', 'aioli', 'mayonnaise'],
-        'hummus': ['hummus', 'humus', 'hummous']
-    }
+    # Order matters - check compound names BEFORE single words to avoid substring matches
+    sauce_map_ordered = [
+        ('sweet chilli', ['sweet chilli', 'sweet chili', 'sweet chilly']),
+        ('tomato', ['tomato sauce', 'ketchup', 'tomatoe', 'tomato']),
+        ('chilli', ['chili', 'chilli', 'chilly', 'chili sauce']),  # After sweet chilli
+        ('garlic', ['garlic', 'garlek', 'galic', 'garlick']),
+        ('bbq', ['bbq', 'barbeque', 'barbecue']),
+        ('mayo', ['mayo', 'aioli', 'mayonnaise']),
+        ('hummus', ['hummus', 'humus', 'hummous'])
+    ]
 
     # Check for specific exclusions ("no garlic", "without chilli", "hold bbq")
     excluded_sauces = []
-    for sauce, keywords in sauce_map.items():
+    for sauce, keywords in sauce_map_ordered:
         for keyword in keywords:
             if any(phrase in text for phrase in [
                 f'no {keyword}', f'without {keyword}', f'hold {keyword}',
@@ -966,17 +971,28 @@ def parse_sauces(text: str) -> List[str]:
                 logger.info(f"Excluding sauce: {sauce}")
                 break
 
-    # Exact matches first
-    for sauce, keywords in sauce_map.items():
+    # Exact matches first - check in order (compound names before single words)
+    # Use a tracking variable to mark which parts of text have been matched
+    matched_text_parts = []
+
+    for sauce, keywords in sauce_map_ordered:
         if sauce in excluded_sauces:
             continue  # Skip excluded items
-        if any(keyword in text for keyword in keywords):
-            if sauce not in sauces:
-                sauces.append(sauce)
+        # Sort keywords by length (longest first) to match "sweet chilli" before "chilli"
+        for keyword in sorted(keywords, key=len, reverse=True):
+            if keyword in text:
+                # Check if this keyword overlaps with already matched text
+                already_matched = any(keyword in matched_part or matched_part in keyword for matched_part in matched_text_parts)
+
+                if not already_matched and sauce not in sauces:
+                    sauces.append(sauce)
+                    matched_text_parts.append(keyword)
+                    logger.info(f"Matched sauce '{sauce}' via keyword '{keyword}'")
+                break  # Stop after first match for this sauce
 
     # Fuzzy match for typos if no exact matches found
     if not sauces and FUZZY_MATCHING_AVAILABLE:
-        all_sauce_choices = list(sauce_map.keys())
+        all_sauce_choices = [sauce for sauce, _ in sauce_map_ordered]
         words = text.split()
         for word in words:
             if len(word) >= 4:  # Only check words of reasonable length
@@ -1080,11 +1096,35 @@ def calculate_price(item: Dict) -> float:
         else:
             # For items without protein (drinks, chips, etc), match first or by name
             if category == 'drinks':
-                # All drink cans are same price
+                # Match drink by name (prioritize exact matches)
+                drink_name_lower = item_name
+                best_match = None
+                best_score = 0
+
                 for menu_item in category_items:
-                    if 'can' in menu_item.get('name', '').lower():
-                        price = menu_item.get('price', 0.0)
-                        break
+                    menu_name_lower = menu_item.get('name', '').lower()
+                    menu_id = menu_item.get('id', '').lower()
+
+                    # Check if drink name matches
+                    if drink_name_lower in menu_name_lower or menu_name_lower in drink_name_lower:
+                        score = len(menu_name_lower)  # Prefer shorter (more specific) names
+                        if score > best_score or best_match is None:
+                            best_match = menu_item
+                            best_score = score
+
+                    # Also check brands for soft drinks
+                    brands = menu_item.get('brands', [])
+                    for brand in brands:
+                        if drink_name_lower in brand.lower() or brand.lower() in drink_name_lower:
+                            best_match = menu_item
+                            break
+
+                if best_match:
+                    price = best_match.get('price', 0.0)
+                else:
+                    # Default to first drink item (soft drink can)
+                    if category_items:
+                        price = category_items[0].get('price', 0.0)
             elif category == 'chips':
                 # Chips have separate menu entries for each size
                 for menu_item in category_items:
@@ -1341,7 +1381,7 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         elif 'chips' in desc_lower or 'fries' in desc_lower:
             category = 'chips'
             item_name = "Chips"
-        elif any(drink in desc_lower for drink in ['coke', 'sprite', 'fanta', 'pepsi', 'drink']):
+        elif any(drink in desc_lower for drink in ['coke', 'sprite', 'fanta', 'pepsi', 'water', 'drink']):
             category = 'drinks'
             # Determine brand
             for brand in ['coca-cola', 'coke', 'sprite', 'fanta', 'pepsi', 'water']:
@@ -1536,6 +1576,30 @@ def tool_remove_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error removing cart item: {e}")
+        return {"ok": False, "error": str(e)}
+
+def tool_clear_cart(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Clear all items from the cart"""
+    try:
+        cart = session_get('cart', [])
+        cart_size = len(cart)
+
+        # Clear the cart
+        session_set('cart', [])
+        session_set('cart_priced', False)
+        session_set('last_totals', {})
+        session_set('last_subtotal', 0.0)
+        session_set('last_total', 0.0)
+        session_set('last_gst', 0.0)
+
+        return {
+            "ok": True,
+            "message": f"Cart cleared ({cart_size} items removed)",
+            "previousCartSize": cart_size
+        }
+
+    except Exception as e:
+        logger.error(f"Error clearing cart: {e}")
         return {"ok": False, "error": str(e)}
 
 # Tool 7: editCartItem - THE CRITICAL ONE
@@ -2447,6 +2511,7 @@ TOOLS = {
     "addMultipleItemsToCart": tool_add_multiple_items_to_cart,
     "getCartState": tool_get_cart_state,
     "removeCartItem": tool_remove_cart_item,
+    "clearCart": tool_clear_cart,
     "editCartItem": tool_edit_cart_item,
     "priceCart": tool_price_cart,
     "convertItemsToMeals": tool_convert_items_to_meals,
@@ -2477,10 +2542,16 @@ def webhook():
     try:
         data = request.get_json() or {}
         message = data.get('message', {})
+        message_type = message.get('type', 'unknown')
         tool_calls = message.get('toolCalls', []) or []
 
+        # Accept all webhook messages with 200 OK (reduces latency)
+        # but only process tool-calls
         if not tool_calls:
-            return jsonify({"error": "No tool calls provided"}), 400
+            # VAPI sends many message types: conversation-update, speech-update, transcript, etc.
+            # Return 200 OK to acknowledge receipt without causing retries or lag
+            logger.debug(f"Webhook received non-tool message type: {message_type}")
+            return jsonify({"status": "acknowledged", "message": "No tool calls to process"}), 200
 
         results = []
 

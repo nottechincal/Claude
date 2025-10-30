@@ -121,9 +121,9 @@ payload = {
 }
 response, status = call_webhook(payload)
 test_result(
-    "Webhook rejects empty tool calls",
-    status >= 400 or response.get('error') is not None,
-    f"Status: {status}"
+    "Webhook acknowledges empty tool calls with 200 OK (no lag)",
+    status == 200 and response.get('status') == 'acknowledged',
+    f"Status: {status}, Response: {response.get('status', 'N/A')}"
 )
 
 # Test 1.2: Check Open (simple tool, no params)

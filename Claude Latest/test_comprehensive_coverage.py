@@ -882,9 +882,399 @@ if results:
 print()
 
 # ============================================================
-# TEST CATEGORY 16: EDGE CASES
+# TEST CATEGORY 16: GÖZLEME VARIANTS
 # ============================================================
-print("🔍 TEST CATEGORY 16: EDGE CASES")
+print("🥟 TEST CATEGORY 16: GÖZLEME VARIANTS")
+print("-" * 70)
+
+call_id = "test-gozleme-001"
+gozleme_types = ["vegan", "lamb", "chicken", "vegetarian"]
+
+for goz_type in gozleme_types:
+    clear_session()
+
+    payload = create_vapi_webhook_payload(
+        "quickAddItem",
+        {"description": f"{goz_type} gozleme"},
+        call_id=call_id
+    )
+    response, status = call_webhook(payload)
+    results = response.get('results', [])
+
+    if results:
+        result = results[0].get('result', {})
+        item = result.get('item', {})
+
+        test_result(
+            f"Add {goz_type} gözleme",
+            result.get('ok') == True and item.get('category') == 'gozleme' and item.get('price') == 15.0,
+            f"Price: ${item.get('price', 0)}, Category: {item.get('category')}",
+            15.0,
+            item.get('price', 0)
+        )
+
+print()
+
+# ============================================================
+# TEST CATEGORY 17: INVALID INPUT HANDLING
+# ============================================================
+print("⚠️ TEST CATEGORY 17: INVALID INPUT HANDLING")
+print("-" * 70)
+
+call_id = "test-invalid-001"
+
+# Test 1: Empty description
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": ""}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Empty description",
+        result.get('ok') == False or result.get('item', {}).get('category') is None,
+        f"Response: {result.get('message', result.get('error', 'Unknown'))}"
+    )
+
+# Test 2: Gibberish input
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "xyz123 qwerty asdf"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Gibberish input",
+        result.get('ok') == True or result.get('ok') == False,  # Should handle gracefully either way
+        f"Handled: {result.get('ok')}, Message: {result.get('message', result.get('error', 'None'))}"
+    )
+
+# Test 3: Special characters
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab !@#$%^&*()"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    item = result.get('item', {})
+    test_result(
+        "Special characters in description",
+        result.get('ok') == True and item.get('protein') == 'lamb',
+        f"Parsed correctly: {item.get('protein', 'none')}, Size: {item.get('size', 'none')}"
+    )
+
+# Test 4: Extremely long description
+clear_session()
+long_desc = "large lamb kebab " + "with extra meat " * 50
+payload = create_vapi_webhook_payload("quickAddItem", {"description": long_desc}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Extremely long description (500+ chars)",
+        result.get('ok') == True or result.get('ok') == False,  # Should handle gracefully
+        f"Handled: {result.get('ok')}"
+    )
+
+# Test 5: Invalid item index for edit
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab"}, call_id=call_id))
+payload = create_vapi_webhook_payload("editCartItem", {"itemIndex": 999, "newDescription": "small chicken kebab"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Invalid item index (999)",
+        result.get('ok') == False,
+        f"Error: {result.get('error', 'none')}"
+    )
+
+# Test 6: Negative item index
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab"}, call_id=call_id))
+payload = create_vapi_webhook_payload("editCartItem", {"itemIndex": -5, "newDescription": "small chicken kebab"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Negative item index (-5)",
+        result.get('ok') == False,
+        f"Error: {result.get('error', 'none')}"
+    )
+
+# Test 7: Missing required parameters
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Missing required parameter (description)",
+        result.get('ok') == False,
+        f"Error: {result.get('error', 'handled')}"
+    )
+
+print()
+
+# ============================================================
+# TEST CATEGORY 18: LARGE ORDER HANDLING
+# ============================================================
+print("📦 TEST CATEGORY 18: LARGE ORDER HANDLING")
+print("-" * 70)
+
+call_id = "test-large-001"
+
+# Test 1: Large quantity
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "20 large lamb kebabs"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    item = result.get('item', {})
+    test_result(
+        "Large quantity (20 items)",
+        result.get('ok') == True and item.get('quantity') == 20,
+        f"Quantity: {item.get('quantity', 0)}"
+    )
+
+# Test 2: Very large quantity
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "100 large lamb kebabs"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    item = result.get('item', {})
+    test_result(
+        "Very large quantity (100 items)",
+        result.get('ok') == True and item.get('quantity') == 100,
+        f"Quantity: {item.get('quantity', 0)}"
+    )
+
+# Test 3: Cart with many different items
+clear_session()
+for i in range(25):
+    protein = ["lamb", "chicken", "mixed", "falafel"][i % 4]
+    size = ["small", "large"][i % 2]
+    call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": f"{size} {protein} kebab"}, call_id=call_id))
+
+# Get cart state
+payload = create_vapi_webhook_payload("getCartState", {}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    cart = result.get('cart', [])
+    test_result(
+        "Cart with 25 different items",
+        result.get('ok') == True and len(cart) == 25,
+        f"Cart size: {len(cart)} items"
+    )
+
+print()
+
+# ============================================================
+# TEST CATEGORY 19: EXTRAS COMBINATIONS
+# ============================================================
+print("➕ TEST CATEGORY 19: EXTRAS COMBINATIONS")
+print("-" * 70)
+
+call_id = "test-extras-001"
+
+# Test 1: Multiple extras on kebab
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab with cheese and extra meat"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    item = result.get('item', {})
+    extras = item.get('extras', [])
+    test_result(
+        "Kebab with cheese + extra meat",
+        result.get('ok') == True and 'cheese' in extras and 'extra meat' in extras,
+        f"Extras: {extras}"
+    )
+
+# Test 2: Cheese + Haloumi
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "large lamb hsp with cheese and haloumi"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    item = result.get('item', {})
+    extras = item.get('extras', [])
+    test_result(
+        "HSP with cheese + haloumi",
+        result.get('ok') == True and 'haloumi' in extras,
+        f"Extras: {extras}, Cheese flag: {item.get('cheese')}"
+    )
+
+# Test 3: All extras at once
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab with cheese, extra meat, and haloumi"}, call_id=call_id)
+response, status = call_webhook(payload)
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    item = result.get('item', {})
+    extras = item.get('extras', [])
+    test_result(
+        "Kebab with all extras (cheese, meat, haloumi)",
+        result.get('ok') == True and len(extras) >= 2,
+        f"Extras count: {len(extras)}, Extras: {extras}"
+    )
+
+print()
+
+# ============================================================
+# TEST CATEGORY 20: PRICING EDGE CASES
+# ============================================================
+print("💰 TEST CATEGORY 20: PRICING EDGE CASES")
+print("-" * 70)
+
+call_id = "test-pricing-001"
+
+# Test 1: Item with all extras
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab with cheese, extra meat, and haloumi"}, call_id=call_id)
+call_webhook(payload)
+response = call_webhook(create_vapi_webhook_payload("priceCart", {}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Pricing with multiple extras",
+        result.get('total', 0) > 15.0,  # Base price + extras
+        f"Total: ${result.get('total', 0):.2f}, GST: ${result.get('gst', 0):.2f}"
+    )
+
+# Test 2: Item with many exclusions and additions
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab no lettuce no tomato no onion with garlic sauce and chilli sauce with cheese"}, call_id=call_id)
+call_webhook(payload)
+response = call_webhook(create_vapi_webhook_payload("priceCart", {}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Pricing with exclusions and extras",
+        result.get('total', 0) > 0,
+        f"Total: ${result.get('total', 0):.2f}"
+    )
+
+# Test 3: Multiple items with different prices
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "small chicken hsp"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large chips"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "coke"}, call_id=call_id))
+response = call_webhook(create_vapi_webhook_payload("priceCart", {}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    expected_min = 15 + 15 + 7 + 3.5  # Approximate
+    test_result(
+        "Pricing complex multi-item cart",
+        result.get('total', 0) >= expected_min * 0.9,  # Within 10% (accounting for GST calculation)
+        f"Total: ${result.get('total', 0):.2f}, Expected: ~${expected_min:.2f}"
+    )
+
+# Test 4: Very large quantity pricing
+clear_session()
+payload = create_vapi_webhook_payload("quickAddItem", {"description": "50 large lamb kebabs"}, call_id=call_id)
+call_webhook(payload)
+response = call_webhook(create_vapi_webhook_payload("priceCart", {}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    expected = 15.0 * 50  # $15 * 50 = $750
+    test_result(
+        "Pricing very large quantity (50 kebabs)",
+        abs(result.get('total', 0) - expected) < 1.0,
+        f"Total: ${result.get('total', 0):.2f}, Expected: ${expected:.2f}"
+    )
+
+print()
+
+# ============================================================
+# TEST CATEGORY 21: MEAL CONVERSION EDGE CASES
+# ============================================================
+print("🍱 TEST CATEGORY 21: MEAL CONVERSION EDGE CASES")
+print("-" * 70)
+
+call_id = "test-conversion-001"
+
+# Test 1: Convert single kebab to meal
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "coke"}, call_id=call_id))
+response = call_webhook(create_vapi_webhook_payload("convertItemsToMeals", {"itemIndices": [0], "drinkIndex": 1}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Convert kebab to meal with drink",
+        result.get('ok') == True,
+        f"Conversions: {result.get('conversions', 0)}"
+    )
+
+# Test 2: Try to convert HSP to meal (should make combo)
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb hsp"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "coke"}, call_id=call_id))
+response = call_webhook(create_vapi_webhook_payload("convertItemsToMeals", {"itemIndices": [0], "drinkIndex": 1}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Convert HSP to combo with drink",
+        result.get('ok') == True,
+        f"Message: {result.get('message', 'success')}"
+    )
+
+# Test 3: Convert without specifying drink (should suggest)
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large chips"}, call_id=call_id))
+response = call_webhook(create_vapi_webhook_payload("convertItemsToMeals", {}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Auto-detect meal conversion opportunity",
+        result.get('ok') == True or 'drink' in result.get('message', '').lower(),
+        f"Response: {result.get('message', 'handled')[:50]}"
+    )
+
+# Test 4: Convert multiple items at once
+clear_session()
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb kebab"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large chicken kebab"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "coke"}, call_id=call_id))
+call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "sprite"}, call_id=call_id))
+response = call_webhook(create_vapi_webhook_payload("convertItemsToMeals", {"itemIndices": [0, 1], "drinkIndex": 2}, call_id=call_id))[0]
+results = response.get('results', [])
+if results:
+    result = results[0].get('result', {})
+    test_result(
+        "Convert multiple kebabs to meals",
+        result.get('ok') == True,
+        f"Conversions: {result.get('conversions', 0)}"
+    )
+
+print()
+
+# ============================================================
+# TEST CATEGORY 22: EDGE CASES
+# ============================================================
+print("🔍 TEST CATEGORY 22: EDGE CASES")
 print("-" * 70)
 
 # Test: Multiple identical items

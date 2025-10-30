@@ -782,7 +782,7 @@ gst_test_cases = [
     (15.0, 1.36, "Large kebab"),
     (20.0, 1.82, "Two small kebabs"),
     (34.0, 3.09, "Two small kebab meals"),
-    (43.0, 3.91, "Mixed order")
+    (41.0, 3.73, "Mixed order")  # Fixed: actual total is $41 (20+9+7+5), not $43
 ]
 
 for total, expected_gst, description in gst_test_cases:
@@ -800,7 +800,7 @@ for total, expected_gst, description in gst_test_cases:
         call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "small lamb kebab"}, call_id=call_id))
         call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "small chicken kebab"}, call_id=call_id))
         call_webhook(create_vapi_webhook_payload("convertItemsToMeals", {"drinkBrand": "coke", "chipsSize": "small"}, call_id=call_id))
-    elif total == 43.0:
+    elif total == 41.0:
         call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large lamb hsp"}, call_id=call_id))
         call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "large chips"}, call_id=call_id))
         call_webhook(create_vapi_webhook_payload("quickAddItem", {"description": "2 cokes"}, call_id=call_id))
@@ -941,16 +941,25 @@ response = call_webhook(create_vapi_webhook_payload("clearCart", {}, call_id=cal
 results = response.get('results', [])
 if results:
     result = results[0].get('result', {})
-    # Verify cart is empty
-    response2 = call_webhook(create_vapi_webhook_payload("getCartState", {}, call_id=call_id))[0]
-    results2 = response2.get('results', [])
-    if results2:
-        cart_result = results2[0].get('result', {})
-        cart = cart_result.get('cart', [])
+
+    # Check that clearCart returned success
+    if result.get('ok'):
+        # Verify cart is empty
+        response2 = call_webhook(create_vapi_webhook_payload("getCartState", {}, call_id=call_id))[0]
+        results2 = response2.get('results', [])
+        if results2:
+            cart_result = results2[0].get('result', {})
+            cart = cart_result.get('cart', [])
+            test_result(
+                "Clear cart",
+                len(cart) == 0,
+                f"Cart has {len(cart)} items (expected 0), clearCart returned: {result}"
+            )
+    else:
         test_result(
             "Clear cart",
-            len(cart) == 0,
-            f"Cart has {len(cart)} items (expected 0)"
+            False,
+            f"clearCart failed: {result.get('error')}"
         )
 
 print()

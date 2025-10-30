@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-10-30T02:57:16.975677",
+  "timestamp": "2025-10-30T03:21:04.512478",
   "summary": {
-    "total": 88,
-    "passed": 88,
+    "total": 113,
+    "passed": 113,
     "failed": 0,
     "success_rate": "100.0%"
   },
@@ -13,7 +13,7 @@
       "details": "Price: $10.0, Status: 200",
       "expected": 10.0,
       "actual": 10.0,
-      "timestamp": "2025-10-30T02:57:16.928573"
+      "timestamp": "2025-10-30T03:21:04.449727"
     },
     {
       "name": "Add large lamb kebab",
@@ -21,7 +21,7 @@
       "details": "Price: $15.0, Status: 200",
       "expected": 15.0,
       "actual": 15.0,
-      "timestamp": "2025-10-30T02:57:16.928997"
+      "timestamp": "2025-10-30T03:21:04.450178"
     },
     {
       "name": "Add small chicken kebab",
@@ -29,7 +29,7 @@
       "details": "Price: $10.0, Status: 200",
       "expected": 10.0,
       "actual": 10.0,
-      "timestamp": "2025-10-30T02:57:16.929319"
+      "timestamp": "2025-10-30T03:21:04.450494"
     },
     {
       "name": "Add large chicken kebab",
@@ -37,23 +37,23 @@
       "details": "Price: $15.0, Status: 200",
       "expected": 15.0,
       "actual": 15.0,
-      "timestamp": "2025-10-30T02:57:16.929628"
+      "timestamp": "2025-10-30T03:21:04.450809"
     },
     {
       "name": "Add small mixed kebab",
       "passed": true,
-      "details": "Price: $0.0, Status: 200",
+      "details": "Price: $10.0, Status: 200",
       "expected": 10.0,
-      "actual": 0.0,
-      "timestamp": "2025-10-30T02:57:16.929891"
+      "actual": 10.0,
+      "timestamp": "2025-10-30T03:21:04.451155"
     },
     {
       "name": "Add large mixed kebab",
       "passed": true,
-      "details": "Price: $0.0, Status: 200",
+      "details": "Price: $15.0, Status: 200",
       "expected": 15.0,
-      "actual": 0.0,
-      "timestamp": "2025-10-30T02:57:16.930185"
+      "actual": 15.0,
+      "timestamp": "2025-10-30T03:21:04.451498"
     },
     {
       "name": "Add small falafel kebab",
@@ -61,7 +61,7 @@
       "details": "Price: $10.0, Status: 200",
       "expected": 10.0,
       "actual": 10.0,
-      "timestamp": "2025-10-30T02:57:16.930423"
+      "timestamp": "2025-10-30T03:21:04.451786"
     },
     {
       "name": "Add large falafel kebab",
@@ -69,7 +69,7 @@
       "details": "Price: $15.0, Status: 200",
       "expected": 15.0,
       "actual": 15.0,
-      "timestamp": "2025-10-30T02:57:16.930704"
+      "timestamp": "2025-10-30T03:21:04.452075"
     },
     {
       "name": "Add small lamb HSP",
@@ -77,7 +77,7 @@
       "details": "Price: $15.0, Category: hsp",
       "expected": 15.0,
       "actual": 15.0,
-      "timestamp": "2025-10-30T02:57:16.930962"
+      "timestamp": "2025-10-30T03:21:04.452355"
     },
     {
       "name": "Add large lamb HSP",
@@ -85,7 +85,7 @@
       "details": "Price: $20.0, Category: hsp",
       "expected": 20.0,
       "actual": 20.0,
-      "timestamp": "2025-10-30T02:57:16.931208"
+      "timestamp": "2025-10-30T03:21:04.452606"
     },
     {
       "name": "Add small chicken HSP",
@@ -93,7 +93,7 @@
       "details": "Price: $15.0, Category: hsp",
       "expected": 15.0,
       "actual": 15.0,
-      "timestamp": "2025-10-30T02:57:16.931482"
+      "timestamp": "2025-10-30T03:21:04.452883"
     },
     {
       "name": "Add large chicken HSP",
@@ -101,23 +101,23 @@
       "details": "Price: $20.0, Category: hsp",
       "expected": 20.0,
       "actual": 20.0,
-      "timestamp": "2025-10-30T02:57:16.931741"
+      "timestamp": "2025-10-30T03:21:04.453139"
     },
     {
       "name": "Add small mixed HSP",
       "passed": true,
-      "details": "Price: $0.0, Category: hsp",
+      "details": "Price: $15.0, Category: hsp",
       "expected": 15.0,
-      "actual": 0.0,
-      "timestamp": "2025-10-30T02:57:16.931992"
+      "actual": 15.0,
+      "timestamp": "2025-10-30T03:21:04.453447"
     },
     {
       "name": "Add large mixed HSP",
       "passed": true,
-      "details": "Price: $0.0, Category: hsp",
+      "details": "Price: $20.0, Category: hsp",
       "expected": 20.0,
-      "actual": 0.0,
-      "timestamp": "2025-10-30T02:57:16.932227"
+      "actual": 20.0,
+      "timestamp": "2025-10-30T03:21:04.453726"
     },
     {
       "name": "Add small falafel HSP",
@@ -125,7 +125,7 @@
       "details": "Price: $15.0, Category: hsp",
       "expected": 15.0,
       "actual": 15.0,
-      "timestamp": "2025-10-30T02:57:16.932464"
+      "timestamp": "2025-10-30T03:21:04.454008"
     },
     {
       "name": "Add large falafel HSP",
@@ -133,7 +133,7 @@
       "details": "Price: $20.0, Category: hsp",
       "expected": 20.0,
       "actual": 20.0,
-      "timestamp": "2025-10-30T02:57:16.932709"
+      "timestamp": "2025-10-30T03:21:04.454274"
     },
     {
       "name": "Kebab with salads: lettuce",
@@ -145,7 +145,7 @@
       "actual": [
         "lettuce"
       ],
-      "timestamp": "2025-10-30T02:57:16.932979"
+      "timestamp": "2025-10-30T03:21:04.454577"
     },
     {
       "name": "Kebab with salads: lettuce, tomato",
@@ -159,7 +159,7 @@
         "lettuce",
         "tomato"
       ],
-      "timestamp": "2025-10-30T02:57:16.933272"
+      "timestamp": "2025-10-30T03:21:04.454937"
     },
     {
       "name": "Kebab with salads: lettuce, tomato, onion",
@@ -175,7 +175,7 @@
         "tomato",
         "onion"
       ],
-      "timestamp": "2025-10-30T02:57:16.933570"
+      "timestamp": "2025-10-30T03:21:04.455252"
     },
     {
       "name": "Kebab with salads: lettuce, tomato, onion, pickles",
@@ -193,7 +193,7 @@
         "onion",
         "pickles"
       ],
-      "timestamp": "2025-10-30T02:57:16.933891"
+      "timestamp": "2025-10-30T03:21:04.455563"
     },
     {
       "name": "Kebab with salads: lettuce, tomato, onion, pickles, olives",
@@ -213,7 +213,7 @@
         "pickles",
         "olives"
       ],
-      "timestamp": "2025-10-30T02:57:16.934222"
+      "timestamp": "2025-10-30T03:21:04.455913"
     },
     {
       "name": "Kebab with salads: tomato, pickles",
@@ -227,7 +227,7 @@
         "tomato",
         "pickles"
       ],
-      "timestamp": "2025-10-30T02:57:16.934516"
+      "timestamp": "2025-10-30T03:21:04.456239"
     },
     {
       "name": "Kebab with salads: onion, olives",
@@ -241,7 +241,7 @@
         "onion",
         "olives"
       ],
-      "timestamp": "2025-10-30T02:57:16.934789"
+      "timestamp": "2025-10-30T03:21:04.456553"
     },
     {
       "name": "Kebab with sauces: garlic",
@@ -253,7 +253,7 @@
       "actual": [
         "garlic"
       ],
-      "timestamp": "2025-10-30T02:57:16.935188"
+      "timestamp": "2025-10-30T03:21:04.456920"
     },
     {
       "name": "Kebab with sauces: garlic, chilli",
@@ -267,7 +267,7 @@
         "chilli",
         "garlic"
       ],
-      "timestamp": "2025-10-30T02:57:16.935573"
+      "timestamp": "2025-10-30T03:21:04.457287"
     },
     {
       "name": "Kebab with sauces: garlic, chilli, bbq",
@@ -283,7 +283,7 @@
         "garlic",
         "bbq"
       ],
-      "timestamp": "2025-10-30T02:57:16.935976"
+      "timestamp": "2025-10-30T03:21:04.457753"
     },
     {
       "name": "Kebab with sauces: bbq, mayo",
@@ -297,7 +297,7 @@
         "bbq",
         "mayo"
       ],
-      "timestamp": "2025-10-30T02:57:16.936321"
+      "timestamp": "2025-10-30T03:21:04.458119"
     },
     {
       "name": "Kebab with sauces: hummus, garlic",
@@ -311,7 +311,7 @@
         "garlic",
         "hummus"
       ],
-      "timestamp": "2025-10-30T02:57:16.936678"
+      "timestamp": "2025-10-30T03:21:04.458478"
     },
     {
       "name": "Kebab with sauces: sweet chilli, mayo",
@@ -325,7 +325,7 @@
         "sweet chilli",
         "mayo"
       ],
-      "timestamp": "2025-10-30T02:57:16.937021"
+      "timestamp": "2025-10-30T03:21:04.458934"
     },
     {
       "name": "Kebab with 'no tomato'",
@@ -333,7 +333,7 @@
       "details": "Salads: [], Extras: []",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.937370"
+      "timestamp": "2025-10-30T03:21:04.459311"
     },
     {
       "name": "Kebab with 'no onion'",
@@ -341,7 +341,7 @@
       "details": "Salads: [], Extras: []",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.937665"
+      "timestamp": "2025-10-30T03:21:04.459609"
     },
     {
       "name": "Kebab with 'no lettuce'",
@@ -349,7 +349,7 @@
       "details": "Salads: [], Extras: []",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.937950"
+      "timestamp": "2025-10-30T03:21:04.459959"
     },
     {
       "name": "Kebab with 'no pickles'",
@@ -357,7 +357,7 @@
       "details": "Salads: [], Extras: []",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.938223"
+      "timestamp": "2025-10-30T03:21:04.460270"
     },
     {
       "name": "Kebab with 'no cheese'",
@@ -365,7 +365,7 @@
       "details": "Salads: [], Extras: []",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.938543"
+      "timestamp": "2025-10-30T03:21:04.460607"
     },
     {
       "name": "Kebab with cheese",
@@ -373,7 +373,7 @@
       "details": "Extras: ['cheese'], Cheese: True",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.938833"
+      "timestamp": "2025-10-30T03:21:04.460929"
     },
     {
       "name": "Kebab with extra meat",
@@ -381,7 +381,7 @@
       "details": "Extras: ['extra meat'], Cheese: False",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.939089"
+      "timestamp": "2025-10-30T03:21:04.461224"
     },
     {
       "name": "Kebab with haloumi",
@@ -389,7 +389,7 @@
       "details": "Extras: ['haloumi'], Cheese: False",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.939343"
+      "timestamp": "2025-10-30T03:21:04.461525"
     },
     {
       "name": "Add small chips with chicken salt",
@@ -397,7 +397,7 @@
       "details": "Price: $5.0",
       "expected": 5.0,
       "actual": 5.0,
-      "timestamp": "2025-10-30T02:57:16.939633"
+      "timestamp": "2025-10-30T03:21:04.461869"
     },
     {
       "name": "Add small chips with normal salt",
@@ -405,7 +405,7 @@
       "details": "Price: $5.0",
       "expected": 5.0,
       "actual": 5.0,
-      "timestamp": "2025-10-30T02:57:16.939902"
+      "timestamp": "2025-10-30T03:21:04.462274"
     },
     {
       "name": "Add small chips with no salt",
@@ -413,7 +413,7 @@
       "details": "Price: $5.0",
       "expected": 5.0,
       "actual": 5.0,
-      "timestamp": "2025-10-30T02:57:16.940161"
+      "timestamp": "2025-10-30T03:21:04.462564"
     },
     {
       "name": "Add large chips with chicken salt",
@@ -421,7 +421,7 @@
       "details": "Price: $9.0",
       "expected": 9.0,
       "actual": 9.0,
-      "timestamp": "2025-10-30T02:57:16.940410"
+      "timestamp": "2025-10-30T03:21:04.462888"
     },
     {
       "name": "Add large chips with normal salt",
@@ -429,7 +429,7 @@
       "details": "Price: $9.0",
       "expected": 9.0,
       "actual": 9.0,
-      "timestamp": "2025-10-30T02:57:16.940671"
+      "timestamp": "2025-10-30T03:21:04.463375"
     },
     {
       "name": "Add large chips with no salt",
@@ -437,7 +437,7 @@
       "details": "Price: $9.0",
       "expected": 9.0,
       "actual": 9.0,
-      "timestamp": "2025-10-30T02:57:16.940914"
+      "timestamp": "2025-10-30T03:21:04.463856"
     },
     {
       "name": "Add coke",
@@ -445,7 +445,7 @@
       "details": "Price: $3.5",
       "expected": 3.5,
       "actual": 3.5,
-      "timestamp": "2025-10-30T02:57:16.941225"
+      "timestamp": "2025-10-30T03:21:04.464329"
     },
     {
       "name": "Add sprite",
@@ -453,7 +453,7 @@
       "details": "Price: $3.5",
       "expected": 3.5,
       "actual": 3.5,
-      "timestamp": "2025-10-30T02:57:16.941463"
+      "timestamp": "2025-10-30T03:21:04.464640"
     },
     {
       "name": "Add fanta",
@@ -461,7 +461,7 @@
       "details": "Price: $3.5",
       "expected": 3.5,
       "actual": 3.5,
-      "timestamp": "2025-10-30T02:57:16.941701"
+      "timestamp": "2025-10-30T03:21:04.464940"
     },
     {
       "name": "Add pepsi",
@@ -469,7 +469,7 @@
       "details": "Price: $3.5",
       "expected": 3.5,
       "actual": 3.5,
-      "timestamp": "2025-10-30T02:57:16.941926"
+      "timestamp": "2025-10-30T03:21:04.465195"
     },
     {
       "name": "Add water",
@@ -477,7 +477,7 @@
       "details": "Price: $3.0",
       "expected": 3.5,
       "actual": 3.0,
-      "timestamp": "2025-10-30T02:57:16.942180"
+      "timestamp": "2025-10-30T03:21:04.465516"
     },
     {
       "name": "Convert lamb kebab to meal (drink: coke, chips: small)",
@@ -485,7 +485,7 @@
       "details": "Drink: coke, Chips: small",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.942580"
+      "timestamp": "2025-10-30T03:21:04.465951"
     },
     {
       "name": "Convert lamb kebab to meal (drink: coke, chips: large)",
@@ -493,7 +493,7 @@
       "details": "Drink: coke, Chips: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.943028"
+      "timestamp": "2025-10-30T03:21:04.466346"
     },
     {
       "name": "Convert lamb kebab to meal (drink: sprite, chips: small)",
@@ -501,7 +501,7 @@
       "details": "Drink: sprite, Chips: small",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.943391"
+      "timestamp": "2025-10-30T03:21:04.466740"
     },
     {
       "name": "Convert lamb kebab to meal (drink: sprite, chips: large)",
@@ -509,7 +509,7 @@
       "details": "Drink: sprite, Chips: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.943796"
+      "timestamp": "2025-10-30T03:21:04.467086"
     },
     {
       "name": "Convert lamb kebab to meal (drink: fanta, chips: small)",
@@ -517,7 +517,7 @@
       "details": "Drink: fanta, Chips: small",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.944133"
+      "timestamp": "2025-10-30T03:21:04.467465"
     },
     {
       "name": "Convert lamb kebab to meal (drink: fanta, chips: large)",
@@ -525,7 +525,7 @@
       "details": "Drink: fanta, Chips: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.944490"
+      "timestamp": "2025-10-30T03:21:04.467828"
     },
     {
       "name": "Convert chicken kebab to meal (drink: coke, chips: small)",
@@ -533,7 +533,7 @@
       "details": "Drink: coke, Chips: small",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.944987"
+      "timestamp": "2025-10-30T03:21:04.468227"
     },
     {
       "name": "Convert chicken kebab to meal (drink: coke, chips: large)",
@@ -541,7 +541,7 @@
       "details": "Drink: coke, Chips: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.945499"
+      "timestamp": "2025-10-30T03:21:04.468595"
     },
     {
       "name": "Convert chicken kebab to meal (drink: sprite, chips: small)",
@@ -549,7 +549,7 @@
       "details": "Drink: sprite, Chips: small",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.946007"
+      "timestamp": "2025-10-30T03:21:04.469014"
     },
     {
       "name": "Convert chicken kebab to meal (drink: sprite, chips: large)",
@@ -557,7 +557,7 @@
       "details": "Drink: sprite, Chips: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.946462"
+      "timestamp": "2025-10-30T03:21:04.469372"
     },
     {
       "name": "Convert chicken kebab to meal (drink: fanta, chips: small)",
@@ -565,7 +565,7 @@
       "details": "Drink: fanta, Chips: small",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.946937"
+      "timestamp": "2025-10-30T03:21:04.469750"
     },
     {
       "name": "Convert chicken kebab to meal (drink: fanta, chips: large)",
@@ -573,7 +573,7 @@
       "details": "Drink: fanta, Chips: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.947414"
+      "timestamp": "2025-10-30T03:21:04.470102"
     },
     {
       "name": "Convert lamb HSP to combo (drink: coke)",
@@ -581,7 +581,7 @@
       "details": "Drink: coke",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.948002"
+      "timestamp": "2025-10-30T03:21:04.470507"
     },
     {
       "name": "Convert lamb HSP to combo (drink: sprite)",
@@ -589,7 +589,7 @@
       "details": "Drink: sprite",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.948513"
+      "timestamp": "2025-10-30T03:21:04.470894"
     },
     {
       "name": "Convert chicken HSP to combo (drink: coke)",
@@ -597,7 +597,7 @@
       "details": "Drink: coke",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.949128"
+      "timestamp": "2025-10-30T03:21:04.471262"
     },
     {
       "name": "Convert chicken HSP to combo (drink: sprite)",
@@ -605,7 +605,7 @@
       "details": "Drink: sprite",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.949647"
+      "timestamp": "2025-10-30T03:21:04.471633"
     },
     {
       "name": "Convert mixed HSP to combo (drink: coke)",
@@ -613,7 +613,7 @@
       "details": "Drink: coke",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.950199"
+      "timestamp": "2025-10-30T03:21:04.472029"
     },
     {
       "name": "Convert mixed HSP to combo (drink: sprite)",
@@ -621,7 +621,7 @@
       "details": "Drink: sprite",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.950614"
+      "timestamp": "2025-10-30T03:21:04.472410"
     },
     {
       "name": "Edit kebab salads",
@@ -629,7 +629,7 @@
       "details": "Salads: ['lettuce', 'onion']",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.951217"
+      "timestamp": "2025-10-30T03:21:04.473232"
     },
     {
       "name": "Edit kebab sauces",
@@ -637,7 +637,7 @@
       "details": "Sauces: ['garlic', 'chilli', 'bbq']",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.951789"
+      "timestamp": "2025-10-30T03:21:04.473849"
     },
     {
       "name": "Upgrade meal chips from small to large",
@@ -645,7 +645,7 @@
       "details": "Chip size: large",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.952365"
+      "timestamp": "2025-10-30T03:21:04.474392"
     },
     {
       "name": "Remove item from cart",
@@ -653,7 +653,7 @@
       "details": "Cart has 2 items (expected 2)",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.953189"
+      "timestamp": "2025-10-30T03:21:04.475166"
     },
     {
       "name": "Flow 1: Simple order checkout",
@@ -661,7 +661,7 @@
       "details": "All steps completed successfully",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.966182"
+      "timestamp": "2025-10-30T03:21:04.488472"
     },
     {
       "name": "Flow 2: Multiple items to meals",
@@ -669,7 +669,7 @@
       "details": "Converted 2 items",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.966794"
+      "timestamp": "2025-10-30T03:21:04.489195"
     },
     {
       "name": "Flow 3: Order with modifications",
@@ -677,7 +677,7 @@
       "details": "Total: $15.0",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.967497"
+      "timestamp": "2025-10-30T03:21:04.490035"
     },
     {
       "name": "Flow 4: HSP combo with exclusions",
@@ -685,7 +685,7 @@
       "details": "Total: $22.0 (expected $22 for large HSP combo)",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.968022"
+      "timestamp": "2025-10-30T03:21:04.490531"
     },
     {
       "name": "Flow 5: Add, remove, verify",
@@ -693,7 +693,7 @@
       "details": "Cart has 2 items",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.969038"
+      "timestamp": "2025-10-30T03:21:04.491295"
     },
     {
       "name": "GST calculation: Small kebab ($10.0)",
@@ -701,7 +701,7 @@
       "details": "GST: $0.91",
       "expected": 0.91,
       "actual": 0.91,
-      "timestamp": "2025-10-30T02:57:16.969485"
+      "timestamp": "2025-10-30T03:21:04.491686"
     },
     {
       "name": "GST calculation: Large kebab ($15.0)",
@@ -709,7 +709,7 @@
       "details": "GST: $1.36",
       "expected": 1.36,
       "actual": 1.36,
-      "timestamp": "2025-10-30T02:57:16.969936"
+      "timestamp": "2025-10-30T03:21:04.492047"
     },
     {
       "name": "GST calculation: Two small kebabs ($20.0)",
@@ -717,7 +717,7 @@
       "details": "GST: $1.82",
       "expected": 1.82,
       "actual": 1.82,
-      "timestamp": "2025-10-30T02:57:16.970494"
+      "timestamp": "2025-10-30T03:21:04.492602"
     },
     {
       "name": "GST calculation: Two small kebab meals ($34.0)",
@@ -725,7 +725,7 @@
       "details": "GST: $3.09",
       "expected": 3.09,
       "actual": 3.09,
-      "timestamp": "2025-10-30T02:57:16.971229"
+      "timestamp": "2025-10-30T03:21:04.493200"
     },
     {
       "name": "GST calculation: Mixed order ($41.0)",
@@ -733,7 +733,7 @@
       "details": "GST: $3.73",
       "expected": 3.73,
       "actual": 3.73,
-      "timestamp": "2025-10-30T02:57:16.972247"
+      "timestamp": "2025-10-30T03:21:04.494193"
     },
     {
       "name": "Create order with empty cart",
@@ -741,7 +741,7 @@
       "details": "Error: Cart is empty",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.972385"
+      "timestamp": "2025-10-30T03:21:04.494338"
     },
     {
       "name": "Edit non-existent item",
@@ -749,7 +749,7 @@
       "details": "Error: Invalid itemIndex. Cart has 1 items (0-0)",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.972689"
+      "timestamp": "2025-10-30T03:21:04.494681"
     },
     {
       "name": "Remove from empty cart",
@@ -757,7 +757,7 @@
       "details": "Error: Invalid itemIndex. Cart has 0 items (0--1)",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.972827"
+      "timestamp": "2025-10-30T03:21:04.494791"
     },
     {
       "name": "Create order without pickup time",
@@ -765,7 +765,207 @@
       "details": "Error: Pickup time not confirmed. Ask the customer when they'd like it ready, then call setPickupTime or estimateReadyTime.",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.973264"
+      "timestamp": "2025-10-30T03:21:04.495183"
+    },
+    {
+      "name": "Add vegan g\u00f6zleme",
+      "passed": true,
+      "details": "Price: $15.0, Category: gozleme",
+      "expected": 15.0,
+      "actual": 15.0,
+      "timestamp": "2025-10-30T03:21:04.495479"
+    },
+    {
+      "name": "Add lamb g\u00f6zleme",
+      "passed": true,
+      "details": "Price: $15.0, Category: gozleme",
+      "expected": 15.0,
+      "actual": 15.0,
+      "timestamp": "2025-10-30T03:21:04.495797"
+    },
+    {
+      "name": "Add chicken g\u00f6zleme",
+      "passed": true,
+      "details": "Price: $15.0, Category: gozleme",
+      "expected": 15.0,
+      "actual": 15.0,
+      "timestamp": "2025-10-30T03:21:04.496079"
+    },
+    {
+      "name": "Add vegetarian g\u00f6zleme",
+      "passed": true,
+      "details": "Price: $15.0, Category: gozleme",
+      "expected": 15.0,
+      "actual": 15.0,
+      "timestamp": "2025-10-30T03:21:04.496341"
+    },
+    {
+      "name": "Empty description",
+      "passed": true,
+      "details": "Response: description is required",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.496427"
+    },
+    {
+      "name": "Gibberish input",
+      "passed": true,
+      "details": "Handled: False, Message: I didn't understand 'xyz123 qwerty asdf'. Try saying something like 'large chicken kebab with lettuce and garlic sauce' or '2 cokes' or 'small chips'.",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.496509"
+    },
+    {
+      "name": "Special characters in description",
+      "passed": true,
+      "details": "Parsed correctly: lamb, Size: large",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.496781"
+    },
+    {
+      "name": "Extremely long description (500+ chars)",
+      "passed": true,
+      "details": "Handled: True",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.497539"
+    },
+    {
+      "name": "Invalid item index (999)",
+      "passed": true,
+      "details": "Error: Invalid itemIndex. Cart has 1 items (0-0)",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.497901"
+    },
+    {
+      "name": "Negative item index (-5)",
+      "passed": true,
+      "details": "Error: Invalid itemIndex. Cart has 1 items (0-0)",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.498205"
+    },
+    {
+      "name": "Missing required parameter (description)",
+      "passed": true,
+      "details": "Error: description is required",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.498266"
+    },
+    {
+      "name": "Large quantity (20 items)",
+      "passed": true,
+      "details": "Quantity: 20",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.498508"
+    },
+    {
+      "name": "Very large quantity (100 items)",
+      "passed": true,
+      "details": "Quantity: 100",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.498839"
+    },
+    {
+      "name": "Cart with 25 different items",
+      "passed": true,
+      "details": "Cart size: 25 items",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.504249"
+    },
+    {
+      "name": "Kebab with cheese + extra meat",
+      "passed": true,
+      "details": "Extras: ['cheese', 'extra meat']",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.504608"
+    },
+    {
+      "name": "HSP with cheese + haloumi",
+      "passed": true,
+      "details": "Extras: ['cheese', 'haloumi'], Cheese flag: True",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.504952"
+    },
+    {
+      "name": "Kebab with all extras (cheese, meat, haloumi)",
+      "passed": true,
+      "details": "Extras count: 3, Extras: ['cheese', 'haloumi', 'extra meat']",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.505331"
+    },
+    {
+      "name": "Pricing with multiple extras",
+      "passed": true,
+      "details": "Total: $19.00, GST: $1.73",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.505741"
+    },
+    {
+      "name": "Pricing with exclusions and extras",
+      "passed": true,
+      "details": "Total: $15.00",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.506397"
+    },
+    {
+      "name": "Pricing complex multi-item cart",
+      "passed": true,
+      "details": "Total: $42.50, Expected: ~$40.50",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.507371"
+    },
+    {
+      "name": "Pricing very large quantity (50 kebabs)",
+      "passed": true,
+      "details": "Total: $750.00, Expected: $750.00",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.507784"
+    },
+    {
+      "name": "Convert kebab to meal with drink",
+      "passed": true,
+      "details": "Conversions: 0",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.508403"
+    },
+    {
+      "name": "Convert HSP to combo with drink",
+      "passed": true,
+      "details": "Message: Converted 1 items to meals",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.508996"
+    },
+    {
+      "name": "Auto-detect meal conversion opportunity",
+      "passed": true,
+      "details": "Response: Converted 1 items to meals",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.509484"
+    },
+    {
+      "name": "Convert multiple kebabs to meals",
+      "passed": true,
+      "details": "Conversions: 0",
+      "expected": null,
+      "actual": null,
+      "timestamp": "2025-10-30T03:21:04.510536"
     },
     {
       "name": "Add multiple identical items (quantity)",
@@ -773,7 +973,7 @@
       "details": "Cart: 1 items, first item quantity: 2",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.973704"
+      "timestamp": "2025-10-30T03:21:04.510882"
     },
     {
       "name": "Multiple exclusions",
@@ -781,7 +981,7 @@
       "details": "Salads: []",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.974437"
+      "timestamp": "2025-10-30T03:21:04.511434"
     },
     {
       "name": "Add 'the lot' (all salads)",
@@ -789,7 +989,7 @@
       "details": "Salads: ['lettuce', 'tomato', 'onion', 'pickles', 'olives'] (5 items)",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.974850"
+      "timestamp": "2025-10-30T03:21:04.511797"
     },
     {
       "name": "Clear cart",
@@ -797,7 +997,7 @@
       "details": "Cart has 0 items (expected 0), clearCart returned: {'ok': True, 'message': 'Cart cleared (2 items removed)', 'previousCartSize': 2}",
       "expected": null,
       "actual": null,
-      "timestamp": "2025-10-30T02:57:16.975552"
+      "timestamp": "2025-10-30T03:21:04.512374"
     }
   ]
 }

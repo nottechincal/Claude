@@ -1085,7 +1085,19 @@ def calculate_price(item: Dict) -> float:
         if protein:
             for menu_item in category_items:
                 menu_name_lower = menu_item.get('name', '').lower()
-                if protein.lower() in menu_name_lower:
+
+                # Smart protein matching - handle "mixed" vs "mix" equivalence
+                protein_matches = False
+                protein_lower = protein.lower()
+
+                if protein_lower in menu_name_lower:
+                    protein_matches = True
+                elif protein_lower == 'mixed' and 'mix' in menu_name_lower:
+                    protein_matches = True
+                elif protein_lower == 'mix' and 'mixed' in menu_name_lower:
+                    protein_matches = True
+
+                if protein_matches:
                     # Check if item has size-based pricing
                     sizes = menu_item.get('sizes', {})
                     if sizes and size:

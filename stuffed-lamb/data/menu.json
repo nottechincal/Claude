@@ -1,0 +1,183 @@
+{
+  "version": "2025-11-02",
+  "currency": "AUD",
+  "categories": {
+    "mains": [
+      {
+        "id": "MANSAF",
+        "name": "Jordanian Mansaf",
+        "category": "mains",
+        "price": 33.00,
+        "description": "Mansaf is a traditional Jordanian dish, made of slow cooked lamb neck in a dried yogurt sauce made from goats and sheeps milk (traditionally known as Jameed), served with rice garnished with nuts",
+        "defaults": {
+          "includes": ["rice", "jameed sauce", "nuts", "lamb neck"]
+        },
+        "sku": "MANSAF001"
+      },
+      {
+        "id": "LAMB_MANDI",
+        "name": "Lamb Mandi",
+        "category": "mains",
+        "price": 28.00,
+        "description": "A tender lamb neck meat served on the top of rice, cooked with a mixture of traditional and aromatic Arabic spices garnished with green chilli, potatoes, and onions served with Tzatziki and Chilli Mandi Sauce on the side",
+        "defaults": {
+          "includes": ["rice", "green chilli", "potatoes", "onions", "tzatziki", "chilli mandi sauce"]
+        },
+        "sku": "LMANDI001"
+      },
+      {
+        "id": "CHICKEN_MANDI",
+        "name": "Chicken Mandi",
+        "category": "mains",
+        "price": 23.00,
+        "description": "A half chicken served on the top of rice, cooked with a mixture of traditional and aromatic Arabic spices garnished with green chilli, parsley and potatoes, served with Tzatziki and Chilli Mandi Sauce on the side",
+        "defaults": {
+          "includes": ["rice", "green chilli", "parsley", "potatoes", "tzatziki", "chilli mandi sauce"]
+        },
+        "sku": "CMANDI001"
+      }
+    ],
+    "soups": [
+      {
+        "id": "SOUP_DAY",
+        "name": "Soup of the Day",
+        "category": "soups",
+        "price": 7.00,
+        "description": "Daily rotating soup selection",
+        "sku": "SOUP001"
+      }
+    ],
+    "drinks": [
+      {
+        "id": "SOFT_DRINK",
+        "name": "Soft Drink (Can)",
+        "price": 3.00,
+        "brands": [
+          "Coke",
+          "Coke No Sugar",
+          "Sprite",
+          "L&P",
+          "Fanta"
+        ],
+        "sku": "DRINK001"
+      },
+      {
+        "id": "WATER",
+        "name": "Bottle of Water",
+        "price": 2.00,
+        "sku": "WATER001"
+      }
+    ]
+  },
+  "modifiers": {
+    "mandi_addons": [
+      {
+        "name": "nuts",
+        "price": 2.00,
+        "applies_to": ["LAMB_MANDI", "CHICKEN_MANDI"],
+        "description": "Add nuts to Mandi dishes"
+      },
+      {
+        "name": "sultanas",
+        "price": 2.00,
+        "applies_to": ["LAMB_MANDI", "CHICKEN_MANDI"],
+        "description": "Add sultanas to Mandi dishes"
+      }
+    ],
+    "extras": [
+      {
+        "name": "nuts",
+        "price": 1.00,
+        "description": "Extra nuts (general)"
+      },
+      {
+        "name": "sultanas",
+        "price": 1.00,
+        "description": "Extra sultanas (general)"
+      },
+      {
+        "name": "tzatziki",
+        "price": 1.00,
+        "description": "Extra tzatziki sauce"
+      },
+      {
+        "name": "chilli mandi sauce",
+        "price": 1.00,
+        "description": "Extra chilli mandi sauce"
+      },
+      {
+        "name": "bread",
+        "price": 1.00,
+        "description": "Extra bread"
+      },
+      {
+        "name": "green chilli",
+        "price": 1.00,
+        "description": "Extra green chilli"
+      },
+      {
+        "name": "potato",
+        "price": 1.00,
+        "description": "Extra potato"
+      },
+      {
+        "name": "rice",
+        "price": 7.00,
+        "description": "Extra rice (side portion)"
+      },
+      {
+        "name": "extra rice on plate",
+        "price": 5.00,
+        "description": "Extra rice added to main dish",
+        "applies_to": ["LAMB_MANDI", "CHICKEN_MANDI"]
+      },
+      {
+        "name": "extra jameed",
+        "price": 8.40,
+        "description": "Extra jameed sauce",
+        "applies_to": ["MANSAF"]
+      },
+      {
+        "name": "extra rice mansaf",
+        "price": 8.40,
+        "description": "Extra rice for Mansaf",
+        "applies_to": ["MANSAF"]
+      }
+    ]
+  },
+  "defaults": {
+    "mandi_garnish": ["green chilli", "potatoes", "onions"],
+    "mandi_sauces": ["tzatziki", "chilli mandi sauce"]
+  },
+  "synonyms": {
+    "mansaaf": "mansaf",
+    "mensaf": "mansaf",
+    "mansaff": "mansaf",
+    "jordanian lamb": "mansaf",
+    "jameed": "mansaf",
+    "mandi": "mandi",
+    "mandy": "mandi",
+    "lamb": "lamb mandi",
+    "chicken": "chicken mandi",
+    "chook": "chicken mandi",
+    "soup": "soup of the day",
+    "daily soup": "soup of the day",
+    "coke": "soft drink",
+    "sprite": "soft drink",
+    "fanta": "soft drink",
+    "l&p": "soft drink",
+    "lemon and paeroa": "l&p",
+    "water": "bottle of water",
+    "bottled water": "bottle of water",
+    "h2o": "water",
+    "raisins": "sultanas",
+    "tzaziki": "tzatziki",
+    "garlic sauce": "tzatziki",
+    "chili sauce": "chilli mandi sauce",
+    "hot sauce": "chilli mandi sauce",
+    "green chili": "green chilli",
+    "green chilies": "green chilli",
+    "potatoes": "potato",
+    "spuds": "potato"
+  }
+}

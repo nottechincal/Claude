@@ -1,0 +1,24 @@
+{
+  "monday": "closed",
+  "tuesday": "closed",
+  "wednesday": [
+    {"open": "13:00", "close": "21:00"}
+  ],
+  "thursday": [
+    {"open": "13:00", "close": "21:00"}
+  ],
+  "friday": [
+    {"open": "13:00", "close": "21:00"}
+  ],
+  "saturday": [
+    {"open": "13:00", "close": "22:00"}
+  ],
+  "sunday": [
+    {"open": "13:00", "close": "22:00"}
+  ],
+  "notes": {
+    "closed_days": ["Monday", "Tuesday"],
+    "format": "24-hour time",
+    "timezone": "Australia/Melbourne"
+  }
+}

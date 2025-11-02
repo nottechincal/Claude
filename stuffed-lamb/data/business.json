@@ -1,0 +1,30 @@
+{
+  "business_details": {
+    "name": "Stuffed Lamb",
+    "address": "210 Broadway, Reservoir VIC 3073",
+    "phone": "+61 3 XXXX XXXX",
+    "timezone": "Australia/Melbourne",
+    "website": "https://stuffed-lamb.tuckerfox.com.au/",
+    "tagline": "Authentic Middle Eastern Cuisine",
+    "rating": 4.5,
+    "cuisine": "Middle Eastern"
+  },
+  "ordering": {
+    "default_lead_minutes": 20,
+    "busy_lead_minutes": 30,
+    "currency": "AUD",
+    "min_order_value": 0,
+    "max_order_value": 500
+  },
+  "contact": {
+    "email": "orders@stuffedlamb.com.au",
+    "instagram": "@stuffedlamb",
+    "facebook": "https://www.facebook.com/stuffedlamb"
+  },
+  "fees": {
+    "dine_in_service_charge_pct": 10,
+    "takeaway_service_charge_pct": 0,
+    "delivery_fee": 0,
+    "note": "10% service charge applies to dine-in only, not takeaway/online orders"
+  }
+}

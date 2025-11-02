@@ -523,6 +523,7 @@ expected_tools = [
     "addMultipleItemsToCart",
     "getCartState",
     "removeCartItem",
+    "clearCart",
     "editCartItem",
     "priceCart",
     "convertItemsToMeals",
@@ -531,14 +532,14 @@ expected_tools = [
     "estimateReadyTime",
     "createOrder",
     "sendMenuLink",
-    "repeatLastOrder",
     "sendReceipt",
+    "repeatLastOrder",
     "endCall"
 ]
 
 test_result(
-    "All 17 tools registered in TOOLS dict",
-    len(server.TOOLS) == 17,
+    "All 18 tools registered in TOOLS dict",
+    len(server.TOOLS) == 18,
     f"Found {len(server.TOOLS)} tools"
 )
 

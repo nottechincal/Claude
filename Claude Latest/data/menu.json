@@ -24,15 +24,6 @@
         "sku": "LAMB001"
       },
       {
-        "name": "haloumi",
-        "price": 2.5,
-        "applies_to": [
-          "kebab",
-          "hsp",
-          "gozleme"
-        ]
-      },
-      {
         "id": "KEB_CHKN",
         "name": "Chicken Kebab",
         "category": "kebab",
@@ -657,6 +648,16 @@
       {
         "name": "sauces",
         "price": 0.5
+      },
+      {
+        "name": "haloumi",
+        "price": 2.5,
+        "applies_to": [
+          "kebab",
+          "hsp",
+          "gozleme"
+        ],
+        "description": "Grilled haloumi cheese"
       }
     ]
   },

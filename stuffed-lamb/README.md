@@ -67,41 +67,48 @@ Automated voice and online ordering system for Stuffed Lamb Middle Eastern Resta
 | Saturday | 1:00 PM - 10:00 PM |
 | Sunday | 1:00 PM - 10:00 PM |
 
-## 🚀 Installation
+## ⚡ Quick Start
 
-### Prerequisites
+### 1. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
 
-- Python 3.8+
-- pip
+### 2. Configure Environment
+```bash
+cp .env.example .env
+nano .env  # Add your Twilio credentials and SHOP_ORDER_TO
+```
 
-### Setup
+### 3. Run the Server
 
-1. **Clone or navigate to this directory:**
-   ```bash
-   cd stuffed-lamb
-   ```
+**For VAPI Integration (includes ngrok):**
+```bash
+# Windows
+start.bat
 
-2. **Create virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+# Linux/Mac
+./start.sh
+```
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+**For Simple Testing (no ngrok):**
+```bash
+python run.py
+```
 
-4. **Configure environment:**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+📖 **See [docs/QUICK_START.md](docs/QUICK_START.md) for detailed setup instructions**
 
-5. **Initialize database:**
-   ```bash
-   python -c "from stuffed_lamb.server import init_database; init_database()"
-   ```
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[QUICK_START.md](docs/QUICK_START.md)** | Get started in 10 minutes |
+| **[STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md)** | All startup options & ngrok setup |
+| **[PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)** | Deploy to production |
+| **[ENV_SETUP_GUIDE.md](docs/ENV_SETUP_GUIDE.md)** | Environment variables guide |
+| **[SETUP_CHECKLIST.md](docs/SETUP_CHECKLIST.md)** | Complete setup checklist |
 
 ## 🧪 Running Tests
 
@@ -131,62 +138,28 @@ The test suite covers:
 - ✅ Business hours
 - ✅ Configuration validation
 
-## 🏃 Running the Server
+## 🛠️ Utility Scripts
 
-### Quick Start
-
-**For VAPI Integration (with ngrok tunnel):**
-
-**Windows:**
-```bash
-start-with-ngrok.bat
-```
-
-**Linux/Mac:**
-```bash
-./start-complete.sh
-```
-
-**For Simple Testing (no VAPI):**
-
-**Windows:**
-```bash
-start.bat
-```
-
-**Linux/Mac:**
-```bash
-./start.sh
-```
-
-**Direct (all platforms):**
-```bash
-python run.py
-```
-
-The server will start on `http://localhost:8000`
-
-📖 **See [STARTUP_GUIDE.md](STARTUP_GUIDE.md) for complete startup options and ngrok setup**
-
-### Verify Setup
+All scripts are located in the `scripts/` folder:
 
 ```bash
-# Check configuration
-./verify_setup.sh        # Linux/Mac
+# Startup scripts
+scripts/start-with-ngrok.bat      # Windows: Full startup with ngrok
+scripts/start-complete.sh         # Linux/Mac: Full startup with ngrok
+scripts/start.bat                 # Windows: Basic startup
+scripts/start.sh                  # Linux/Mac: Basic startup
 
-# Health check
-python healthcheck.py --url http://localhost:8000 --full
+# Utility scripts
+scripts/stop.bat                  # Windows: Stop all services
+scripts/stop.sh                   # Linux/Mac: Stop all services
+scripts/verify_setup.sh           # Verify system configuration
+scripts/healthcheck.py            # Health check utility
 ```
 
-### Production Deployment
-
-For production deployment options (Docker, systemd, cloud platforms), see:
-📖 **[PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)**
-
-Quick deploy with Docker:
-```bash
-docker-compose up -d
-```
+**Quick launchers at root:**
+- `start.bat` (Windows) - Launches full startup with ngrok
+- `start.sh` (Linux/Mac) - Launches full startup with ngrok
+- `python run.py` - Direct run (no ngrok)
 
 ## 📁 Project Structure
 
@@ -194,36 +167,53 @@ docker-compose up -d
 stuffed-lamb/
 ├── stuffed_lamb/                    # Main application package
 │   ├── __init__.py
-│   └── server.py                    # Flask server with all business logic
-├── data/                            # Configuration and menu data
-│   ├── menu.json                    # Complete menu with pricing
-│   ├── business.json                # Business details and settings
+│   └── server.py                    # Flask server with business logic
+│
+├── data/                            # Business data
+│   ├── menu.json                    # Menu with pricing
+│   ├── business.json                # Business details
 │   ├── hours.json                   # Operating hours
-│   └── rules.json                   # Business rules and policies
-├── deployment/                      # Production deployment files
-│   └── stuffed-lamb.service         # Systemd service file
-├── tests/                           # Test suite
-│   └── test_stuffed_lamb_system.py
+│   └── rules.json                   # Business rules
+│
 ├── config/                          # VAPI configuration
 │   ├── vapi-tools.json              # VAPI tool definitions
 │   └── system-prompt.md             # AI assistant prompt
-├── logs/                            # Application logs (auto-created)
+│
+├── tests/                           # Test suite
+│   └── test_stuffed_lamb_system.py
+│
+├── docs/                            # 📚 Documentation
+│   ├── QUICK_START.md               # Get started in 10 minutes
+│   ├── STARTUP_GUIDE.md             # All startup options & ngrok
+│   ├── PRODUCTION_DEPLOYMENT.md     # Production deployment guide
+│   ├── ENV_SETUP_GUIDE.md           # Environment variables
+│   ├── SETUP_CHECKLIST.md           # Complete setup checklist
+│   ├── SYSTEM_STATUS_REPORT.md      # System status overview
+│   └── ACTION_REQUIRED.md           # Setup action items
+│
+├── scripts/                         # 🛠️ Utility scripts
+│   ├── start-with-ngrok.bat         # Windows: Full startup
+│   ├── start-complete.sh            # Linux: Full startup
+│   ├── start.bat                    # Windows: Basic startup
+│   ├── start.sh                     # Linux: Basic startup
+│   ├── stop.bat                     # Windows: Stop services
+│   ├── stop.sh                      # Linux: Stop services
+│   ├── verify_setup.sh              # Setup verification
+│   └── healthcheck.py               # Health check utility
+│
+├── deployment/                      # 🚀 Deployment files
+│   └── stuffed-lamb.service         # Systemd service
+│
+├── templates/                       # 📋 Template files
+│   └── .env.CORRECTED               # Alternative .env template
+│
+├── run.py                           # Application entry point
 ├── requirements.txt                 # Python dependencies
-├── .env.example                     # Environment variables template
-├── .env.CORRECTED                   # Production-ready .env template
-├── Dockerfile                       # Docker image definition
-├── docker-compose.yml               # Docker Compose configuration
-├── .dockerignore                    # Docker build exclusions
-├── start.sh                         # Linux/Mac startup script
-├── start.bat                        # Windows startup script
-├── run.py                           # Main application entry point
-├── verify_setup.sh                  # Setup verification script
-├── healthcheck.py                   # Health check utility
-├── PRODUCTION_DEPLOYMENT.md         # Production deployment guide
-├── QUICK_START.md                   # Quick start guide
-├── SETUP_CHECKLIST.md               # Setup checklist
-├── ENV_SETUP_GUIDE.md               # Environment variables guide
-├── .gitignore
+├── .env.example                     # Environment template
+├── Dockerfile                       # Docker image
+├── docker-compose.yml               # Docker Compose
+├── start.bat                        # Quick launcher (Windows)
+├── start.sh                         # Quick launcher (Linux/Mac)
 └── README.md                        # This file
 ```
 

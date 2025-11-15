@@ -1,0 +1,469 @@
+{
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "checkOpen",
+        "description": "Check if the shop is currently open for business",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "getCallerSmartContext",
+        "description": "Get caller's phone number, order history, favorite items, and smart greeting suggestions. Use this at the start of every call instead of basic getCallerInfo.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "quickAddItem",
+        "description": "Smart NLP parser that adds items from natural language description. Handles phrases like '2 large lamb kebabs with extra garlic sauce' or 'large chips with chicken salt' or 'coke'. Fastest way to add items - use this for all simple orders.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Natural language description of the item(s). Examples: 'large lamb kebab with garlic sauce', '2 cokes', 'small chicken hsp no salad'"
+            }
+          },
+          "required": [
+            "description"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "addMultipleItemsToCart",
+        "description": "Add multiple fully configured items to cart in one batch call. Use when customer lists multiple items upfront.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "items": {
+              "type": "array",
+              "description": "Array of items to add. Each item must have category and optional properties like size, protein, salads, sauces, quantity.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "description": "Item category: kebabs, hsp, chips, drinks, gozleme, sweets"
+                  },
+                  "size": {
+                    "type": "string",
+                    "description": "Size: small or large"
+                  },
+                  "protein": {
+                    "type": "string",
+                    "description": "Protein: lamb, chicken, mixed, falafel"
+                  },
+                  "salads": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sauces": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "extras": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "description": "Quantity"
+                  },
+                  "brand": {
+                    "type": "string",
+                    "description": "Drink brand"
+                  },
+                  "salt_type": {
+                    "type": "string",
+                    "description": "Salt type for chips: chicken, normal, none"
+                  }
+                },
+                "required": [
+                  "category"
+                ]
+              }
+            }
+          },
+          "required": [
+            "items"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "getCartState",
+        "description": "Get current cart contents - returns both structured data and human-readable formatted items. Use this to review the order with customer.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "removeCartItem",
+        "description": "Remove an item from cart by index. Use getCartState first to see items and their indexes (0-based).",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndex": {
+              "type": "number",
+              "description": "Zero-based index of item to remove (0 = first item, 1 = second, etc.)"
+            }
+          },
+          "required": [
+            "itemIndex"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "clearCart",
+        "description": "Clear all items from the cart. Use when customer wants to start over completely. Confirms action by returning the number of items that were removed.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "editCartItem",
+        "description": "Edit ANY property of a cart item in ONE call. Can change size, protein, salads, sauces, chips_size, quantity, anything. This is the ONLY tool for editing items. Example: editCartItem(0, {chips_size: 'large'}) to upgrade meal chips.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndex": {
+              "type": "number",
+              "description": "Zero-based index of item to edit"
+            },
+            "modifications": {
+              "type": "object",
+              "description": "Object containing fields to modify and their new values. Can include: size, protein, salads, sauces, extras, cheese, quantity, salt_type, chips_size. Example: {\"chips_size\": \"large\"} or {\"salads\": [\"lettuce\", \"tomato\"], \"sauces\": [\"garlic\"]}"
+            }
+          },
+          "required": [
+            "itemIndex",
+            "modifications"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "priceCart",
+        "description": "Calculate total price for cart with detailed breakdown (subtotal, GST, total). Use before confirming order.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "convertItemsToMeals",
+        "description": "Convert kebabs or HSPs to combo meals. KEBAB COMBO = kebab + chips + drink. HSP COMBO = HSP + drink (HSP already includes chips). Use when customer says 'make it a meal/combo', 'add a drink', or orders items that should be combos. Can specify drink brand, chips size (kebabs only), and which items to convert.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "itemIndices": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Optional: specific cart item indices to convert (0-based). If not provided, converts ALL kebabs and HSPs."
+            },
+            "drinkBrand": {
+              "type": "string",
+              "description": "Drink choice: coke, sprite, fanta, pepsi, etc. Default: coke",
+              "default": "coke"
+            },
+            "chipsSize": {
+              "type": "string",
+              "description": "Chips size: small or large. Default: small",
+              "enum": [
+                "small",
+                "large"
+              ],
+              "default": "small"
+            },
+            "chipsSalt": {
+              "type": "string",
+              "description": "Salt type for chips: chicken, normal, none. Default: chicken",
+              "enum": [
+                "chicken",
+                "normal",
+                "none"
+              ],
+              "default": "chicken"
+            }
+          },
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "getOrderSummary",
+        "description": "Get human-readable order summary to repeat back to customer before finalizing. Returns formatted text with all items and total.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "setPickupTime",
+        "description": "Set custom pickup time when customer requests a specific time. Use when they say 'I'll pick it up at 6pm' or 'ready in 30 minutes'.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "requestedTime": {
+              "type": "string",
+              "description": "Customer's requested time. Examples: 'in 30 minutes', '6pm', '6:30 PM'"
+            }
+          },
+          "required": [
+            "requestedTime"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "estimateReadyTime",
+        "description": "Estimate when order will be ready for pickup based on queue size. Use when customer doesn't specify a pickup time.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sendMenuLink",
+        "description": "Send the Kebabalab menu link to a phone number via SMS.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Phone number to send the menu link to"
+            }
+          },
+          "required": [
+            "phoneNumber"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sendReceipt",
+        "description": "Send an SMS receipt for the most recent order to the specified phone number.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Phone number that should receive the receipt"
+            }
+          },
+          "required": [
+            "phoneNumber"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "createOrder",
+        "description": "Create and save the final order to database. Must be called AFTER estimateReadyTime or setPickupTime. Clears the cart after successful creation.",
+        "strict": true,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "customerName": {
+              "type": "string",
+              "description": "Customer's name for the order"
+            },
+            "customerPhone": {
+              "type": "string",
+              "description": "Customer's phone number (get from getCallerSmartContext)"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Optional special instructions or notes for the order"
+            }
+          },
+          "required": [
+            "customerName",
+            "customerPhone"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "repeatLastOrder",
+        "description": "Copy customer's last order to cart for fast reordering. Use when customer says 'my usual' or 'same as last time'. Requires phone number.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "phoneNumber": {
+              "type": "string",
+              "description": "Customer's phone number to look up last order"
+            }
+          },
+          "required": [
+            "phoneNumber"
+          ]
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "endCall",
+        "description": "End the phone call gracefully after order completion. Use when order is confirmed and customer is done.",
+        "strict": false,
+        "parameters": {
+          "type": "object",
+          "properties": {},
+          "required": []
+        }
+      },
+      "async": false,
+      "server": {
+        "url": "YOUR_WEBHOOK_URL/webhook"
+      }
+    }
+  ]
+}

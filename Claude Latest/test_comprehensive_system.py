@@ -81,8 +81,8 @@ test_result(
 )
 
 test_result(
-    "All 17 tools registered",
-    len(server.TOOLS) == 17,
+    "All 18 tools registered",
+    len(server.TOOLS) == 18,
     f"Found {len(server.TOOLS)} tools: {', '.join(list(server.TOOLS.keys())[:5])}..."
 )
 

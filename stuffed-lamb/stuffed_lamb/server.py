@@ -329,6 +329,19 @@ def load_menu():
         logger.error(f"Failed to load menu: {e}")
         return False
 
+def _find_menu_item_by_id(item_id: str) -> Optional[Dict]:
+    """Find a menu item by its ID"""
+    if not MENU:
+        return None
+
+    categories = MENU.get('categories', {})
+    for category_name, items in categories.items():
+        if isinstance(items, list):
+            for item in items:
+                if item.get('id') == item_id:
+                    return item
+    return None
+
 # ==================== SESSION MANAGEMENT ====================
 
 def get_session_id() -> str:
@@ -776,33 +789,21 @@ def _send_sms(phone: str, body: str) -> Tuple[bool, Optional[str]]:
 
 
 def _format_item_for_sms(item: Dict) -> str:
+    """Format a cart item for SMS - Stuffed Lamb version."""
     qty = item.get('quantity', 1)
     prefix = f"{qty}x " if qty and qty > 1 else ""
-    size = _title_case_phrase(item.get('size'))
-    protein = _title_case_phrase(item.get('protein'))
-    category = _title_case_phrase(item.get('category')) or _title_case_phrase(item.get('name'))
 
-    if item.get('category') == 'kebabs':
-        base = f"{size} {protein} Kebab".strip()
-        if item.get('is_combo'):
-            chips_size = _title_case_phrase(item.get('chips_size') or 'small')
-            drink = _title_case_phrase(item.get('drink_brand') or 'coke')
-            base = f"{size} {protein} Kebab Meal ({chips_size} chips, {drink})".strip()
-    elif item.get('category') == 'hsp':
-        cheese_text = "with cheese" if item.get('cheese') else "no cheese"
-        base = f"{size} {protein} HSP ({cheese_text})"
-    else:
-        base = item.get('name') or category
+    # Get item name
+    base = item.get('name') or _title_case_phrase(item.get('category')) or 'Item'
 
-    salads = item.get('salads') or []
-    sauces = item.get('sauces') or []
+    # Get add-ons and extras
+    addons = [a for a in (item.get('addons') or []) if a]
     extras = [e for e in (item.get('extras') or []) if e]
 
     lines = [f"{prefix}{base}".strip()]
-    if salads:
-        lines.append(f"  • Salads: {_human_join(_title_case_phrase(s) for s in salads)}")
-    if sauces:
-        lines.append(f"  • Sauces: {_human_join(_title_case_phrase(s) for s in sauces)}")
+
+    if addons:
+        lines.append(f"  • Add-ons: {_human_join(_title_case_phrase(a) for a in addons)}")
     if extras:
         lines.append(f"  • Extras: {_human_join(_title_case_phrase(e) for e in extras)}")
 
@@ -851,200 +852,9 @@ def _send_order_notifications(
     if not success:
         logger.error(f"Shop SMS failed: {error}")
 
-def parse_protein(text: str) -> Optional[str]:
-    """Extract protein type from text with fuzzy matching for typo tolerance"""
-    text = normalize_text(text)
-
-    # Exact matches first
-    if any(word in text for word in ['lamb', 'lamp']):
-        return 'lamb'
-    if any(word in text for word in ['chicken', 'chiken', 'chkn']):
-        return 'chicken'
-    if 'mix' in text or 'mixed' in text:
-        return 'mixed'
-    if 'falafel' in text or 'vegan' in text:
-        return 'falafel'
-
-    # Fuzzy match if available (handles typos like "chikn", "lamm", "chicen")
-    protein_choices = ['chicken', 'lamb', 'mixed', 'falafel']
-    match = fuzzy_match(text, protein_choices, threshold=75)
-    if match:
-        logger.info(f"Fuzzy matched protein '{text}' to '{match}'")
-        return match
-
-    return None
-
-def parse_size(text: str) -> Optional[str]:
-    """Extract size from text"""
-    text = normalize_text(text)
-
-    if not text:
-        return None
-
-    # Match explicit words first to avoid substring collisions (e.g. "small" containing "l ")
-    if re.search(r"\bsmall\b", text):
-        return 'small'
-    if re.search(r"\bs\b", text):
-        return 'small'
-
-    if re.search(r"\blarge\b", text) or re.search(r"\bbig\b", text):
-        return 'large'
-    if re.search(r"\bl\b", text):
-        return 'large'
-
-    return None
-
-def parse_salads(text: str) -> List[str]:
-    """Extract salads from text with fuzzy matching for typo tolerance"""
-    text = normalize_text(text)
-    salads = []
-
-    # Check for "the lot" - adds all salads
-    if any(phrase in text for phrase in ['the lot', 'with the lot', 'everything', 'all salads', 'with everything']):
-        return ['lettuce', 'tomato', 'onion', 'pickles', 'olives']
-
-    # Check for "no salad" first (all salads excluded)
-    if any(phrase in text for phrase in ['no salad', 'without salad', 'hold salad']):
-        return []
-
-    salad_map = {
-        'lettuce': ['lettuce', 'letuce', 'letus'],
-        'tomato': ['tomato', 'tomatos', 'toma'],
-        'onion': ['onion', 'onions', 'onin'],
-        'pickles': ['pickle', 'pickles', 'pickel'],
-        'olives': ['olive', 'olives', 'olivs']
-    }
-
-    # Check for specific exclusions ("no onion", "without pickles", "hold lettuce")
-    excluded_salads = []
-    for salad, keywords in salad_map.items():
-        for keyword in keywords:
-            if any(phrase in text for phrase in [
-                f'no {keyword}', f'without {keyword}', f'hold {keyword}',
-                f'hold the {keyword}', f'without the {keyword}'
-            ]):
-                excluded_salads.append(salad)
-                logger.info(f"Excluding salad: {salad}")
-                break
-
-    # Exact matches first
-    for salad, keywords in salad_map.items():
-        if salad in excluded_salads:
-            continue  # Skip excluded items
-        if any(keyword in text for keyword in keywords):
-            salads.append(salad)
-
-    # Fuzzy match for typos if no exact matches found
-    if not salads and FUZZY_MATCHING_AVAILABLE:
-        all_salad_choices = list(salad_map.keys())
-        words = text.split()
-        for word in words:
-            if len(word) >= 4:  # Only check words of reasonable length
-                match = fuzzy_match(word, all_salad_choices, threshold=75)
-                if match and match not in salads and match not in excluded_salads:
-                    salads.append(match)
-                    logger.info(f"Fuzzy matched salad '{word}' to '{match}'")
-
-    return salads
-
-def parse_sauces(text: str) -> List[str]:
-    """Extract sauces from text with fuzzy matching for typo tolerance"""
-    text = normalize_text(text)
-    sauces = []
-
-    # Check for "no sauce" first (all sauces excluded)
-    if any(phrase in text for phrase in ['no sauce', 'without sauce', 'hold sauce']):
-        return []
-
-    # Order matters - check compound names BEFORE single words to avoid substring matches
-    sauce_map_ordered = [
-        ('sweet chilli', ['sweet chilli', 'sweet chili', 'sweet chilly']),
-        ('tomato', ['tomato sauce', 'ketchup', 'tomatoe', 'tomato']),
-        ('chilli', ['chili', 'chilli', 'chilly', 'chili sauce']),  # After sweet chilli
-        ('garlic', ['garlic', 'garlek', 'galic', 'garlick']),
-        ('bbq', ['bbq', 'barbeque', 'barbecue']),
-        ('mayo', ['mayo', 'aioli', 'mayonnaise']),
-        ('hummus', ['hummus', 'humus', 'hummous'])
-    ]
-
-    # Check for specific exclusions ("no garlic", "without chilli", "hold bbq")
-    excluded_sauces = []
-    for sauce, keywords in sauce_map_ordered:
-        for keyword in keywords:
-            if any(phrase in text for phrase in [
-                f'no {keyword}', f'without {keyword}', f'hold {keyword}',
-                f'hold the {keyword}', f'without the {keyword}'
-            ]):
-                excluded_sauces.append(sauce)
-                logger.info(f"Excluding sauce: {sauce}")
-                break
-
-    # Exact matches first - check in order (compound names before single words)
-    # Use a tracking variable to mark which parts of text have been matched
-    matched_text_parts = []
-
-    for sauce, keywords in sauce_map_ordered:
-        if sauce in excluded_sauces:
-            continue  # Skip excluded items
-        # Sort keywords by length (longest first) to match "sweet chilli" before "chilli"
-        for keyword in sorted(keywords, key=len, reverse=True):
-            if keyword in text:
-                # Check if this keyword overlaps with already matched text
-                already_matched = any(keyword in matched_part or matched_part in keyword for matched_part in matched_text_parts)
-
-                if not already_matched and sauce not in sauces:
-                    sauces.append(sauce)
-                    matched_text_parts.append(keyword)
-                    logger.info(f"Matched sauce '{sauce}' via keyword '{keyword}'")
-                break  # Stop after first match for this sauce
-
-    # Fuzzy match for typos if no exact matches found
-    if not sauces and FUZZY_MATCHING_AVAILABLE:
-        all_sauce_choices = [sauce for sauce, _ in sauce_map_ordered]
-        words = text.split()
-        for word in words:
-            if len(word) >= 4:  # Only check words of reasonable length
-                match = fuzzy_match(word, all_sauce_choices, threshold=75)
-                if match and match not in sauces and match not in excluded_sauces:
-                    sauces.append(match)
-                    logger.info(f"Fuzzy matched sauce '{word}' to '{match}'")
-
-    return sauces
-
-
-def parse_extras(text: str) -> List[str]:
-    """Extract extras such as cheese or haloumi from text with exclusion detection."""
-    text = normalize_text(text)
-    extras: List[str] = []
-
-    extra_keywords = {
-        "cheese": ["cheese", "extra cheese", "add cheese", "with cheese"],
-        "haloumi": ["haloumi", "halloumi"],
-        "jalapenos": ["jalapeno", "jalapeño", "jalapenos"],
-        "olives": ["olive", "olives"],
-        "extra meat": ["extra meat", "more meat", "double meat"],
-    }
-
-    # Check for specific exclusions ("no cheese", "without haloumi", "hold cheese")
-    excluded_extras = []
-    for extra, keywords in extra_keywords.items():
-        for keyword in keywords:
-            if any(phrase in text for phrase in [
-                f'no {keyword}', f'without {keyword}', f'hold {keyword}',
-                f'hold the {keyword}', f'without the {keyword}'
-            ]):
-                excluded_extras.append(extra)
-                logger.info(f"Excluding extra: {extra}")
-                break
-
-    # Add extras only if not excluded
-    for extra, keywords in extra_keywords.items():
-        if extra in excluded_extras:
-            continue  # Skip excluded items
-        if any(keyword in text for keyword in keywords):
-            extras.append(extra)
-
-    return extras
+# NOTE: Removed parse_protein, parse_size, parse_salads, parse_sauces, parse_extras functions
+# These were Kebabalab-specific and not used in Stuffed Lamb system.
+# Stuffed Lamb uses direct item IDs (MANSAF, LAMB_MANDI, CHICKEN_MANDI) instead.
 
 def parse_quantity(text: str) -> int:
     """Extract quantity from text"""
@@ -1070,192 +880,114 @@ def parse_quantity(text: str) -> int:
 def calculate_price(item: Dict) -> float:
     """
     Calculate price for a single item by looking up prices in menu.json.
+    Designed for Stuffed Lamb menu (Mansaf, Lamb Mandi, Chicken Mandi).
     No hardcoded prices - all prices come from MENU data structure.
     """
     price = 0.0
 
-    # If it's a combo/meal, use existing combo price
-    if item.get('is_combo'):
+    # If item already has a price set (from combo or pre-calculated), use it
+    if item.get('price'):
         return item.get('price', 0.0)
 
+    # Get item ID and category
+    item_id = item.get('id', '')
     category = item.get('category', '')
-    size = item.get('size', 'small')
-    protein = item.get('protein', '')
     item_name = item.get('name', '').lower()
 
     # Get categories from loaded menu
     categories = MENU.get('categories', {})
     category_items = categories.get(category, [])
 
-    # Find base price from menu
+    # Find base price from menu - match by ID first, then by name
     if category_items:
-        # For items with protein (kebabs, hsp), match by protein
-        if protein:
-            for menu_item in category_items:
+        for menu_item in category_items:
+            # Try matching by ID first (most reliable)
+            if item_id and menu_item.get('id') == item_id:
+                price = menu_item.get('price', 0.0)
+                break
+            # Fall back to name matching for drinks
+            elif category == 'drinks':
                 menu_name_lower = menu_item.get('name', '').lower()
+                menu_id = menu_item.get('id', '').lower()
 
-                # Smart protein matching - handle "mixed" vs "mix" equivalence
-                protein_matches = False
-                protein_lower = protein.lower()
-
-                if protein_lower in menu_name_lower:
-                    protein_matches = True
-                elif protein_lower == 'mixed' and 'mix' in menu_name_lower:
-                    protein_matches = True
-                elif protein_lower == 'mix' and 'mixed' in menu_name_lower:
-                    protein_matches = True
-
-                if protein_matches:
-                    # Check if item has size-based pricing
-                    sizes = menu_item.get('sizes', {})
-                    if sizes and size:
-                        price = sizes.get(size, sizes.get('small', 0.0))
-                    else:
-                        price = menu_item.get('price', 0.0)
+                # Check if drink name matches
+                if item_name in menu_name_lower or menu_name_lower in item_name:
+                    price = menu_item.get('price', 0.0)
                     break
-        else:
-            # For items without protein (drinks, chips, etc), match first or by name
-            if category == 'drinks':
-                # Match drink by name (prioritize exact matches)
-                drink_name_lower = item_name
-                best_match = None
-                best_score = 0
 
-                for menu_item in category_items:
-                    menu_name_lower = menu_item.get('name', '').lower()
-                    menu_id = menu_item.get('id', '').lower()
-
-                    # Check if drink name matches
-                    if drink_name_lower in menu_name_lower or menu_name_lower in drink_name_lower:
-                        score = len(menu_name_lower)  # Prefer shorter (more specific) names
-                        if score > best_score or best_match is None:
-                            best_match = menu_item
-                            best_score = score
-
-                    # Also check brands for soft drinks
-                    brands = menu_item.get('brands', [])
-                    for brand in brands:
-                        if drink_name_lower in brand.lower() or brand.lower() in drink_name_lower:
-                            best_match = menu_item
-                            break
-
-                if best_match:
-                    price = best_match.get('price', 0.0)
-                else:
-                    # Default to first drink item (soft drink can)
-                    if category_items:
-                        price = category_items[0].get('price', 0.0)
-            elif category == 'chips':
-                # Chips have separate menu entries for each size
-                for menu_item in category_items:
-                    if 'chip' in menu_item.get('name', '').lower():
-                        # Match by size field in menu item
-                        item_size = menu_item.get('size', '')
-                        if item_size == size:
-                            price = menu_item.get('price', 0.0)
-                            break
-            elif category == 'sweets':
-                # Match by name for sweets
-                for menu_item in category_items:
-                    menu_name_lower = menu_item.get('name', '').lower()
-                    if any(word in item_name for word in menu_name_lower.split()):
+                # Also check brands for soft drinks
+                brands = menu_item.get('brands', [])
+                for brand in brands:
+                    if item_name in brand.lower() or brand.lower() in item_name:
                         price = menu_item.get('price', 0.0)
                         break
-            else:
-                # Generic: try first item or match by name
-                for menu_item in category_items:
-                    sizes = menu_item.get('sizes', {})
-                    if sizes:
-                        price = sizes.get(size, sizes.get('small', 0.0))
-                    else:
-                        price = menu_item.get('price', 0.0)
+                if price > 0:
                     break
 
-    # Add extras pricing from menu modifiers
+    # Add extras and add-ons pricing from menu modifiers
     modifiers = MENU.get('modifiers', {})
-    extras_pricing = modifiers.get('extras', [])
 
+    # Check for add-ons (like nuts/sultanas on Mandi dishes)
+    addons = item.get('addons', [])
+    mandi_addons_pricing = modifiers.get('mandi_addons', [])
+    for addon in addons:
+        addon_lower = addon.lower()
+        for modifier in mandi_addons_pricing:
+            modifier_name = modifier.get('name', '').lower()
+            if addon_lower == modifier_name or addon_lower in modifier_name:
+                # Check if this modifier applies to this item
+                applies_to = modifier.get('applies_to', [])
+                if not applies_to or item_id in applies_to:
+                    price += modifier.get('price', 0.0)
+                break
+
+    # Check for extras (extra jameed, extra rice, etc.)
     extras = item.get('extras', [])
+    extras_pricing = modifiers.get('extras', [])
     for extra in extras:
         extra_lower = extra.lower()
-
-        # Look up extra price in modifiers
         for modifier in extras_pricing:
             modifier_name = modifier.get('name', '').lower()
-
             if extra_lower == modifier_name or extra_lower in modifier_name:
-                # Check if this modifier applies to this category
+                # Check if this modifier applies to this item
                 applies_to = modifier.get('applies_to', [])
-                if not applies_to or category in applies_to:
-                    extra_price = modifier.get('price', 0.0)
-
-                    # Special case: cheese is included in HSPs
-                    if extra_lower == 'cheese' and category == 'hsp':
-                        # Don't charge for cheese on HSP (already included)
-                        continue
-
-                    price += extra_price
+                if not applies_to or item_id in applies_to:
+                    price += modifier.get('price', 0.0)
                 break
 
     return price
 
 def format_cart_item(item: Dict, index: int) -> str:
-    """Format a cart item for natural order review."""
+    """Format a cart item for natural order review - Stuffed Lamb version."""
     qty = max(1, int(item.get('quantity', 1) or 1))
     qty_prefix = f"{qty}x " if qty > 1 else ""
 
-    category = item.get('category')
-    size = _title_case_phrase(item.get('size'))
-    protein = _title_case_phrase(item.get('protein'))
-    salads = [s.lower() for s in (item.get('salads') or [])]
-    sauces = [s.lower() for s in (item.get('sauces') or [])]
+    # Get item details
+    name = item.get('name') or 'Item'
+    addons = [a.lower() for a in (item.get('addons') or [])]
     extras = [e.lower() for e in (item.get('extras') or [])]
 
     segments: List[str] = []
 
-    if category == 'kebabs':
-        base = f"{size} {protein} kebab".strip()
-        if item.get('is_combo'):
-            chips_size = _title_case_phrase(item.get('chips_size') or 'small')
-            drink = _title_case_phrase(item.get('drink_brand') or 'coke')
-            base = f"{size} {protein} kebab meal with {chips_size.lower()} chips and a {drink}"
-        segments.append(base.strip())
-        segments.append(
-            f"salads: {_human_join(s.capitalize() for s in salads) if salads else 'none'}"
-        )
-        segments.append(
-            f"sauces: {_human_join(s.capitalize() for s in sauces) if sauces else 'none'}"
-        )
-    elif category == 'hsp':
-        cheese_flag = item.get('cheese') or ('cheese' in extras)
-        cheese_text = 'yes' if cheese_flag else 'no'
-        base = f"{size} {protein} HSP"
-        if item.get('is_combo'):
-            drink = _title_case_phrase(item.get('drink_brand') or 'coke')
-            base = f"{size} {protein} HSP combo with {drink}"
-        segments.append(base.strip())
-        segments.append(f"cheese: {cheese_text}")
-        segments.append(
-            f"sauces: {_human_join(s.capitalize() for s in sauces) if sauces else 'none'}"
-        )
-    elif category == 'chips':
-        salt_type = item.get('salt_type') or item.get('salt')
-        base = f"{size} chips".strip()
-        if salt_type:
-            base += f" with {salt_type} salt"
-        segments.append(base)
-    else:
-        name = item.get('name') or category or 'Item'
-        segments.append(_title_case_phrase(name))
+    # Start with the item name
+    segments.append(_title_case_phrase(name))
 
-    extras_filtered = [e for e in extras if e != 'cheese']
-    if extras_filtered:
+    # Add add-ons if present (nuts, sultanas for Mandi dishes)
+    if addons:
         segments.append(
-            f"extras: {_human_join(e.capitalize() for e in extras_filtered)}"
+            f"with {_human_join(a.capitalize() for a in addons)}"
         )
 
+    # Add extras if present
+    if extras:
+        segments.append(
+            f"extras: {_human_join(e.capitalize() for e in extras)}"
+        )
+
+    # Calculate total price
     price = calculate_price(item) * qty
-    # Use comma separation for speech-friendly output (not " | " which gets read as "vertical bar")
+
+    # Use comma separation for speech-friendly output
     line = f"{index}. {qty_prefix}{', '.join(segments)} - ${price:.2f}"
     return line.strip()
 
@@ -1344,7 +1076,7 @@ def tool_get_caller_smart_context(params: Dict[str, Any]) -> Dict[str, Any]:
 
         # Greeting suggestions
         is_returning = len(orders) > 0
-        greeting_suggestion = "Welcome back!" if is_returning else "Welcome to Kebabalab!"
+        greeting_suggestion = "Welcome back!" if is_returning else "Welcome to Stuffed Lamb!"
 
         return {
             "ok": True,
@@ -1369,12 +1101,14 @@ def tool_get_caller_smart_context(params: Dict[str, Any]) -> Dict[str, Any]:
 # Tool 3: quickAddItem
 def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Smart NLP parser - add items from natural language.
+    Smart NLP parser - add items from natural language for Stuffed Lamb.
 
     Examples:
-    - "large lamb kebab with garlic sauce and lettuce"
+    - "lamb mandi with nuts"
+    - "chicken mandi add sultanas"
+    - "mansaf with extra jameed"
     - "2 cokes"
-    - "small chicken hsp no salad"
+    - "soup of the day"
     """
     try:
         description = params.get('description', '').strip()
@@ -1387,88 +1121,112 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Parse quantity
         quantity = parse_quantity(description)
 
-        # Parse category
+        # Normalize description
         desc_lower = normalize_text(description)
-        category = None
-        item_name = ""
 
-        if 'kebab' in desc_lower or 'doner' in desc_lower:
-            category = 'kebabs'
-            item_name = "Kebab"
-        elif 'hsp' in desc_lower:
-            category = 'hsp'
-            item_name = "HSP"
-        elif 'chips' in desc_lower or 'fries' in desc_lower:
-            category = 'chips'
-            item_name = "Chips"
-        elif any(drink in desc_lower for drink in ['coke', 'sprite', 'fanta', 'pepsi', 'water', 'drink']):
-            category = 'drinks'
-            # Determine brand
-            for brand in ['coca-cola', 'coke', 'sprite', 'fanta', 'pepsi', 'water']:
-                if brand in desc_lower:
-                    item_name = brand.capitalize()
-                    break
-            if not item_name:
-                item_name = "Coke"  # default
-        elif 'gozleme' in desc_lower:
-            category = 'gozleme'
-            item_name = "Gözleme"
+        # Try to match menu items using synonyms
+        matched_item = None
+        item_id = None
+
+        # Check for main dishes
+        if any(word in desc_lower for word in ['mansaf', 'mensaf', 'mansaaf', 'jordanian']):
+            item_id = 'MANSAF'
+            matched_item = _find_menu_item_by_id('MANSAF')
+        elif any(word in desc_lower for word in ['lamb mandi', 'lamb mandy', 'lam mandi']):
+            item_id = 'LAMB_MANDI'
+            matched_item = _find_menu_item_by_id('LAMB_MANDI')
+        elif any(word in desc_lower for word in ['chicken mandi', 'chicken mandy', 'chook mandi']):
+            item_id = 'CHICKEN_MANDI'
+            matched_item = _find_menu_item_by_id('CHICKEN_MANDI')
+        elif any(word in desc_lower for word in ['soup']):
+            item_id = 'SOUP_DAY'
+            matched_item = _find_menu_item_by_id('SOUP_DAY')
+        elif any(word in desc_lower for word in ['coke', 'sprite', 'fanta', 'l&p', 'soft drink', 'soda']):
+            item_id = 'SOFT_DRINK'
+            matched_item = _find_menu_item_by_id('SOFT_DRINK')
+            # Determine specific brand
+            matched_item = matched_item.copy() if matched_item else {'id': 'SOFT_DRINK', 'name': 'Soft Drink', 'price': 3.00}
+            if 'coke' in desc_lower and 'no sugar' not in desc_lower:
+                matched_item['name'] = 'Soft Drink (Coke)'
+            elif 'coke no sugar' in desc_lower or 'diet coke' in desc_lower:
+                matched_item['name'] = 'Soft Drink (Coke No Sugar)'
+            elif 'sprite' in desc_lower:
+                matched_item['name'] = 'Soft Drink (Sprite)'
+            elif 'fanta' in desc_lower:
+                matched_item['name'] = 'Soft Drink (Fanta)'
+            elif 'l&p' in desc_lower or 'lemon' in desc_lower:
+                matched_item['name'] = 'Soft Drink (L&P)'
+        elif any(word in desc_lower for word in ['water', 'h2o']):
+            item_id = 'WATER'
+            matched_item = _find_menu_item_by_id('WATER')
         else:
             return {
                 "ok": False,
-                "error": f"I didn't understand '{description}'. Try saying something like 'large chicken kebab with lettuce and garlic sauce' or '2 cokes' or 'small chips'."
+                "error": f"I didn't understand '{description}'. Try something like 'lamb mandi', 'chicken mandi', 'mansaf', 'soup', or 'coke'."
             }
 
-        # Parse size - MUST ask customer, never default
-        size = parse_size(description)
-        if not size and category in ['kebabs', 'hsp', 'chips']:
-            # Don't default - ask the customer!
-            return {
-                "ok": False,
-                "error": f"I need to know the size for the {category}. Would you like small or large?"
-            }
+        if not matched_item:
+            return {"ok": False, "error": f"Sorry, I couldn't find that item in our menu."}
 
-        # Parse protein (for kebabs/hsp)
-        protein = None
-        if category in ['kebabs', 'hsp']:
-            protein = parse_protein(description)
-            if not protein:
-                protein = 'chicken'  # default
-            item_name = f"{protein.capitalize()} {item_name}"
+        # Parse add-ons for Mandi dishes
+        addons = []
+        if item_id in ['LAMB_MANDI', 'CHICKEN_MANDI']:
+            if any(word in desc_lower for word in ['nuts', 'nut']):
+                addons.append('nuts')
+            if any(word in desc_lower for word in ['sultanas', 'sultana', 'raisins', 'raisin']):
+                addons.append('sultanas')
 
-        # Parse salads
-        salads = parse_salads(description)
+        # Parse extras
+        extras = []
+        if item_id == 'MANSAF':
+            if any(word in desc_lower for word in ['extra jameed', 'more jameed', 'extra sauce']):
+                extras.append('extra jameed')
+            if any(word in desc_lower for word in ['extra rice', 'more rice']):
+                extras.append('extra rice mansaf')
 
-        # Parse sauces
-        sauces = parse_sauces(description)
+        if item_id in ['LAMB_MANDI', 'CHICKEN_MANDI']:
+            if any(word in desc_lower for word in ['extra rice on plate', 'rice on plate', 'more rice']):
+                extras.append('extra rice on plate')
+            if any(word in desc_lower for word in ['extra green chilli', 'extra chilli', 'more chilli']):
+                extras.append('green chilli')
+            if any(word in desc_lower for word in ['extra potato', 'more potato']):
+                extras.append('potato')
+            if any(word in desc_lower for word in ['extra tzatziki', 'more tzatziki']):
+                extras.append('tzatziki')
+            if any(word in desc_lower for word in ['extra chilli sauce', 'more chilli sauce']):
+                extras.append('chilli mandi sauce')
 
-        # Parse extras/add-ons
-        extras = parse_extras(description)
-
-        # Check if cheese was explicitly excluded (for HSPs)
-        desc_normalized = normalize_text(description)
-        cheese_excluded = any(phrase in desc_normalized for phrase in [
-            'no cheese', 'without cheese', 'hold cheese', 'hold the cheese', 'without the cheese'
-        ])
-
-        # Create item
+        # Build item
         item = {
-            "category": category,
-            "name": f"{size.capitalize()} {item_name}" if size else item_name,
-            "size": size,
-            "protein": protein,
-            "salads": salads,
-            "sauces": sauces,
-            "extras": extras,
+            "id": item_id,
+            "name": matched_item['name'],
+            "price": matched_item.get('price', 0.0),
             "quantity": quantity,
-            "is_combo": False,
-            # HSPs include cheese by default UNLESS explicitly excluded
-            # Kebabs only get cheese if explicitly requested as extra
-            "cheese": (not cheese_excluded) if category == 'hsp' else ("cheese" in extras),
+            "addons": addons,
+            "extras": extras,
+            "category": matched_item.get('category', 'unknown')
         }
 
-        # Calculate price
-        item['price'] = calculate_price(item)
+        # Calculate total price
+        total_price = matched_item.get('price', 0.0)
+
+        # Add addon prices (nuts/sultanas for Mandi)
+        for addon in addons:
+            if addon in ['nuts', 'sultanas']:
+                total_price += 2.00  # $2 each for Mandi add-ons
+
+        # Add extra prices
+        for extra in extras:
+            if extra == 'extra jameed':
+                total_price += 8.40
+            elif extra == 'extra rice mansaf':
+                total_price += 8.40
+            elif extra == 'extra rice on plate':
+                total_price += 5.00
+            elif extra in ['green chilli', 'potato', 'tzatziki', 'chilli mandi sauce']:
+                total_price += 1.00
+
+        item['total_price'] = total_price * quantity
 
         # Add to cart
         cart = session_get('cart', [])
@@ -1478,9 +1236,13 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
         logger.info(f"Added to cart: {item}")
 
+        # Build response message
+        addons_text = f" with {' and '.join(addons)}" if addons else ""
+        extras_text = f" plus {', '.join(extras)}" if extras else ""
+
         return {
             "ok": True,
-            "message": f"Added {quantity}x {item['name']} to cart",
+            "message": f"Added {quantity}x {item['name']}{addons_text}{extras_text} to cart",
             "item": item,
             "cartSize": len(cart)
         }
@@ -1491,7 +1253,7 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
 # Tool 4: addMultipleItemsToCart
 def tool_add_multiple_items_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Add multiple fully configured items to cart in one call"""
+    """Add multiple fully configured items to cart in one call - Stuffed Lamb version"""
     try:
         items = params.get('items', [])
 
@@ -1504,22 +1266,15 @@ def tool_add_multiple_items_to_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         for item_config in items:
             category = item_config.get('category', '')
 
-            # Build item
+            # Build item for Stuffed Lamb menu
             item = {
+                "id": item_config.get('id', ''),
                 "category": category,
                 "name": item_config.get('name', ''),
-                "size": item_config.get('size'),
-                "protein": item_config.get('protein'),
-                "salads": item_config.get('salads', []),
-                "sauces": item_config.get('sauces', []),
+                "addons": item_config.get('addons', []),
                 "extras": item_config.get('extras', []),
-                # HSPs ALWAYS include cheese (it's included in price)
-                # For other categories, use the provided value or False
-                "cheese": True if category == 'hsp' else item_config.get('cheese', False),
                 "quantity": item_config.get('quantity', 1),
-                "brand": item_config.get('brand'),
-                "salt_type": item_config.get('salt_type', 'chicken'),
-                "is_combo": False
+                "brand": item_config.get('brand'),  # For drink brands
             }
 
             # Calculate price
@@ -1741,15 +1496,15 @@ def _normalise_modifications(raw: Any) -> Dict[str, Any]:
 
 def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Edit ANY property of a cart item in ONE call.
+    Edit ANY property of a cart item in ONE call - Stuffed Lamb version.
 
     This is the ONLY tool for editing cart items.
-    Can change size, protein, salads, sauces, chips_size, anything.
+    Can change quantity, addons (nuts/sultanas), extras, etc.
 
     Examples:
-    - editCartItem(0, {"chips_size": "large"})
-    - editCartItem(0, {"size": "large", "sauces": ["garlic", "chili"]})
-    - editCartItem(1, {"salads": []})
+    - editCartItem(0, {"addons": ["nuts", "sultanas"]})
+    - editCartItem(0, {"extras": ["extra jameed"]})
+    - editCartItem(1, {"quantity": 2})
     """
     try:
         item_index = params.get('itemIndex')
@@ -1760,7 +1515,7 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         if not modifications:
             modifications = _normalise_modifications(params.get('properties'))
 
-        # Some integrations send {"property": "size", "value": "large"}
+        # Some integrations send {"property": "quantity", "value": 2}
         if not modifications and params.get('property') and 'value' in params:
             modifications = {str(params['property']): params['value']}
 
@@ -1805,124 +1560,33 @@ def tool_edit_cart_item(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.info(f"BEFORE EDIT - Item {item_index}: {json.dumps(item)}")
         logger.info(f"Modifications requested: {json.dumps(modifications)}")
 
-        # Validate salads and sauces lists to prevent corruption
-        VALID_SALADS = ['lettuce', 'tomato', 'onion', 'pickles', 'olives']
-        VALID_SAUCES = ['garlic', 'chilli', 'bbq', 'tomato', 'sweet chilli', 'mayo', 'hummus']
-
         # Apply ALL modifications
         for field, value in modifications.items():
-            if field == "size":
-                old_size = item.get("size")
-                item["size"] = value
-
-                # Update name if it starts with size word
-                name = item.get("name", "")
-                if name:
-                    # Replace Small/Large at the beginning of the name
-                    if name.startswith("Small") or name.startswith("Large"):
-                        updated = re.sub(r"^(Small|Large)", value.capitalize(), name, count=1)
-                        item["name"] = updated
-                    else:
-                        # If name doesn't start with size, prepend it
-                        item["name"] = f"{value.capitalize()} {name}"
-
-                # CRITICAL: Recalculate price for HSP combos when size changes
-                if item.get('is_combo') and item.get('category') == 'hsp':
-                    if value == 'small':
-                        item['price'] = 17.0
-                        logger.info(f"HSP combo size changed to small, price set to $17.00")
-                    else:  # large
-                        item['price'] = 22.0
-                        logger.info(f"HSP combo size changed to large, price set to $22.00")
-
-                logger.info(f"Size changed from '{old_size}' to '{value}', name is now '{item['name']}'")
-
-            elif field == "protein":
-                item["protein"] = value
-                logger.info(f"Protein changed to '{value}'")
-
-            elif field == "salads":
-                # Validate salads list
-                if isinstance(value, list):
-                    # Filter out any sauces that got mixed in
-                    valid_salads = [s for s in value if s.lower() not in VALID_SAUCES]
-                    invalid_items = [s for s in value if s.lower() in VALID_SAUCES]
-                    if invalid_items:
-                        logger.warning(f"SALAD CORRUPTION PREVENTED: Removed sauces from salads list: {invalid_items}")
-                    item["salads"] = valid_salads
-                else:
-                    item["salads"] = []
-                logger.info(f"Salads set to: {item['salads']}")
-
-            elif field == "sauces":
-                # Validate sauces list
-                if isinstance(value, list):
-                    # Filter out any salads that got mixed in
-                    valid_sauces = [s for s in value if s.lower() not in VALID_SALADS]
-                    invalid_items = [s for s in value if s.lower() in VALID_SALADS]
-                    if invalid_items:
-                        logger.warning(f"SAUCE CORRUPTION PREVENTED: Removed salads from sauces list: {invalid_items}")
-                    item["sauces"] = valid_sauces
-                else:
-                    item["sauces"] = []
-                logger.info(f"Sauces set to: {item['sauces']}")
-
-            elif field == "extras":
-                item["extras"] = value if isinstance(value, list) else []
-                logger.info(f"Extras set to: {item['extras']}")
-
-            elif field == "cheese":
-                item["cheese"] = bool(value)
-                logger.info(f"Cheese set to: {item['cheese']}")
-
-            elif field == "quantity":
+            if field == "quantity":
                 old_qty = item.get("quantity", 1)
                 item["quantity"] = int(value) if value else 1
                 logger.info(f"Quantity changed from {old_qty} to {item['quantity']}")
 
-            elif field == "salt_type":
-                item["salt_type"] = value
-                logger.info(f"Salt type set to: {value}")
+            elif field == "addons":
+                # Add-ons like nuts and sultanas for Mandi dishes
+                item["addons"] = value if isinstance(value, list) else []
+                logger.info(f"Add-ons set to: {item['addons']}")
 
-            elif field == "chips_size":
-                # CRITICAL: Handle meal chips upgrade
-                if item.get('is_combo'):
-                    old_chips_size = item.get('chips_size', 'small')
-                    new_chips_size = value
+            elif field == "extras":
+                # Extras like extra jameed, extra rice, etc.
+                item["extras"] = value if isinstance(value, list) else []
+                logger.info(f"Extras set to: {item['extras']}")
 
-                    item['chips_size'] = new_chips_size
-
-                    # Recalculate combo price based on kebab size and chips size
-                    kebab_size = item.get('size', 'small')
-                    if kebab_size == 'small':
-                        if new_chips_size == "large":
-                            item['price'] = 20.0
-                            item['name'] = "Small Kebab Meal (Large Chips)"
-                        else:
-                            item['price'] = 17.0
-                            item['name'] = "Small Kebab Meal"
-                    else:  # large kebab
-                        if new_chips_size == "large":
-                            item['price'] = 25.0
-                            item['name'] = "Large Kebab Meal (Large Chips)"
-                        else:
-                            item['price'] = 22.0
-                            item['name'] = "Large Kebab Meal"
-
-                    logger.info(f"Updated chips from {old_chips_size} to {new_chips_size}, new price: ${item['price']}")
-                else:
-                    logger.warning(f"chips_size can only be modified on combo/meal items")
             else:
-                # Unknown field - log warning and set it
-                logger.warning(f"Unknown field '{field}' being set to: {value}")
+                # Generic field - log and set it
+                logger.info(f"Setting field '{field}' to: {value}")
                 item[field] = value
 
-        # ALWAYS recalculate price after modifications (unless it's a combo with fixed price)
-        if not item.get('is_combo'):
-            old_price = item.get('price', 0.0)
-            item['price'] = calculate_price(item)
-            if old_price != item['price']:
-                logger.info(f"Price recalculated from ${old_price:.2f} to ${item['price']:.2f}")
+        # ALWAYS recalculate price after modifications
+        old_price = item.get('price', 0.0)
+        item['price'] = calculate_price(item)
+        if old_price != item['price']:
+            logger.info(f"Price recalculated from ${old_price:.2f} to ${item['price']:.2f}")
 
         # Update cart
         cart[item_index] = item
@@ -1993,116 +1657,9 @@ def tool_price_cart(params: Dict[str, Any]) -> Dict[str, Any]:
         logger.error(f"Error pricing cart: {e}")
         return {"ok": False, "error": str(e)}
 
-# Tool 9: convertItemsToMeals
-def tool_convert_items_to_meals(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Convert kebabs or HSPs in cart to combo meals"""
-    try:
-        cart = session_get('cart', [])
-        item_indices = params.get('itemIndices')
-        drink_brand = params.get('drinkBrand', 'coke')
-        chips_size = params.get('chipsSize', 'small')
-        chips_salt = params.get('chipsSalt', 'chicken')
+# NOTE: Removed convertItemsToMeals tool - Stuffed Lamb has no combo meals
 
-        # If no indices specified, convert ALL kebabs and HSPs
-        if item_indices is None:
-            item_indices = [i for i, item in enumerate(cart) if item.get('category') in ['kebabs', 'hsp']]
-
-        if not item_indices:
-            return {"ok": False, "error": "No items to convert"}
-
-        converted_count = 0
-
-        for idx in item_indices:
-            if idx < 0 or idx >= len(cart):
-                continue
-
-            item = cart[idx]
-            category = item.get('category')
-
-            # Can only convert kebabs or HSPs
-            if category not in ['kebabs', 'hsp']:
-                continue
-
-            # Skip if already a combo
-            if item.get('is_combo'):
-                continue
-
-            # Convert to meal/combo
-            item_size = item.get('size', 'small')
-
-            if category == 'kebabs':
-                # Kebab combos: kebab + chips + drink
-                # From menu.json: small=$17, large=$22 (small chips), +$3 for large chips
-                if item_size == 'small':
-                    meal_price = 20.0 if chips_size == 'large' else 17.0
-                    meal_name = f"Small Kebab Meal{' (Large Chips)' if chips_size == 'large' else ''}"
-                else:
-                    meal_price = 25.0 if chips_size == 'large' else 22.0
-                    meal_name = f"Large Kebab Meal{' (Large Chips)' if chips_size == 'large' else ''}"
-
-                item['chips_size'] = chips_size
-                item['chips_salt'] = chips_salt
-
-            elif category == 'hsp':
-                # HSP combos: HSP + drink (no chips, HSP already has chips)
-                # From menu.json: small=$17, large=$22
-                meal_price = 17.0 if item_size == 'small' else 22.0
-                meal_name = f"{item_size.title()} HSP Combo"
-                logger.info(f"Converting {item_size} HSP to combo: ${meal_price}")
-
-            # Update item
-            item['is_combo'] = True
-            item['name'] = meal_name
-            item['price'] = meal_price
-            item['drink_brand'] = drink_brand
-
-            cart[idx] = item
-            converted_count += 1
-
-        # CRITICAL FIX: Remove duplicate drinks if they match the meal drinks
-        # If user said "2 kebabs and 2 cokes" then "make them meals with cokes"
-        # We need to remove the separate 2 cokes since they're now in the meals
-        if converted_count > 0:
-            drinks_needed = converted_count  # One drink per meal
-            drink_brand_normalized = drink_brand.lower()
-
-            # Find separate drink items that match
-            for i in range(len(cart) - 1, -1, -1):  # Iterate backwards for safe removal
-                item = cart[i]
-                if item.get('category') == 'drinks' and not item.get('is_combo'):
-                    item_name = item.get('name', '').lower()
-                    # Check if this drink matches the meal drink
-                    if drink_brand_normalized in item_name or item_name in drink_brand_normalized:
-                        item_qty = item.get('quantity', 1)
-
-                        if item_qty <= drinks_needed:
-                            # Remove entire item
-                            logger.info(f"Removing duplicate drink item (qty {item_qty}): {item.get('name')}")
-                            cart.pop(i)
-                            drinks_needed -= item_qty
-                        else:
-                            # Reduce quantity
-                            item['quantity'] = item_qty - drinks_needed
-                            logger.info(f"Reduced drink quantity from {item_qty} to {item['quantity']}")
-                            drinks_needed = 0
-
-                        if drinks_needed == 0:
-                            break
-
-        session_set('cart', cart)
-        session_set('cart_priced', False)
-
-        return {
-            "ok": True,
-            "message": f"Converted {converted_count} items to meals",
-            "convertedCount": converted_count
-        }
-
-    except Exception as e:
-        logger.error(f"Error converting to meals: {e}")
-        return {"ok": False, "error": str(e)}
-
-# Tool 10: getOrderSummary
+# Tool 9: getOrderSummary
 def tool_get_order_summary(params: Dict[str, Any]) -> Dict[str, Any]:
     """Get human-readable order summary for review"""
     try:
@@ -2404,7 +1961,7 @@ def tool_send_menu_link(params: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": "phoneNumber is required"}
 
         message = (
-            "🥙 KEBABALAB MENU\n\n"
+            "🐑 STUFFED LAMB MENU\n\n"
             f"Check out our full menu: {MENU_LINK_URL}\n\n"
             f"Call or text us on {SHOP_NUMBER_DEFAULT} if you need a hand!"
         )
@@ -2515,7 +2072,7 @@ def tool_end_call(params: Dict[str, Any]) -> Dict[str, Any]:
 
         return {
             "ok": True,
-            "message": "Thank you for calling Kebabalab. Have a great day!"
+            "message": "Thank you for calling Stuffed Lamb. Have a great day!"
         }
 
     except Exception as e:
@@ -2534,7 +2091,6 @@ TOOLS = {
     "clearCart": tool_clear_cart,
     "editCartItem": tool_edit_cart_item,
     "priceCart": tool_price_cart,
-    "convertItemsToMeals": tool_convert_items_to_meals,
     "getOrderSummary": tool_get_order_summary,
     "setPickupTime": tool_set_pickup_time,
     "estimateReadyTime": tool_estimate_ready_time,
@@ -2552,7 +2108,7 @@ def health_check():
     """Health check endpoint - minimal information for security"""
     return jsonify({
         "status": "healthy",
-        "server": "kebabalab",
+        "server": "stuffed-lamb",
         "version": "2.0"
     })
 
@@ -2633,7 +2189,7 @@ def webhook():
 
 def main() -> None:
     logger.info("="*50)
-    logger.info("Kebabalab VAPI Server - SIMPLIFIED")
+    logger.info("Stuffed Lamb VAPI Server - SIMPLIFIED")
     logger.info("="*50)
 
     # Initialize

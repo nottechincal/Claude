@@ -133,44 +133,82 @@ The test suite covers:
 
 ## 🏃 Running the Server
 
-### Development Mode
+### Quick Start
 
+**Windows:**
 ```bash
-python -m stuffed_lamb.server
+start.bat
 ```
 
-The server will start on `http://localhost:5000`
+**Linux/Mac:**
+```bash
+./start.sh
+```
 
-### Production Mode
+**Direct (all platforms):**
+```bash
+python run.py
+```
+
+The server will start on `http://localhost:8000`
+
+### Verify Setup
 
 ```bash
-# Using Gunicorn (recommended)
-gunicorn -w 4 -b 0.0.0.0:5000 stuffed_lamb.server:app
+# Check configuration
+./verify_setup.sh        # Linux/Mac
 
-# Or using Flask's built-in server (not recommended for production)
-export FLASK_APP=stuffed_lamb.server
-flask run --host=0.0.0.0 --port=5000
+# Health check
+python healthcheck.py --url http://localhost:8000 --full
+```
+
+### Production Deployment
+
+For production deployment options (Docker, systemd, cloud platforms), see:
+📖 **[PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)**
+
+Quick deploy with Docker:
+```bash
+docker-compose up -d
 ```
 
 ## 📁 Project Structure
 
 ```
 stuffed-lamb/
-├── stuffed_lamb/          # Main application package
+├── stuffed_lamb/                    # Main application package
 │   ├── __init__.py
-│   └── server.py          # Flask server with all business logic
-├── data/                  # Configuration and menu data
-│   ├── menu.json          # Complete menu with pricing
-│   ├── business.json      # Business details and settings
-│   ├── hours.json         # Operating hours
-│   └── rules.json         # Business rules and policies
-├── tests/                 # Test suite
+│   └── server.py                    # Flask server with all business logic
+├── data/                            # Configuration and menu data
+│   ├── menu.json                    # Complete menu with pricing
+│   ├── business.json                # Business details and settings
+│   ├── hours.json                   # Operating hours
+│   └── rules.json                   # Business rules and policies
+├── deployment/                      # Production deployment files
+│   └── stuffed-lamb.service         # Systemd service file
+├── tests/                           # Test suite
 │   └── test_stuffed_lamb_system.py
-├── logs/                  # Application logs (auto-created)
-├── requirements.txt       # Python dependencies
-├── .env.example          # Environment variables template
+├── config/                          # VAPI configuration
+│   ├── vapi-tools.json              # VAPI tool definitions
+│   └── system-prompt.md             # AI assistant prompt
+├── logs/                            # Application logs (auto-created)
+├── requirements.txt                 # Python dependencies
+├── .env.example                     # Environment variables template
+├── .env.CORRECTED                   # Production-ready .env template
+├── Dockerfile                       # Docker image definition
+├── docker-compose.yml               # Docker Compose configuration
+├── .dockerignore                    # Docker build exclusions
+├── start.sh                         # Linux/Mac startup script
+├── start.bat                        # Windows startup script
+├── run.py                           # Main application entry point
+├── verify_setup.sh                  # Setup verification script
+├── healthcheck.py                   # Health check utility
+├── PRODUCTION_DEPLOYMENT.md         # Production deployment guide
+├── QUICK_START.md                   # Quick start guide
+├── SETUP_CHECKLIST.md               # Setup checklist
+├── ENV_SETUP_GUIDE.md               # Environment variables guide
 ├── .gitignore
-└── README.md             # This file
+└── README.md                        # This file
 ```
 
 ## 💰 Pricing Examples
@@ -242,6 +280,7 @@ REDIS_PORT=6379
 
 ## 📊 Features
 
+### Core Features
 - ✅ Complete menu with all items and pricing
 - ✅ Add-ons system (nuts, sultanas for Mandi dishes)
 - ✅ Flexible extras system
@@ -253,6 +292,18 @@ REDIS_PORT=6379
 - ✅ Extensive test coverage
 - ✅ VAPI integration ready
 - ✅ Fuzzy matching for voice orders
+
+### Production Ready
+- ✅ Automatic .env loading (python-dotenv)
+- ✅ Cross-platform startup scripts (Windows/Linux/Mac)
+- ✅ Docker & Docker Compose support
+- ✅ Systemd service configuration
+- ✅ Health check endpoint & monitoring
+- ✅ Setup verification tools
+- ✅ Comprehensive deployment documentation
+- ✅ Security hardening options
+- ✅ Log management
+- ✅ Backup strategies
 
 ## 🎯 Key Differences from Kebabalab System
 
@@ -276,6 +327,11 @@ This system is tailored specifically for Stuffed Lamb:
 
 ## 🐛 Troubleshooting
 
+### Run Setup Verification
+```bash
+./verify_setup.sh        # Comprehensive system check (Linux/Mac)
+```
+
 ### Tests failing?
 ```bash
 # Make sure menu data is valid
@@ -287,12 +343,31 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 
 ### Server not starting?
 ```bash
-# Check if port 5000 is available
-lsof -i :5000
+# Check if port 8000 is available
+lsof -i :8000           # Linux/Mac
+netstat -ano | findstr :8000    # Windows
 
-# Try a different port
-python -m stuffed_lamb.server --port=8080
+# Check .env file exists and is configured
+cat .env
+
+# Check dependencies
+pip install -r requirements.txt
+
+# Try different port
+PORT=8080 python run.py
 ```
+
+### .env not loading?
+The system now includes python-dotenv for automatic .env loading. If variables aren't loading:
+```bash
+# Verify python-dotenv is installed
+pip install python-dotenv
+
+# Or manually load (Linux/Mac)
+set -a; source .env; set +a; python run.py
+```
+
+For more troubleshooting, see [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)
 
 ## 📞 Support
 

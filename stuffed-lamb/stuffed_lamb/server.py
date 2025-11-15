@@ -329,6 +329,19 @@ def load_menu():
         logger.error(f"Failed to load menu: {e}")
         return False
 
+def _find_menu_item_by_id(item_id: str) -> Optional[Dict]:
+    """Find a menu item by its ID"""
+    if not MENU:
+        return None
+
+    categories = MENU.get('categories', {})
+    for category_name, items in categories.items():
+        if isinstance(items, list):
+            for item in items:
+                if item.get('id') == item_id:
+                    return item
+    return None
+
 # ==================== SESSION MANAGEMENT ====================
 
 def get_session_id() -> str:
@@ -1369,12 +1382,14 @@ def tool_get_caller_smart_context(params: Dict[str, Any]) -> Dict[str, Any]:
 # Tool 3: quickAddItem
 def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Smart NLP parser - add items from natural language.
+    Smart NLP parser - add items from natural language for Stuffed Lamb.
 
     Examples:
-    - "large lamb kebab with garlic sauce and lettuce"
+    - "lamb mandi with nuts"
+    - "chicken mandi add sultanas"
+    - "mansaf with extra jameed"
     - "2 cokes"
-    - "small chicken hsp no salad"
+    - "soup of the day"
     """
     try:
         description = params.get('description', '').strip()
@@ -1387,88 +1402,112 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         # Parse quantity
         quantity = parse_quantity(description)
 
-        # Parse category
+        # Normalize description
         desc_lower = normalize_text(description)
-        category = None
-        item_name = ""
 
-        if 'kebab' in desc_lower or 'doner' in desc_lower:
-            category = 'kebabs'
-            item_name = "Kebab"
-        elif 'hsp' in desc_lower:
-            category = 'hsp'
-            item_name = "HSP"
-        elif 'chips' in desc_lower or 'fries' in desc_lower:
-            category = 'chips'
-            item_name = "Chips"
-        elif any(drink in desc_lower for drink in ['coke', 'sprite', 'fanta', 'pepsi', 'water', 'drink']):
-            category = 'drinks'
-            # Determine brand
-            for brand in ['coca-cola', 'coke', 'sprite', 'fanta', 'pepsi', 'water']:
-                if brand in desc_lower:
-                    item_name = brand.capitalize()
-                    break
-            if not item_name:
-                item_name = "Coke"  # default
-        elif 'gozleme' in desc_lower:
-            category = 'gozleme'
-            item_name = "Gözleme"
+        # Try to match menu items using synonyms
+        matched_item = None
+        item_id = None
+
+        # Check for main dishes
+        if any(word in desc_lower for word in ['mansaf', 'mensaf', 'mansaaf', 'jordanian']):
+            item_id = 'MANSAF'
+            matched_item = _find_menu_item_by_id('MANSAF')
+        elif any(word in desc_lower for word in ['lamb mandi', 'lamb mandy', 'lam mandi']):
+            item_id = 'LAMB_MANDI'
+            matched_item = _find_menu_item_by_id('LAMB_MANDI')
+        elif any(word in desc_lower for word in ['chicken mandi', 'chicken mandy', 'chook mandi']):
+            item_id = 'CHICKEN_MANDI'
+            matched_item = _find_menu_item_by_id('CHICKEN_MANDI')
+        elif any(word in desc_lower for word in ['soup']):
+            item_id = 'SOUP_DAY'
+            matched_item = _find_menu_item_by_id('SOUP_DAY')
+        elif any(word in desc_lower for word in ['coke', 'sprite', 'fanta', 'l&p', 'soft drink', 'soda']):
+            item_id = 'SOFT_DRINK'
+            matched_item = _find_menu_item_by_id('SOFT_DRINK')
+            # Determine specific brand
+            matched_item = matched_item.copy() if matched_item else {'id': 'SOFT_DRINK', 'name': 'Soft Drink', 'price': 3.00}
+            if 'coke' in desc_lower and 'no sugar' not in desc_lower:
+                matched_item['name'] = 'Soft Drink (Coke)'
+            elif 'coke no sugar' in desc_lower or 'diet coke' in desc_lower:
+                matched_item['name'] = 'Soft Drink (Coke No Sugar)'
+            elif 'sprite' in desc_lower:
+                matched_item['name'] = 'Soft Drink (Sprite)'
+            elif 'fanta' in desc_lower:
+                matched_item['name'] = 'Soft Drink (Fanta)'
+            elif 'l&p' in desc_lower or 'lemon' in desc_lower:
+                matched_item['name'] = 'Soft Drink (L&P)'
+        elif any(word in desc_lower for word in ['water', 'h2o']):
+            item_id = 'WATER'
+            matched_item = _find_menu_item_by_id('WATER')
         else:
             return {
                 "ok": False,
-                "error": f"I didn't understand '{description}'. Try saying something like 'large chicken kebab with lettuce and garlic sauce' or '2 cokes' or 'small chips'."
+                "error": f"I didn't understand '{description}'. Try something like 'lamb mandi', 'chicken mandi', 'mansaf', 'soup', or 'coke'."
             }
 
-        # Parse size - MUST ask customer, never default
-        size = parse_size(description)
-        if not size and category in ['kebabs', 'hsp', 'chips']:
-            # Don't default - ask the customer!
-            return {
-                "ok": False,
-                "error": f"I need to know the size for the {category}. Would you like small or large?"
-            }
+        if not matched_item:
+            return {"ok": False, "error": f"Sorry, I couldn't find that item in our menu."}
 
-        # Parse protein (for kebabs/hsp)
-        protein = None
-        if category in ['kebabs', 'hsp']:
-            protein = parse_protein(description)
-            if not protein:
-                protein = 'chicken'  # default
-            item_name = f"{protein.capitalize()} {item_name}"
+        # Parse add-ons for Mandi dishes
+        addons = []
+        if item_id in ['LAMB_MANDI', 'CHICKEN_MANDI']:
+            if any(word in desc_lower for word in ['nuts', 'nut']):
+                addons.append('nuts')
+            if any(word in desc_lower for word in ['sultanas', 'sultana', 'raisins', 'raisin']):
+                addons.append('sultanas')
 
-        # Parse salads
-        salads = parse_salads(description)
+        # Parse extras
+        extras = []
+        if item_id == 'MANSAF':
+            if any(word in desc_lower for word in ['extra jameed', 'more jameed', 'extra sauce']):
+                extras.append('extra jameed')
+            if any(word in desc_lower for word in ['extra rice', 'more rice']):
+                extras.append('extra rice mansaf')
 
-        # Parse sauces
-        sauces = parse_sauces(description)
+        if item_id in ['LAMB_MANDI', 'CHICKEN_MANDI']:
+            if any(word in desc_lower for word in ['extra rice on plate', 'rice on plate', 'more rice']):
+                extras.append('extra rice on plate')
+            if any(word in desc_lower for word in ['extra green chilli', 'extra chilli', 'more chilli']):
+                extras.append('green chilli')
+            if any(word in desc_lower for word in ['extra potato', 'more potato']):
+                extras.append('potato')
+            if any(word in desc_lower for word in ['extra tzatziki', 'more tzatziki']):
+                extras.append('tzatziki')
+            if any(word in desc_lower for word in ['extra chilli sauce', 'more chilli sauce']):
+                extras.append('chilli mandi sauce')
 
-        # Parse extras/add-ons
-        extras = parse_extras(description)
-
-        # Check if cheese was explicitly excluded (for HSPs)
-        desc_normalized = normalize_text(description)
-        cheese_excluded = any(phrase in desc_normalized for phrase in [
-            'no cheese', 'without cheese', 'hold cheese', 'hold the cheese', 'without the cheese'
-        ])
-
-        # Create item
+        # Build item
         item = {
-            "category": category,
-            "name": f"{size.capitalize()} {item_name}" if size else item_name,
-            "size": size,
-            "protein": protein,
-            "salads": salads,
-            "sauces": sauces,
-            "extras": extras,
+            "id": item_id,
+            "name": matched_item['name'],
+            "price": matched_item.get('price', 0.0),
             "quantity": quantity,
-            "is_combo": False,
-            # HSPs include cheese by default UNLESS explicitly excluded
-            # Kebabs only get cheese if explicitly requested as extra
-            "cheese": (not cheese_excluded) if category == 'hsp' else ("cheese" in extras),
+            "addons": addons,
+            "extras": extras,
+            "category": matched_item.get('category', 'unknown')
         }
 
-        # Calculate price
-        item['price'] = calculate_price(item)
+        # Calculate total price
+        total_price = matched_item.get('price', 0.0)
+
+        # Add addon prices (nuts/sultanas for Mandi)
+        for addon in addons:
+            if addon in ['nuts', 'sultanas']:
+                total_price += 2.00  # $2 each for Mandi add-ons
+
+        # Add extra prices
+        for extra in extras:
+            if extra == 'extra jameed':
+                total_price += 8.40
+            elif extra == 'extra rice mansaf':
+                total_price += 8.40
+            elif extra == 'extra rice on plate':
+                total_price += 5.00
+            elif extra in ['green chilli', 'potato', 'tzatziki', 'chilli mandi sauce']:
+                total_price += 1.00
+
+        item['total_price'] = total_price * quantity
 
         # Add to cart
         cart = session_get('cart', [])
@@ -1478,9 +1517,13 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
         logger.info(f"Added to cart: {item}")
 
+        # Build response message
+        addons_text = f" with {' and '.join(addons)}" if addons else ""
+        extras_text = f" plus {', '.join(extras)}" if extras else ""
+
         return {
             "ok": True,
-            "message": f"Added {quantity}x {item['name']} to cart",
+            "message": f"Added {quantity}x {item['name']}{addons_text}{extras_text} to cart",
             "item": item,
             "cartSize": len(cart)
         }

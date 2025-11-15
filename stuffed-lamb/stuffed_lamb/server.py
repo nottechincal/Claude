@@ -22,6 +22,14 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import pytz
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    print("WARNING: python-dotenv not installed, .env file will not be loaded automatically")
+    print("Install with: pip install python-dotenv")
+
 # Fuzzy string matching for typo tolerance
 try:
     from rapidfuzz import fuzz, process

@@ -1,0 +1,33 @@
+[Unit]
+Description=Stuffed Lamb VAPI Ordering System
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/stuffed-lamb
+Environment="PATH=/opt/stuffed-lamb/venv/bin"
+EnvironmentFile=/opt/stuffed-lamb/.env
+ExecStart=/opt/stuffed-lamb/venv/bin/python /opt/stuffed-lamb/run.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stuffed-lamb
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/stuffed-lamb/data
+ReadWritePaths=/opt/stuffed-lamb/logs
+
+# Resource limits
+LimitNOFILE=4096
+MemoryLimit=512M
+
+[Install]
+WantedBy=multi-user.target

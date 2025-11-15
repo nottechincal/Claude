@@ -52,15 +52,43 @@ nano .env  # or vim, or any editor
 ```
 
 ### **Step 3: Run the Server**
+
+**Option 1: Use Startup Scripts (Recommended)**
+
+**Windows:**
+```bash
+start.bat
+```
+
+**Linux/Mac:**
+```bash
+./start.sh
+```
+
+**Option 2: Direct Run**
 ```bash
 python run.py
 ```
 
 **Done!** Server is now running on http://localhost:8000
 
+💡 **Tip:** The startup scripts automatically check dependencies and .env configuration!
+
 ---
 
 ## ✅ **Verify Everything Works**
+
+### **Setup Verification (Recommended):**
+```bash
+./verify_setup.sh        # Linux/Mac
+```
+**Checks:** Python version, .env file, dependencies, data files, Redis, port availability
+
+### **Health Check:**
+```bash
+python healthcheck.py --url http://localhost:8000 --full
+```
+**Verifies:** Server is running and endpoints are accessible
 
 ### **Run Tests:**
 ```bash
@@ -146,10 +174,30 @@ See `config/VAPI_SETUP.md` for full instructions.
 
 ---
 
+## 🚀 **Production Deployment**
+
+### **Quick Deploy with Docker:**
+```bash
+# Create .env file first, then:
+docker-compose up -d
+```
+
+### **For Full Production Deployment:**
+See **[PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)** for:
+- Linux server deployment (systemd)
+- Docker deployment
+- Windows server setup
+- Cloud platforms (Heroku, Railway, AWS, etc.)
+- Monitoring and maintenance
+- Security best practices
+
+---
+
 ## 📚 **Full Documentation**
 
 | File | What's Inside |
 |------|---------------|
+| **PRODUCTION_DEPLOYMENT.md** | 🚀 Production deployment guide |
 | **SETUP_CHECKLIST.md** | Complete step-by-step setup |
 | **SYSTEM_STATUS_REPORT.md** | Full system status and configuration |
 | **ENV_SETUP_GUIDE.md** | Environment variables explained |

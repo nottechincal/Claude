@@ -135,6 +135,20 @@ The test suite covers:
 
 ### Quick Start
 
+**For VAPI Integration (with ngrok tunnel):**
+
+**Windows:**
+```bash
+start-with-ngrok.bat
+```
+
+**Linux/Mac:**
+```bash
+./start-complete.sh
+```
+
+**For Simple Testing (no VAPI):**
+
 **Windows:**
 ```bash
 start.bat
@@ -151,6 +165,8 @@ python run.py
 ```
 
 The server will start on `http://localhost:8000`
+
+📖 **See [STARTUP_GUIDE.md](STARTUP_GUIDE.md) for complete startup options and ngrok setup**
 
 ### Verify Setup
 

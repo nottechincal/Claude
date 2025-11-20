@@ -1,0 +1,437 @@
+[1m[94m
+╔════════════════════════════════════════════════════════════════════╗
+║                                                                    ║
+║          STUFFED LAMB - VAPI WEBHOOK TESTING SUITE                ║
+║                                                                    ║
+╚════════════════════════════════════════════════════════════════════╝
+[0m
+
+Testing webhook: [94mhttp://localhost:8000/webhook[0m
+Using secret: [94m********************[0m
+
+
+[1m======================================================================[0m
+[1mCATEGORY 1: BASIC MENU ITEMS[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1mlamb mandi[0m
+  Input: [94mlamb mandi[0m
+  Result: Added 1x Lamb Mandi to cart
+  Expected: Should add Lamb Mandi ($28)
+
+[92m✅ PASS[0m [1mchicken mandi[0m
+  Input: [94mchicken mandi[0m
+  Result: Added 1x Chicken Mandi to cart
+  Expected: Should add Chicken Mandi ($23)
+
+[92m✅ PASS[0m [1mmansaf[0m
+  Input: [94mmansaf[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+  Expected: Should add Jordanian Mansaf ($33)
+
+[92m✅ PASS[0m [1msoup of the day[0m
+  Input: [94msoup of the day[0m
+  Result: Added 1x Soup of the Day to cart
+  Expected: Should add Soup ($7)
+
+[92m✅ PASS[0m [1msoft drink[0m
+  Input: [94msoft drink[0m
+  Result: Added 1x Soft Drink (Can) to cart
+  Expected: Should add Soft Drink ($3)
+
+[92m✅ PASS[0m [1mbottle of water[0m
+  Input: [94mbottle of water[0m
+  Result: Added 1x Bottle of Water to cart
+  Expected: Should add Water ($2)
+
+[91m❌ FAIL[0m [1mcoke[0m
+  Input: [94mcoke[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+  Expected: Should add Soft Drink - Coke
+
+[91m❌ FAIL[0m [1msprite[0m
+  Input: [94msprite[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+  Expected: Should add Soft Drink - Sprite
+
+[1m======================================================================[0m
+[1mCATEGORY 2: QUANTITY PARSING[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1m2 lamb mandis[0m
+  Input: [94m2 lamb mandis[0m
+  Result: Added 2x Lamb Mandi to cart
+  Expected: Should add 2x Lamb Mandi
+
+[92m✅ PASS[0m [1mthree chicken mandi[0m
+  Input: [94mthree chicken mandi[0m
+  Result: Added 3x Chicken Mandi to cart
+  Expected: Should add 3x Chicken Mandi
+
+[91m❌ FAIL[0m [1m5 cokes[0m
+  Input: [94m5 cokes[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+  Expected: Should add 5x Soft Drink
+
+[92m✅ PASS[0m [1mone mansaf[0m
+  Input: [94mone mansaf[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+  Expected: Should add 1x Mansaf
+
+[1m======================================================================[0m
+[1mCATEGORY 3: ADD-ONS & EXTRAS[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1mlamb mandi with nuts[0m
+  Input: [94mlamb mandi with nuts[0m
+  Result: Added 1x Lamb Mandi with nuts plus nuts to cart
+  Expected: Should add nuts addon (+$2)
+
+[92m✅ PASS[0m [1mlamb mandi with sultanas[0m
+  Input: [94mlamb mandi with sultanas[0m
+  Result: Added 1x Lamb Mandi with sultanas plus sultanas to cart
+  Expected: Should add sultanas addon (+$2)
+
+[92m✅ PASS[0m [1mlamb mandi with nuts and sultanas[0m
+  Input: [94mlamb mandi with nuts and sultanas[0m
+  Result: Added 1x Lamb Mandi with nuts and sultanas plus sultanas, nuts to cart
+  Expected: Should add both addons (+$4)
+
+[92m✅ PASS[0m [1mchicken mandi add nuts[0m
+  Input: [94mchicken mandi add nuts[0m
+  Result: Added 1x Chicken Mandi with nuts plus extra rice on plate, chilli mandi sauce, green chilli, sultanas, tzatziki, potato, bread, nuts to cart
+  Expected: Should add nuts to chicken
+
+[91m❌ FAIL[0m [1mmansaf with extra jameed[0m
+  Input: [94mmansaf with extra jameed[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+  Expected: Should add extra jameed (+$8.40)
+
+[92m✅ PASS[0m [1mlamb mandi with extra rice on plate[0m
+  Input: [94mlamb mandi with extra rice on plate[0m
+  Result: Added 1x Lamb Mandi plus extra rice on plate, chilli mandi sauce, green chilli, sultanas, tzatziki, potato, bread, nuts to cart
+  Expected: Should add extra rice (+$5)
+
+[92m✅ PASS[0m [1mchicken with extra tzatziki[0m
+  Input: [94mchicken with extra tzatziki[0m
+  Result: Added 1x Chicken Mandi plus extra rice on plate, chilli mandi sauce, green chilli, sultanas, tzatziki, potato, bread, nuts to cart
+  Expected: Should add extra tzatziki (+$1)
+
+[1m======================================================================[0m
+[1mCATEGORY 4: ACCENT & PRONUNCIATION VARIANTS[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1mAustralian accent - Mansaf[0m
+  Input: [94mman saff[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+
+[91m❌ FAIL[0m [1mAlternative mansaf[0m
+  Input: [94mmun saf[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mDropped 'b' - lamb[0m
+  Input: [94mlam mandi[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mAlternative spelling[0m
+  Input: [94mlamb mondi[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mAlternative spelling[0m
+  Input: [94mlamb mandy[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mTypo - chicken[0m
+  Input: [94mchikin mandi[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[92m✅ PASS[0m [1mAussie slang - chicken[0m
+  Input: [94mchook mandi[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[92m✅ PASS[0m [1mAlternative spelling[0m
+  Input: [94mchicken mondy[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[91m❌ FAIL[0m [1mTypo - nuts[0m
+  Input: [94mnutz[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mSynonym - sultanas[0m
+  Input: [94mraisins[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mTypo - raisins/sultanas[0m
+  Input: [94mraisens[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mSynonym - tzatziki[0m
+  Input: [94mgarlic yogurt[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mTypo - tzatziki[0m
+  Input: [94mtzaziki[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mAlternative spelling[0m
+  Input: [94mmensaf[0m
+  Result: Added 1x Jordanian Mansaf to cart
+
+[92m✅ PASS[0m [1mAlternative spelling[0m
+  Input: [94mmansaaf[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+
+[92m✅ PASS[0m [1mAlternative spelling[0m
+  Input: [94mmansaff[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+
+[92m✅ PASS[0m [1mAussie - chicken mandi[0m
+  Input: [94mchook[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[92m✅ PASS[0m [1mCasual - lamb mandi[0m
+  Input: [94mjust lamb[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[1m======================================================================[0m
+[1mCATEGORY 5: COMPLEX ORDERS[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1mAdd lamb with both addons[0m
+  Input: [94mlamb mandi with nuts and sultanas[0m
+  Result: Added 1x Lamb Mandi with nuts and sultanas plus sultanas, nuts to cart
+
+[92m✅ PASS[0m [1mAdd 2 chickens[0m
+  Input: [94m2 chicken mandis[0m
+  Result: Added 2x Chicken Mandi to cart
+
+[91m❌ FAIL[0m [1mAdd mansaf with extra[0m
+  Input: [94mmansaf with extra jameed[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mAdd drinks[0m
+  Input: [94m3 cokes and 2 waters[0m
+  Result: Added 3x Bottle of Water to cart
+
+[92m✅ PASS[0m [1mGet cart state[0m
+  Input: [94mgetCartState[0m
+  Result: Success
+  Expected: Should have 4-5 items
+
+[92m✅ PASS[0m [1mPrice cart[0m
+  Input: [94mpriceCart[0m
+  Result: Total: $86.00 (inc. $7.82 GST)
+  Expected: Should calculate total with GST
+
+[1m======================================================================[0m
+[1mCATEGORY 6: EDGE CASES & ERROR HANDLING[0m
+[1m======================================================================[0m
+
+[91m❌ FAIL[0m [1mShould gracefully fail - not on menu[0m
+  Input: [94mburger[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mShould gracefully fail - not on menu[0m
+  Input: [94mpizza[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mShould fail - empty description[0m
+  Input: [94m[0m
+  Error: [91mdescription is required[0m
+
+[91m❌ FAIL[0m [1mVague - might fail or match mansaf[0m
+  Input: [94mthe thing with yogurt[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mShould match lamb mandi via synonym[0m
+  Input: [94mlamb[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mShould match chicken mandi via synonym[0m
+  Input: [94mchicken[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[92m✅ PASS[0m [1mCasual speech[0m
+  Input: [94mgimme a lamb[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mPolite phrasing[0m
+  Input: [94mcan I get the chicken please[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[1m======================================================================[0m
+[1mCATEGORY 7: FULL ORDER FLOW[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1mClear cart[0m
+  Input: [94mclearCart[0m
+  Result: Cart cleared (7 items removed)
+
+[92m✅ PASS[0m [1mCheck if open[0m
+  Input: [94mcheckOpen[0m
+  Result: We're open! Hours today: 13:00-21:00.
+
+[92m✅ PASS[0m [1mGet caller context[0m
+  Input: [94mgetCallerSmartContext[0m
+  Result: Success
+
+[92m✅ PASS[0m [1mAdd lamb mandi[0m
+  Input: [94mlamb mandi with nuts[0m
+  Result: Added 1x Lamb Mandi with nuts plus nuts to cart
+
+[91m❌ FAIL[0m [1mAdd coke[0m
+  Input: [94mcoke[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mReview cart[0m
+  Input: [94mgetCartState[0m
+  Result: Success
+
+[92m✅ PASS[0m [1mPrice cart[0m
+  Input: [94mpriceCart[0m
+  Result: Total: $31.00 (inc. $2.82 GST)
+
+[92m✅ PASS[0m [1mGet order summary[0m
+  Input: [94mgetOrderSummary[0m
+  Result: Success
+
+[92m✅ PASS[0m [1mEstimate ready time[0m
+  Input: [94mestimateReadyTime[0m
+  Result: Your order will be ready in about 17 minutes (2:38 PM)
+
+[92m✅ PASS[0m [1mCreate order[0m
+  Input: [94mcreateOrder[0m
+  Result: Order #002 confirmed! Total $31.00, ready in about 17 minutes (2:38 PM)
+
+[1m======================================================================[0m
+[1mCATEGORY 8: MISSING PRONUNCIATION VARIANTS (Expected to Fail)[0m
+[1m======================================================================[0m
+
+[92m✅ PASS[0m [1mAustralian accent - mansaf[0m
+  Input: [94mmahn-sahf[0m
+  Result: Added 1x Jordanian Mansaf to cart
+
+[92m✅ PASS[0m [1mAustralian accent - lamb mandi[0m
+  Input: [94mlammondy[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mShort form - lamb mandi[0m
+  Input: [94mlam[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mMiddle Eastern - mansaf[0m
+  Input: [94mman-saaf[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+
+[91m❌ FAIL[0m [1mPhonetic - jameed[0m
+  Input: [94mjah-meed[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[91m❌ FAIL[0m [1mAlternative - jameed[0m
+  Input: [94mjah-meet[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mFast speech - lamb mandi[0m
+  Input: [94mlmandi[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mFast speech - mansaf[0m
+  Input: [94mmsaf[0m
+  Result: Added 1x Jordanian Mansaf plus extra rice mansaf to cart
+
+[92m✅ PASS[0m [1mFast casual - chicken mandi[0m
+  Input: [94mgimme chook[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[91m❌ FAIL[0m [1mMishear - mansaf[0m
+  Input: [94mman sack[0m
+  Error: [91mI didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?[0m
+
+[92m✅ PASS[0m [1mMishear - mansaf[0m
+  Input: [94mman staff[0m
+  Result: Added 1x Jordanian Mansaf to cart
+
+[92m✅ PASS[0m [1mMishear - chicken mandi[0m
+  Input: [94mchicken monday[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[92m✅ PASS[0m [1mDescriptive - mansaf[0m
+  Input: [94mthe lamb with yogurt[0m
+  Result: Added 1x Lamb Mandi to cart
+
+[92m✅ PASS[0m [1mDescriptive - lamb mandi[0m
+  Input: [94mlamb on rice[0m
+  Result: Added 1x Lamb Mandi plus rice to cart
+
+[92m✅ PASS[0m [1mDescriptive - chicken mandi[0m
+  Input: [94mhalf chicken[0m
+  Result: Added 1x Chicken Mandi to cart
+
+[1m======================================================================[0m
+[1mTEST SUMMARY REPORT[0m
+[1m======================================================================[0m
+
+[1mOverall Results:[0m
+  Total Tests: 76
+  [92mPassed: 57[0m
+  [91mFailed: 19[0m
+  [1mSuccess Rate: 75.0%[0m
+
+[1mResults by Category:[0m
+  [93m⚠️[0m Basic Items: 6/8 (75.0%)
+  [93m⚠️[0m Quantities: 3/4 (75.0%)
+  [93m⚠️[0m Add-ons & Extras: 6/7 (85.7%)
+  [91m❌[0m Pronunciations: 12/18 (66.7%)
+  [93m⚠️[0m Complex Order: 5/6 (83.3%)
+  [91m❌[0m Edge Cases: 4/8 (50.0%)
+  [92m✅[0m Full Flow: 9/10 (90.0%)
+  [93m⚠️[0m Missing Variants: 12/15 (80.0%)
+
+[1m[91mFailed Tests:[0m
+
+  1. coke
+     Input: coke
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  2. sprite
+     Input: sprite
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  3. 5 cokes
+     Input: 5 cokes
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  4. mansaf with extra jameed
+     Input: mansaf with extra jameed
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  5. Alternative mansaf
+     Input: mun saf
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  6. Typo - nuts
+     Input: nutz
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  7. Synonym - sultanas
+     Input: raisins
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  8. Typo - raisins/sultanas
+     Input: raisens
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  9. Synonym - tzatziki
+     Input: garlic yogurt
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  10. Typo - tzatziki
+     Input: tzaziki
+     Error: I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?
+
+  ... and 9 more failures
+
+[1mProduction Readiness Assessment:[0m
+  [93m⚠️  FAIR - Significant improvements needed[0m
+
+[92m📄 Detailed report saved to: /home/user/Claude/stuffed-lamb/test_results.json[0m

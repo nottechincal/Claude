@@ -1,0 +1,1574 @@
+{
+  "timestamp": "2025-11-20T03:21:13.024831",
+  "total_tests": 76,
+  "passed": 57,
+  "failed": 19,
+  "success_rate": 75.0,
+  "results": [
+    {
+      "category": "Basic Items",
+      "test": "lamb mandi",
+      "input": "lamb mandi",
+      "expected": "Should add Lamb Mandi ($28)",
+      "result": {
+        "cartSize": 14,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Basic Items",
+      "test": "chicken mandi",
+      "input": "chicken mandi",
+      "expected": "Should add Chicken Mandi ($23)",
+      "result": {
+        "cartSize": 15,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Basic Items",
+      "test": "mansaf",
+      "input": "mansaf",
+      "expected": "Should add Jordanian Mansaf ($33)",
+      "result": {
+        "cartSize": 16,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Basic Items",
+      "test": "soup of the day",
+      "input": "soup of the day",
+      "expected": "Should add Soup ($7)",
+      "result": {
+        "cartSize": 17,
+        "item": {
+          "addons": [],
+          "basePrice": 7.0,
+          "category": "soups",
+          "extras": [],
+          "id": "SOUP_DAY",
+          "name": "Soup of the Day",
+          "price": 7.0,
+          "quantity": 1,
+          "total_price": 7.0
+        },
+        "message": "Added 1x Soup of the Day to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Basic Items",
+      "test": "soft drink",
+      "input": "soft drink",
+      "expected": "Should add Soft Drink ($3)",
+      "result": {
+        "cartSize": 18,
+        "item": {
+          "addons": [],
+          "basePrice": 3.0,
+          "category": "unknown",
+          "extras": [],
+          "id": "SOFT_DRINK",
+          "name": "Soft Drink (Can)",
+          "price": 3.0,
+          "quantity": 1,
+          "total_price": 3.0
+        },
+        "message": "Added 1x Soft Drink (Can) to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Basic Items",
+      "test": "bottle of water",
+      "input": "bottle of water",
+      "expected": "Should add Water ($2)",
+      "result": {
+        "cartSize": 19,
+        "item": {
+          "addons": [],
+          "basePrice": 2.0,
+          "category": "unknown",
+          "extras": [],
+          "id": "WATER",
+          "name": "Bottle of Water",
+          "price": 2.0,
+          "quantity": 1,
+          "total_price": 2.0
+        },
+        "message": "Added 1x Bottle of Water to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Basic Items",
+      "test": "coke",
+      "input": "coke",
+      "expected": "Should add Soft Drink - Coke",
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Basic Items",
+      "test": "sprite",
+      "input": "sprite",
+      "expected": "Should add Soft Drink - Sprite",
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Quantities",
+      "test": "2 lamb mandis",
+      "input": "2 lamb mandis",
+      "expected": "Should add 2x Lamb Mandi",
+      "result": {
+        "cartSize": 20,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 2,
+          "total_price": 56.0
+        },
+        "message": "Added 2x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Quantities",
+      "test": "three chicken mandi",
+      "input": "three chicken mandi",
+      "expected": "Should add 3x Chicken Mandi",
+      "result": {
+        "cartSize": 21,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 3,
+          "total_price": 69.0
+        },
+        "message": "Added 3x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Quantities",
+      "test": "5 cokes",
+      "input": "5 cokes",
+      "expected": "Should add 5x Soft Drink",
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Quantities",
+      "test": "one mansaf",
+      "input": "one mansaf",
+      "expected": "Should add 1x Mansaf",
+      "result": {
+        "cartSize": 22,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "lamb mandi with nuts",
+      "input": "lamb mandi with nuts",
+      "expected": "Should add nuts addon (+$2)",
+      "result": {
+        "cartSize": 23,
+        "item": {
+          "addons": [
+            "nuts"
+          ],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "nuts"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 31.0,
+          "quantity": 1,
+          "total_price": 31.0
+        },
+        "message": "Added 1x Lamb Mandi with nuts plus nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "lamb mandi with sultanas",
+      "input": "lamb mandi with sultanas",
+      "expected": "Should add sultanas addon (+$2)",
+      "result": {
+        "cartSize": 24,
+        "item": {
+          "addons": [
+            "sultanas"
+          ],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "sultanas"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 31.0,
+          "quantity": 1,
+          "total_price": 31.0
+        },
+        "message": "Added 1x Lamb Mandi with sultanas plus sultanas to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "lamb mandi with nuts and sultanas",
+      "input": "lamb mandi with nuts and sultanas",
+      "expected": "Should add both addons (+$4)",
+      "result": {
+        "cartSize": 25,
+        "item": {
+          "addons": [
+            "nuts",
+            "sultanas"
+          ],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "sultanas",
+            "nuts"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 34.0,
+          "quantity": 1,
+          "total_price": 34.0
+        },
+        "message": "Added 1x Lamb Mandi with nuts and sultanas plus sultanas, nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "chicken mandi add nuts",
+      "input": "chicken mandi add nuts",
+      "expected": "Should add nuts to chicken",
+      "result": {
+        "cartSize": 26,
+        "item": {
+          "addons": [
+            "nuts"
+          ],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [
+            "extra rice on plate",
+            "chilli mandi sauce",
+            "green chilli",
+            "sultanas",
+            "tzatziki",
+            "potato",
+            "bread",
+            "nuts"
+          ],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 37.0,
+          "quantity": 1,
+          "total_price": 37.0
+        },
+        "message": "Added 1x Chicken Mandi with nuts plus extra rice on plate, chilli mandi sauce, green chilli, sultanas, tzatziki, potato, bread, nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "mansaf with extra jameed",
+      "input": "mansaf with extra jameed",
+      "expected": "Should add extra jameed (+$8.40)",
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "lamb mandi with extra rice on plate",
+      "input": "lamb mandi with extra rice on plate",
+      "expected": "Should add extra rice (+$5)",
+      "result": {
+        "cartSize": 27,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "extra rice on plate",
+            "chilli mandi sauce",
+            "green chilli",
+            "sultanas",
+            "tzatziki",
+            "potato",
+            "bread",
+            "nuts"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 40.0,
+          "quantity": 1,
+          "total_price": 40.0
+        },
+        "message": "Added 1x Lamb Mandi plus extra rice on plate, chilli mandi sauce, green chilli, sultanas, tzatziki, potato, bread, nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Add-ons & Extras",
+      "test": "chicken with extra tzatziki",
+      "input": "chicken with extra tzatziki",
+      "expected": "Should add extra tzatziki (+$1)",
+      "result": {
+        "cartSize": 28,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [
+            "extra rice on plate",
+            "chilli mandi sauce",
+            "green chilli",
+            "sultanas",
+            "tzatziki",
+            "potato",
+            "bread",
+            "nuts"
+          ],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 35.0,
+          "quantity": 1,
+          "total_price": 35.0
+        },
+        "message": "Added 1x Chicken Mandi plus extra rice on plate, chilli mandi sauce, green chilli, sultanas, tzatziki, potato, bread, nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Australian accent - Mansaf",
+      "input": "man saff",
+      "expected": null,
+      "result": {
+        "cartSize": 29,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative mansaf",
+      "input": "mun saf",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Dropped 'b' - lamb",
+      "input": "lam mandi",
+      "expected": null,
+      "result": {
+        "cartSize": 30,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative spelling",
+      "input": "lamb mondi",
+      "expected": null,
+      "result": {
+        "cartSize": 31,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative spelling",
+      "input": "lamb mandy",
+      "expected": null,
+      "result": {
+        "cartSize": 32,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Typo - chicken",
+      "input": "chikin mandi",
+      "expected": null,
+      "result": {
+        "cartSize": 33,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Aussie slang - chicken",
+      "input": "chook mandi",
+      "expected": null,
+      "result": {
+        "cartSize": 34,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative spelling",
+      "input": "chicken mondy",
+      "expected": null,
+      "result": {
+        "cartSize": 35,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Typo - nuts",
+      "input": "nutz",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Synonym - sultanas",
+      "input": "raisins",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Typo - raisins/sultanas",
+      "input": "raisens",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Synonym - tzatziki",
+      "input": "garlic yogurt",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Typo - tzatziki",
+      "input": "tzaziki",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative spelling",
+      "input": "mensaf",
+      "expected": null,
+      "result": {
+        "cartSize": 36,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 33.0,
+          "quantity": 1,
+          "total_price": 33.0
+        },
+        "message": "Added 1x Jordanian Mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative spelling",
+      "input": "mansaaf",
+      "expected": null,
+      "result": {
+        "cartSize": 37,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Alternative spelling",
+      "input": "mansaff",
+      "expected": null,
+      "result": {
+        "cartSize": 38,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Aussie - chicken mandi",
+      "input": "chook",
+      "expected": null,
+      "result": {
+        "cartSize": 39,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Pronunciations",
+      "test": "Casual - lamb mandi",
+      "input": "just lamb",
+      "expected": null,
+      "result": {
+        "cartSize": 40,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Complex Order",
+      "test": "Add lamb with both addons",
+      "input": "lamb mandi with nuts and sultanas",
+      "expected": null,
+      "result": {
+        "cartSize": 1,
+        "item": {
+          "addons": [
+            "nuts",
+            "sultanas"
+          ],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "sultanas",
+            "nuts"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 34.0,
+          "quantity": 1,
+          "total_price": 34.0
+        },
+        "message": "Added 1x Lamb Mandi with nuts and sultanas plus sultanas, nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Complex Order",
+      "test": "Add 2 chickens",
+      "input": "2 chicken mandis",
+      "expected": null,
+      "result": {
+        "cartSize": 2,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 2,
+          "total_price": 46.0
+        },
+        "message": "Added 2x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Complex Order",
+      "test": "Add mansaf with extra",
+      "input": "mansaf with extra jameed",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Complex Order",
+      "test": "Add drinks",
+      "input": "3 cokes and 2 waters",
+      "expected": null,
+      "result": {
+        "cartSize": 3,
+        "item": {
+          "addons": [],
+          "basePrice": 2.0,
+          "category": "unknown",
+          "extras": [],
+          "id": "WATER",
+          "name": "Bottle of Water",
+          "price": 2.0,
+          "quantity": 3,
+          "total_price": 6.0
+        },
+        "message": "Added 3x Bottle of Water to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Complex Order",
+      "test": "Get cart state",
+      "input": "getCartState",
+      "expected": "Should have 4-5 items",
+      "result": {
+        "cart": [
+          {
+            "addons": [
+              "nuts",
+              "sultanas"
+            ],
+            "basePrice": 28.0,
+            "category": "mains",
+            "extras": [
+              "sultanas",
+              "nuts"
+            ],
+            "id": "LAMB_MANDI",
+            "name": "Lamb Mandi",
+            "price": 34.0,
+            "quantity": 1,
+            "total_price": 34.0
+          },
+          {
+            "addons": [],
+            "basePrice": 23.0,
+            "category": "mains",
+            "extras": [],
+            "id": "CHICKEN_MANDI",
+            "name": "Chicken Mandi",
+            "price": 23.0,
+            "quantity": 2,
+            "total_price": 46.0
+          },
+          {
+            "addons": [],
+            "basePrice": 2.0,
+            "category": "unknown",
+            "extras": [],
+            "id": "WATER",
+            "name": "Bottle of Water",
+            "price": 2.0,
+            "quantity": 3,
+            "total_price": 6.0
+          }
+        ],
+        "formattedItems": [
+          "0. Lamb Mandi, with Nuts, Sultanas, extras: Sultanas, Nuts - $34.00",
+          "1. 2x Chicken Mandi - $46.00",
+          "2. 3x Bottle Of Water - $6.00"
+        ],
+        "isEmpty": false,
+        "itemCount": 3,
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Complex Order",
+      "test": "Price cart",
+      "input": "priceCart",
+      "expected": "Should calculate total with GST",
+      "result": {
+        "gst": 7.82,
+        "itemCount": 3,
+        "message": "Total: $86.00 (inc. $7.82 GST)",
+        "ok": true,
+        "subtotal": 78.18,
+        "total": 86.0
+      },
+      "success": true
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Should gracefully fail - not on menu",
+      "input": "burger",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Should gracefully fail - not on menu",
+      "input": "pizza",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Should fail - empty description",
+      "input": "",
+      "expected": null,
+      "result": {
+        "error": "description is required",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Vague - might fail or match mansaf",
+      "input": "the thing with yogurt",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Should match lamb mandi via synonym",
+      "input": "lamb",
+      "expected": null,
+      "result": {
+        "cartSize": 4,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Should match chicken mandi via synonym",
+      "input": "chicken",
+      "expected": null,
+      "result": {
+        "cartSize": 5,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Casual speech",
+      "input": "gimme a lamb",
+      "expected": null,
+      "result": {
+        "cartSize": 6,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Edge Cases",
+      "test": "Polite phrasing",
+      "input": "can I get the chicken please",
+      "expected": null,
+      "result": {
+        "cartSize": 7,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Clear cart",
+      "input": "clearCart",
+      "expected": null,
+      "result": {
+        "message": "Cart cleared (7 items removed)",
+        "ok": true,
+        "previousCartSize": 7
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Check if open",
+      "input": "checkOpen",
+      "expected": null,
+      "result": {
+        "closeTime": "21:00",
+        "currentTime": "14:21",
+        "isOpen": true,
+        "message": "We're open! Hours today: 13:00-21:00.",
+        "ok": true,
+        "openTime": "13:00"
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Get caller context",
+      "input": "getCallerSmartContext",
+      "expected": null,
+      "result": {
+        "canRepeatOrder": false,
+        "greetingSuggestion": "Welcome to Stuffed Lamb!",
+        "isReturningCustomer": false,
+        "mostOrderedItem": null,
+        "ok": true,
+        "orderCount": 0,
+        "orderHistory": [],
+        "phone": "+61412345678"
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Add lamb mandi",
+      "input": "lamb mandi with nuts",
+      "expected": null,
+      "result": {
+        "cartSize": 1,
+        "item": {
+          "addons": [
+            "nuts"
+          ],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "nuts"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 31.0,
+          "quantity": 1,
+          "total_price": 31.0
+        },
+        "message": "Added 1x Lamb Mandi with nuts plus nuts to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Add coke",
+      "input": "coke",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Full Flow",
+      "test": "Review cart",
+      "input": "getCartState",
+      "expected": null,
+      "result": {
+        "cart": [
+          {
+            "addons": [
+              "nuts"
+            ],
+            "basePrice": 28.0,
+            "category": "mains",
+            "extras": [
+              "nuts"
+            ],
+            "id": "LAMB_MANDI",
+            "name": "Lamb Mandi",
+            "price": 31.0,
+            "quantity": 1,
+            "total_price": 31.0
+          }
+        ],
+        "formattedItems": [
+          "0. Lamb Mandi, with Nuts, extras: Nuts - $31.00"
+        ],
+        "isEmpty": false,
+        "itemCount": 1,
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Price cart",
+      "input": "priceCart",
+      "expected": null,
+      "result": {
+        "gst": 2.82,
+        "itemCount": 1,
+        "message": "Total: $31.00 (inc. $2.82 GST)",
+        "ok": true,
+        "subtotal": 28.18,
+        "total": 31.0
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Get order summary",
+      "input": "getOrderSummary",
+      "expected": null,
+      "result": {
+        "itemCount": 1,
+        "ok": true,
+        "summary": "1. Lamb Mandi, with Nuts, extras: Nuts - $31.00\n\nTotal: $31.00",
+        "total": 31.0
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Estimate ready time",
+      "input": "estimateReadyTime",
+      "expected": null,
+      "result": {
+        "estimatedMinutes": 17,
+        "message": "Your order will be ready in about 17 minutes (2:38 PM)",
+        "ok": true,
+        "readyAt": "2:38 PM",
+        "readyAtIso": "2025-11-20T14:38:11.415078+11:00"
+      },
+      "success": true
+    },
+    {
+      "category": "Full Flow",
+      "test": "Create order",
+      "input": "createOrder",
+      "expected": null,
+      "result": {
+        "displayOrderNumber": "#002",
+        "message": "Order #002 confirmed! Total $31.00, ready in about 17 minutes (2:38 PM)",
+        "ok": true,
+        "orderNumber": "20251120-002",
+        "readyAt": "2:38 PM",
+        "total": 31.0
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Australian accent - mansaf",
+      "input": "mahn-sahf",
+      "expected": null,
+      "result": {
+        "cartSize": 1,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 33.0,
+          "quantity": 1,
+          "total_price": 33.0
+        },
+        "message": "Added 1x Jordanian Mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Australian accent - lamb mandi",
+      "input": "lammondy",
+      "expected": null,
+      "result": {
+        "cartSize": 2,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Short form - lamb mandi",
+      "input": "lam",
+      "expected": null,
+      "result": {
+        "cartSize": 3,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Middle Eastern - mansaf",
+      "input": "man-saaf",
+      "expected": null,
+      "result": {
+        "cartSize": 4,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Phonetic - jameed",
+      "input": "jah-meed",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Alternative - jameed",
+      "input": "jah-meet",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Fast speech - lamb mandi",
+      "input": "lmandi",
+      "expected": null,
+      "result": {
+        "cartSize": 5,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Fast speech - mansaf",
+      "input": "msaf",
+      "expected": null,
+      "result": {
+        "cartSize": 6,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [
+            "extra rice mansaf"
+          ],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 41.4,
+          "quantity": 1,
+          "total_price": 41.4
+        },
+        "message": "Added 1x Jordanian Mansaf plus extra rice mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Fast casual - chicken mandi",
+      "input": "gimme chook",
+      "expected": null,
+      "result": {
+        "cartSize": 7,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Mishear - mansaf",
+      "input": "man sack",
+      "expected": null,
+      "result": {
+        "error": "I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?",
+        "ok": false
+      },
+      "success": false
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Mishear - mansaf",
+      "input": "man staff",
+      "expected": null,
+      "result": {
+        "cartSize": 8,
+        "item": {
+          "addons": [],
+          "basePrice": 33.0,
+          "category": "mains",
+          "extras": [],
+          "id": "MANSAF",
+          "name": "Jordanian Mansaf",
+          "price": 33.0,
+          "quantity": 1,
+          "total_price": 33.0
+        },
+        "message": "Added 1x Jordanian Mansaf to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Mishear - chicken mandi",
+      "input": "chicken monday",
+      "expected": null,
+      "result": {
+        "cartSize": 9,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Descriptive - mansaf",
+      "input": "the lamb with yogurt",
+      "expected": null,
+      "result": {
+        "cartSize": 10,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 28.0,
+          "quantity": 1,
+          "total_price": 28.0
+        },
+        "message": "Added 1x Lamb Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Descriptive - lamb mandi",
+      "input": "lamb on rice",
+      "expected": null,
+      "result": {
+        "cartSize": 11,
+        "item": {
+          "addons": [],
+          "basePrice": 28.0,
+          "category": "mains",
+          "extras": [
+            "rice"
+          ],
+          "id": "LAMB_MANDI",
+          "name": "Lamb Mandi",
+          "price": 35.0,
+          "quantity": 1,
+          "total_price": 35.0
+        },
+        "message": "Added 1x Lamb Mandi plus rice to cart",
+        "ok": true
+      },
+      "success": true
+    },
+    {
+      "category": "Missing Variants",
+      "test": "Descriptive - chicken mandi",
+      "input": "half chicken",
+      "expected": null,
+      "result": {
+        "cartSize": 12,
+        "item": {
+          "addons": [],
+          "basePrice": 23.0,
+          "category": "mains",
+          "extras": [],
+          "id": "CHICKEN_MANDI",
+          "name": "Chicken Mandi",
+          "price": 23.0,
+          "quantity": 1,
+          "total_price": 23.0
+        },
+        "message": "Added 1x Chicken Mandi to cart",
+        "ok": true
+      },
+      "success": true
+    }
+  ]
+}

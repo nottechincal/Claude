@@ -1,68 +1,193 @@
 {
   "items": {
-    "mansaf": [
+    "jordanian mansaf": [
       "man saff",
       "mun saf",
-      "jordanian lamb"
+      "man-saf",
+      "jordanian lamb",
+      "mansaaf",
+      "mensaf",
+      "mansov",
+      "man sack",
+      "man staff",
+      "man-staff",
+      "mahn-sahf",
+      "mahn-saff",
+      "man-saaf",
+      "man-sef",
+      "msaf",
+      "mansf",
+      "traditional lamb",
+      "lamb with yogurt",
+      "jordanian dish",
+      "jameed dish"
     ],
     "lamb mandi": [
       "lam mandi",
       "lamb mondi",
-      "lamb mandy"
+      "lamb mandy",
+      "lamb monday",
+      "lammondy",
+      "lam mandy",
+      "lmandi",
+      "lamb on rice",
+      "spiced lamb",
+      "lamb rice",
+      "just lamb",
+      "the lamb"
     ],
     "chicken mandi": [
       "chikin mandi",
       "chook mandi",
-      "chicken mondy"
+      "chicken mondy",
+      "chicken monday",
+      "chook monday",
+      "chook mondy",
+      "chick mandi",
+      "chicken on rice",
+      "spiced chicken",
+      "half chicken",
+      "the chicken",
+      "just chicken"
     ],
-    "soft drink": [
+    "soft drink (can)": [
       "sof drink",
       "soda",
-      "coka"
+      "coka",
+      "coke",
+      "coca cola",
+      "coca-cola",
+      "sprite",
+      "lemonade",
+      "fanta",
+      "fanta orange",
+      "l&p",
+      "l and p",
+      "lnp",
+      "lemon paeroa",
+      "lemon and paeroa",
+      "pop",
+      "fizzy drink",
+      "cold drink",
+      "can of coke",
+      "can of sprite",
+      "can of fanta",
+      "softie"
     ],
     "bottle of water": [
       "bottled water",
       "water bottle",
-      "wodder"
+      "wodder",
+      "worder",
+      "just water",
+      "plain water",
+      "still water",
+      "bottle water",
+      "h2o",
+      "aqua"
+    ],
+    "soup of the day": [
+      "soup",
+      "daily soup",
+      "todays soup",
+      "the soup",
+      "soupy",
+      "soup special",
+      "what soup"
     ]
   },
   "modifiers": {
     "nuts": [
       "nutz",
-      "mixed nuts"
+      "mixed nuts",
+      "nut",
+      "with nuts",
+      "add nuts",
+      "extra nuts",
+      "some nuts",
+      "nutty",
+      "tree nuts"
     ],
     "sultanas": [
       "raisins",
-      "raisens"
+      "raisens",
+      "sultana",
+      "dried grapes",
+      "raisin",
+      "sultans",
+      "with sultanas",
+      "add sultanas"
     ],
     "extra rice on plate": [
       "rice on the plate",
-      "rice on top"
+      "rice on top",
+      "extra rice on the plate",
+      "more rice on plate",
+      "rice on it",
+      "additional rice",
+      "rice on dish"
     ],
     "extra rice mansaf": [
       "extra rice",
-      "more rice"
+      "more rice",
+      "mansaf rice",
+      "rice for mansaf",
+      "additional rice",
+      "extra mansaf rice"
     ],
     "extra jameed": [
       "extra jameet",
-      "extra sauce"
+      "extra sauce",
+      "more jameed",
+      "more sauce",
+      "extra yogurt sauce",
+      "more yogurt",
+      "jah-meed",
+      "jah-meet",
+      "jameet",
+      "extra yoghurt",
+      "more yoghurt",
+      "jameed sauce",
+      "yogurt sauce"
     ],
     "green chilli": [
       "green chili",
       "green chile",
-      "chilli"
+      "chilli",
+      "green pepper",
+      "hot pepper",
+      "chili",
+      "chile",
+      "green hot pepper"
     ],
     "potato": [
       "patata",
-      "potatoe"
+      "potatoe",
+      "potatoes",
+      "spud",
+      "tater"
     ],
     "tzatziki": [
       "garlic yogurt",
-      "tzaziki"
+      "tzaziki",
+      "tzatziki sauce",
+      "garlic sauce",
+      "yogurt sauce",
+      "yoghurt sauce",
+      "zaziki",
+      "tsatsiki",
+      "cucumber yogurt",
+      "garlic yoghurt"
     ],
     "chilli mandi sauce": [
       "chili mandy sauce",
-      "hot mandi sauce"
+      "hot mandi sauce",
+      "mandi chilli",
+      "spicy sauce",
+      "hot sauce",
+      "chili sauce",
+      "chilli sauce",
+      "mandi sauce"
     ]
   }
 }

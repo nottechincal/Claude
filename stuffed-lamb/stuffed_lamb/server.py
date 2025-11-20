@@ -468,7 +468,9 @@ def build_menu_indexes() -> None:
         canonical_name = normalize_text(canonical)
         item_id = item_name_to_id.get(canonical_name)
         if not item_id:
+            logger.warning(f"Pronunciation entry '{canonical}' (normalized: '{canonical_name}') not found in menu items. Available: {list(item_name_to_id.keys())}")
             continue
+        logger.debug(f"Registering {len(variants)} pronunciation variants for '{canonical}': {variants[:5]}...")
         for variant in variants:
             _register_item_variant(item_id, variant)
 
@@ -1376,6 +1378,45 @@ def _text_mentions_modifier(text: str, canonical_name: str) -> bool:
     return False
 
 
+def _check_if_modifier_only(description: str) -> Optional[str]:
+    """
+    Check if user is trying to order a modifier/add-on by itself.
+    Returns the modifier name if matched, None otherwise.
+    """
+    # Check against all known modifiers and their variants
+    all_modifiers = {}
+
+    # Get modifiers from menu
+    modifiers = MENU.get('modifiers', {})
+    for modifier_group in modifiers.values():
+        if isinstance(modifier_group, list):
+            for modifier in modifier_group:
+                canonical = modifier.get('name', '')
+                if canonical:
+                    all_modifiers[normalize_text(canonical)] = canonical
+
+    # Add pronunciation variants for modifiers
+    pronunciation_modifiers = PRONUNCIATIONS.get('modifiers', {}) or {}
+    for canonical, variants in pronunciation_modifiers.items():
+        canonical_norm = normalize_text(canonical)
+        if canonical_norm not in all_modifiers:
+            all_modifiers[canonical_norm] = canonical
+        for variant in variants:
+            variant_norm = normalize_text(variant)
+            all_modifiers[variant_norm] = canonical
+
+    # Check for exact match
+    if description in all_modifiers:
+        return all_modifiers[description]
+
+    # Check for fuzzy match
+    match = fuzzy_match(description, list(all_modifiers.keys()), threshold=78)
+    if match:
+        return all_modifiers[match]
+
+    return None
+
+
 def _match_item_from_description(description: str) -> Optional[str]:
     normalized_description = normalize_text(description)
     if not normalized_description:
@@ -1621,10 +1662,17 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
 
         item_id = _match_item_from_description(desc_lower)
         if not item_id:
+            # Check if they're trying to order a modifier/add-on by itself
+            modifier_match = _check_if_modifier_only(desc_lower)
+            if modifier_match:
+                record_metric('quick_add_failure_total')
+                logger.info(f"Modifier-only request detected: {modifier_match}")
+                return {"ok": False, "error": f"Would you like to add {modifier_match} to a dish? Try 'Lamb Mandi with {modifier_match}' or 'Chicken Mandi with {modifier_match}'!"}
+
             record_metric('quick_add_failure_total')
             record_metric('menu_miss_total')
             logger.warning(f"QuickAddItem unmatched description: {description}")
-            return {"ok": False, "error": f"I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?"}
+            return {"ok": False, "error": f"I didn't catch that. We specialize in Middle Eastern cuisine - try our Jordanian Mansaf ($33), Lamb Mandi ($28), or Chicken Mandi ($23). We also have soup and drinks!"}
 
         matched_item = _find_menu_item_by_id(item_id)
         if not matched_item:

@@ -18,8 +18,18 @@ import logging
 import os
 import sqlite3
 import re
+import hmac
+import smtplib
+import threading
+import time
+import unicodedata
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from email.message import EmailMessage
+from functools import wraps
+from queue import Empty, Queue
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+
 import pytz
 
 # Load environment variables from .env file
@@ -121,30 +131,63 @@ except ImportError:
 
 app = Flask(__name__)
 
-# CORS configuration - allow broader access for testing
-# CORS(app) allows all origins, methods, and headers (good for testing)
-# For production, set ALLOWED_ORIGINS in .env and configure CORS more restrictively
-CORS(app)
+# CORS configuration
+allowed_origins = os.getenv('ALLOWED_ORIGINS', '*')
+if allowed_origins.strip() == '*':
+    CORS(app)
+else:
+    origin_list = [origin.strip() for origin in allowed_origins.split(',') if origin.strip()]
+    if origin_list:
+        CORS(app, origins=origin_list, supports_credentials=True)
+    else:
+        CORS(app)
+
+
+class JsonFormatter(logging.Formatter):
+    """Structured logging formatter for consistent observability."""
+
+    def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
+        log_record = {
+            'timestamp': self.formatTime(record, self.datefmt),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+        }
+
+        # Attach any custom attributes for richer context
+        for attr in ('correlation_id', 'session_id', 'tool'):
+            value = getattr(record, attr, None)
+            if value:
+                log_record[attr] = value
+
+        if record.exc_info:
+            log_record['exc_info'] = self.formatException(record.exc_info)
+
+        return json.dumps(log_record, ensure_ascii=False)
+
 
 # Logging
-# Create logs directory if it doesn't exist
 os.makedirs('logs', exist_ok=True)
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/stuffed_lamb.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+_stream_handler = logging.StreamHandler()
+_file_handler = logging.FileHandler('logs/stuffed_lamb.log')
+_formatter = JsonFormatter()
+_stream_handler.setFormatter(_formatter)
+_file_handler.setFormatter(_formatter)
+
+logger = logging.getLogger('stuffed_lamb')
+logger.setLevel(logging.INFO)
+logger.addHandler(_stream_handler)
+logger.addHandler(_file_handler)
+logger.propagate = False
 
 # Paths
 # Get parent directory of stuffed_lamb package (go up one level to project root)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 MENU_FILE = os.path.join(DATA_DIR, 'menu.json')
+PRONUNCIATIONS_FILE = os.path.join(DATA_DIR, 'pronunciations.json')
+HOURS_FILE = os.path.join(DATA_DIR, 'hours.json')
 DB_FILE = os.path.join(DATA_DIR, 'orders.db')
 
 # Business constants
@@ -167,6 +210,33 @@ except pytz.exceptions.UnknownTimeZoneError:
 
 # Global menu
 MENU = {}
+PRONUNCIATIONS: Dict[str, Dict[str, List[str]]] = {"items": {}, "modifiers": {}}
+BUSINESS_HOURS: Dict[str, Any] = {}
+
+# NLP indexes populated after menu load
+ITEM_VARIANTS: Dict[str, Set[str]] = defaultdict(set)
+ITEM_VARIANT_LOOKUP: Dict[str, str] = {}
+MODIFIER_VARIANTS: Dict[str, Set[str]] = defaultdict(set)
+
+# Metrics & observability
+METRICS: Counter = Counter()
+METRIC_DESCRIPTIONS = {
+    'quick_add_requests_total': 'quickAddItem tool invocations',
+    'quick_add_success_total': 'quickAddItem parsed successfully',
+    'quick_add_failure_total': 'quickAddItem failures',
+    'menu_miss_total': 'Descriptions that failed to map to the menu',
+    'sms_success_total': 'Successful SMS sends',
+    'sms_failure_total': 'Failed SMS sends',
+    'webhook_auth_failures_total': 'Rejected webhook calls due to auth',
+    'notification_queue_retries_total': 'Notification job retries',
+}
+
+
+def record_metric(name: str, value: int = 1) -> None:
+    """Increment a Prometheus-style counter"""
+    if value == 0:
+        return
+    METRICS[name] += value
 
 # Session storage: Redis (production) or in-memory (fallback)
 SESSIONS = {}  # Fallback in-memory storage if Redis unavailable
@@ -178,6 +248,25 @@ MAX_SESSIONS = int(os.getenv('MAX_SESSIONS', '1000'))  # Max concurrent sessions
 # Will be initialized after SHOP_TIMEZONE is set
 LAST_CLEANUP = None
 CLEANUP_INTERVAL = timedelta(minutes=5)  # Run cleanup every 5 minutes
+
+# Security & notification controls
+WEBHOOK_SHARED_SECRET = os.getenv('WEBHOOK_SHARED_SECRET')
+ENABLE_SECONDARY_NOTIFICATIONS = os.getenv('ENABLE_SECONDARY_NOTIFICATIONS', 'false').strip().lower() in {'1', 'true', 'yes'}
+SMS_FAILOVER_THRESHOLD = int(os.getenv('SMS_FAILOVER_THRESHOLD', '3'))
+SMS_MAX_RETRIES = int(os.getenv('SMS_MAX_RETRIES', '3'))
+FAILOVER_NOTIFICATION_EMAIL = os.getenv('FAILOVER_NOTIFICATION_EMAIL')
+SMTP_HOST = os.getenv('SMTP_HOST')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '587'))
+SMTP_USERNAME = os.getenv('SMTP_USERNAME')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD')
+SMTP_USE_TLS = os.getenv('SMTP_USE_TLS', 'true').strip().lower() in {'1', 'true', 'yes'}
+
+# Notification queue infrastructure
+NOTIFICATION_QUEUE: "Queue[Dict[str, Any]]" = Queue()
+NOTIFICATION_STOP_EVENT = threading.Event()
+NOTIFICATION_WORKER: Optional[threading.Thread] = None
+SMS_FAILURE_STREAK = 0
+SMS_FAILURE_LOCK = threading.Lock()
 
 # Initialize Redis connection
 if REDIS_AVAILABLE:
@@ -293,7 +382,119 @@ def init_database():
 
     logger.info("Database initialized with performance indexes")
 
-# ==================== MENU ====================
+# ==================== MENU & CONFIG LOADING ====================
+
+def load_pronunciations() -> None:
+    """Load pronunciation dictionary for accent tolerance"""
+    global PRONUNCIATIONS
+    try:
+        with open(PRONUNCIATIONS_FILE, 'r', encoding='utf-8') as handle:
+            data = json.load(handle)
+            if isinstance(data, dict):
+                PRONUNCIATIONS = data
+            else:
+                raise ValueError("Pronunciation file must be a dictionary")
+        logger.info("Pronunciation dictionary loaded")
+    except FileNotFoundError:
+        PRONUNCIATIONS = {"items": {}, "modifiers": {}}
+        logger.warning("Pronunciation file not found; continue without accent hints")
+    except Exception as exc:
+        logger.error(f"Failed to load pronunciation dictionary: {exc}")
+        PRONUNCIATIONS = {"items": {}, "modifiers": {}}
+
+
+def load_hours_config() -> None:
+    """Load business hours configuration"""
+    global BUSINESS_HOURS
+    try:
+        with open(HOURS_FILE, 'r', encoding='utf-8') as handle:
+            BUSINESS_HOURS = json.load(handle)
+        logger.info("Business hours configuration loaded")
+    except FileNotFoundError:
+        logger.warning("Hours configuration missing; defaulting to open every day")
+        BUSINESS_HOURS = {}
+    except Exception as exc:
+        logger.error(f"Failed to load hours configuration: {exc}")
+        BUSINESS_HOURS = {}
+
+
+def _register_item_variant(item_id: str, phrase: str) -> None:
+    if not phrase:
+        return
+    normalized = normalize_text(phrase)
+    if not normalized:
+        return
+    ITEM_VARIANTS[item_id].add(normalized)
+    ITEM_VARIANT_LOOKUP[normalized] = item_id
+
+
+def _register_modifier_variant(canonical: str, phrase: str) -> None:
+    normalized_canonical = normalize_text(canonical)
+    normalized_phrase = normalize_text(phrase)
+    if not normalized_canonical or not normalized_phrase:
+        return
+    MODIFIER_VARIANTS[normalized_canonical].add(normalized_phrase)
+
+
+def build_menu_indexes() -> None:
+    """Create synonym/variant lookups for menu items and modifiers"""
+    ITEM_VARIANTS.clear()
+    ITEM_VARIANT_LOOKUP.clear()
+    MODIFIER_VARIANTS.clear()
+
+    categories = MENU.get('categories', {})
+    synonyms = MENU.get('synonyms', {})
+    item_name_to_id: Dict[str, str] = {}
+
+    for items in categories.values():
+        if not isinstance(items, list):
+            continue
+        for item in items:
+            item_id = item.get('id')
+            canonical_name = normalize_text(item.get('name', ''))
+            if not item_id or not canonical_name:
+                continue
+            item_name_to_id[canonical_name] = item_id
+            _register_item_variant(item_id, canonical_name)
+
+    for variant, canonical in synonyms.items():
+        canonical_name = normalize_text(str(canonical))
+        item_id = item_name_to_id.get(canonical_name)
+        if item_id:
+            _register_item_variant(item_id, variant)
+
+    pronunciation_items = PRONUNCIATIONS.get('items', {}) or {}
+    for canonical, variants in pronunciation_items.items():
+        canonical_name = normalize_text(canonical)
+        item_id = item_name_to_id.get(canonical_name)
+        if not item_id:
+            continue
+        for variant in variants:
+            _register_item_variant(item_id, variant)
+
+    modifiers = MENU.get('modifiers', {})
+    pronunciation_modifiers = PRONUNCIATIONS.get('modifiers', {}) or {}
+    for modifier_group in modifiers.values():
+        if not isinstance(modifier_group, list):
+            continue
+        for modifier in modifier_group:
+            canonical = modifier.get('name', '')
+            if not canonical:
+                continue
+            canonical_norm = normalize_text(canonical)
+            if not canonical_norm:
+                continue
+            _register_modifier_variant(canonical_norm, canonical)
+
+            for synonym, target in synonyms.items():
+                if normalize_text(str(target)) == canonical_norm:
+                    _register_modifier_variant(canonical_norm, synonym)
+
+            for variant in pronunciation_modifiers.get(canonical.lower(), []):
+                _register_modifier_variant(canonical_norm, variant)
+
+    logger.info("Menu indexes refreshed for NLP matching")
+
 
 def load_menu():
     """Load and validate menu from JSON file"""
@@ -312,6 +513,8 @@ def load_menu():
         for category in required_categories:
             if category not in categories:
                 logger.warning(f"Menu missing category: {category}")
+
+        build_menu_indexes()
 
         # Log menu stats
         total_items = sum(len(items) for items in categories.values() if isinstance(items, list))
@@ -341,6 +544,11 @@ def _find_menu_item_by_id(item_id: str) -> Optional[Dict]:
                 if item.get('id') == item_id:
                     return item
     return None
+
+
+# Load pronunciation and hours configuration at import time
+load_pronunciations()
+load_hours_config()
 
 # ==================== SESSION MANAGEMENT ====================
 
@@ -643,7 +851,9 @@ def normalize_text(text: str) -> str:
     """Normalize text for comparison"""
     if not text:
         return ""
-    return text.lower().strip()
+    text = unicodedata.normalize('NFKD', str(text))
+    text = ''.join(char for char in text if not unicodedata.combining(char))
+    return re.sub(r'\s+', ' ', text.lower()).strip()
 
 def fuzzy_match(text: str, choices: List[str], threshold: int = 80) -> Optional[str]:
     """
@@ -657,20 +867,24 @@ def fuzzy_match(text: str, choices: List[str], threshold: int = 80) -> Optional[
         return None
 
     text = normalize_text(text)
-    # Extract word tokens from text for better matching
-    words = text.split()
-
     best_match = None
     best_score = 0
 
+    # First attempt using partial ratio on the entire phrase
+    result = process.extractOne(text, choices, scorer=fuzz.partial_ratio)
+    if result and result[1] >= threshold:
+        best_match = result[0]
+        best_score = result[1]
+
+    # Fallback to word-level comparison for very short aliases
+    words = text.split()
     for word in words:
-        if len(word) < 3:  # Skip very short words
+        if len(word) < 3:
             continue
         result = process.extractOne(word, choices, scorer=fuzz.ratio)
-        if result and result[1] >= threshold:
-            if result[1] > best_score:
-                best_score = result[1]
-                best_match = result[0]
+        if result and result[1] >= threshold and result[1] > best_score:
+            best_score = result[1]
+            best_match = result[0]
 
     return best_match
 
@@ -782,9 +996,11 @@ def _send_sms(phone: str, body: str) -> Tuple[bool, Optional[str]]:
         return False, "SMS not configured"
     try:
         client.messages.create(body=body, from_=from_number, to=_au_to_e164(phone))
+        record_metric('sms_success_total')
         return True, None
     except Exception as exc:  # pragma: no cover - network dependant
         logger.error(f"Failed to send SMS to {phone}: {exc}")
+        record_metric('sms_failure_total')
         return False, str(exc)
 
 
@@ -810,6 +1026,49 @@ def _format_item_for_sms(item: Dict) -> str:
     return "\n".join(lines)
 
 
+def _send_secondary_notification(subject: str, body: str) -> None:
+    if not ENABLE_SECONDARY_NOTIFICATIONS or not FAILOVER_NOTIFICATION_EMAIL:
+        logger.warning("Secondary notification skipped - channel disabled")
+        return
+    if not SMTP_HOST:
+        logger.warning("Secondary notification skipped - SMTP not configured")
+        return
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = os.getenv('SMTP_FROM', FAILOVER_NOTIFICATION_EMAIL)
+    msg['To'] = FAILOVER_NOTIFICATION_EMAIL
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
+            if SMTP_USE_TLS:
+                smtp.starttls()
+            if SMTP_USERNAME and SMTP_PASSWORD:
+                smtp.login(SMTP_USERNAME, SMTP_PASSWORD)
+            smtp.send_message(msg)
+        logger.info("Secondary notification dispatched")
+    except Exception as exc:  # pragma: no cover - network dependant
+        logger.error(f"Secondary notification failed: {exc}")
+
+
+def _handle_notification_outcome(success: bool, context: str, fallback_body: str) -> None:
+    global SMS_FAILURE_STREAK
+    with SMS_FAILURE_LOCK:
+        if success:
+            SMS_FAILURE_STREAK = 0
+            return
+        SMS_FAILURE_STREAK += 1
+        logger.error(context)
+        if (
+            ENABLE_SECONDARY_NOTIFICATIONS
+            and FAILOVER_NOTIFICATION_EMAIL
+            and SMS_FAILURE_STREAK >= SMS_FAILOVER_THRESHOLD
+        ):
+            _send_secondary_notification("Stuffed Lamb order failover", fallback_body)
+            SMS_FAILURE_STREAK = 0
+
+
 def _send_order_notifications(
     order_display_number: str,
     customer_name: str,
@@ -818,14 +1077,16 @@ def _send_order_notifications(
     total: float,
     ready_phrase: str,
     send_customer_sms: bool = True,
-):
+    correlation_id: Optional[str] = None,
+) -> bool:
     client, from_number = _get_twilio_client()
     if not client or not from_number:  # pragma: no cover - optional runtime dependency
         logger.warning("SMS notifications skipped - Twilio not configured")
-        return
+        return True
 
     cart_summary = "\n\n".join(_format_item_for_sms(item) for item in cart)
 
+    customer_success = True
     if send_customer_sms:
         customer_message = (
             f"🥙 {SHOP_NAME.upper()} ORDER {order_display_number}\n\n"
@@ -834,9 +1095,15 @@ def _send_order_notifications(
             f"Ready {ready_phrase}\n\n"
             f"Thank you, {customer_name}!"
         )
-        success, error = _send_sms(customer_phone, customer_message)
-        if not success:
-            logger.error(f"Customer SMS failed: {error}")
+        customer_success, error = _send_sms(customer_phone, customer_message)
+        if not customer_success:
+            _handle_notification_outcome(
+                False,
+                f"Customer SMS failed ({order_display_number}): {error}",
+                customer_message,
+            )
+        else:
+            _handle_notification_outcome(True, '', '')
 
     shop_number = SHOP_NUMBER_DEFAULT
     shop_message = (
@@ -848,9 +1115,80 @@ def _send_order_notifications(
         f"TOTAL: ${total:.2f}\n"
         f"Location: {SHOP_ADDRESS}"
     )
-    success, error = _send_sms(shop_number, shop_message)
-    if not success:
-        logger.error(f"Shop SMS failed: {error}")
+    shop_success, error = _send_sms(shop_number, shop_message)
+    if not shop_success:
+        _handle_notification_outcome(
+            False,
+            f"Shop SMS failed ({order_display_number}): {error}",
+            shop_message,
+        )
+    else:
+        _handle_notification_outcome(True, '', '')
+
+    logger.info(
+        "Notification dispatch complete",
+        extra={"correlation_id": correlation_id, "tool": "createOrder"},
+    )
+
+    return (customer_success if send_customer_sms else True) and shop_success
+
+
+def _notification_worker() -> None:
+    while not NOTIFICATION_STOP_EVENT.is_set():
+        try:
+            job = NOTIFICATION_QUEUE.get(timeout=1)
+        except Empty:
+            continue
+
+        if not job:
+            continue
+
+        payload = job.get('payload', {})
+        attempts = job.get('attempts', 0)
+        success = False
+        try:
+            success = _send_order_notifications(**payload)
+        except Exception as exc:
+            logger.error(f"Notification job failed: {exc}", exc_info=True)
+
+        if not success and attempts + 1 < SMS_MAX_RETRIES:
+            job['attempts'] = attempts + 1
+            NOTIFICATION_QUEUE.put(job)
+            record_metric('notification_queue_retries_total')
+        NOTIFICATION_QUEUE.task_done()
+
+
+def _start_notification_worker() -> None:
+    global NOTIFICATION_WORKER
+    if NOTIFICATION_WORKER and NOTIFICATION_WORKER.is_alive():
+        return
+
+    NOTIFICATION_WORKER = threading.Thread(target=_notification_worker, name='notification-worker', daemon=True)
+    NOTIFICATION_WORKER.start()
+
+
+def _enqueue_notification_job(
+    order_display_number: str,
+    customer_name: str,
+    customer_phone: str,
+    cart: List[Dict],
+    total: float,
+    ready_phrase: str,
+    send_customer_sms: bool,
+) -> None:
+    correlation_id = f"order-{order_display_number}-{int(time.time() * 1000)}"
+    payload = {
+        'order_display_number': order_display_number,
+        'customer_name': customer_name,
+        'customer_phone': customer_phone,
+        'cart': cart,
+        'total': total,
+        'ready_phrase': ready_phrase,
+        'send_customer_sms': send_customer_sms,
+        'correlation_id': correlation_id,
+    }
+    NOTIFICATION_QUEUE.put({'payload': payload, 'attempts': 0})
+    _start_notification_worker()
 
 # NOTE: Removed parse_protein, parse_size, parse_salads, parse_sauces, parse_extras functions
 # These were Kebabalab-specific and not used in Stuffed Lamb system.
@@ -885,44 +1223,40 @@ def calculate_price(item: Dict) -> float:
     """
     price = 0.0
 
-    # If item already has a price set (from combo or pre-calculated), use it
-    if item.get('price'):
-        return item.get('price', 0.0)
+    # Determine base price
+    base_price = item.get('basePrice')
+    if base_price is None and (not item.get('addons') and not item.get('extras')):
+        base_price = item.get('price')
 
-    # Get item ID and category
     item_id = item.get('id', '')
     category = item.get('category', '')
     item_name = item.get('name', '').lower()
 
-    # Get categories from loaded menu
-    categories = MENU.get('categories', {})
-    category_items = categories.get(category, [])
+    if base_price is None:
+        categories = MENU.get('categories', {})
+        category_items = categories.get(category, [])
 
-    # Find base price from menu - match by ID first, then by name
-    if category_items:
-        for menu_item in category_items:
-            # Try matching by ID first (most reliable)
-            if item_id and menu_item.get('id') == item_id:
-                price = menu_item.get('price', 0.0)
-                break
-            # Fall back to name matching for drinks
-            elif category == 'drinks':
-                menu_name_lower = menu_item.get('name', '').lower()
-                menu_id = menu_item.get('id', '').lower()
-
-                # Check if drink name matches
-                if item_name in menu_name_lower or menu_name_lower in item_name:
-                    price = menu_item.get('price', 0.0)
+        if category_items:
+            for menu_item in category_items:
+                if item_id and menu_item.get('id') == item_id:
+                    base_price = menu_item.get('price', 0.0)
                     break
-
-                # Also check brands for soft drinks
-                brands = menu_item.get('brands', [])
-                for brand in brands:
-                    if item_name in brand.lower() or brand.lower() in item_name:
-                        price = menu_item.get('price', 0.0)
+                elif category == 'drinks':
+                    menu_name_lower = menu_item.get('name', '').lower()
+                    if item_name in menu_name_lower or menu_name_lower in item_name:
+                        base_price = menu_item.get('price', 0.0)
                         break
-                if price > 0:
+                    for brand in menu_item.get('brands', []) or []:
+                        if item_name in brand.lower() or brand.lower() in item_name:
+                            base_price = menu_item.get('price', 0.0)
+                            break
+                if base_price:
                     break
+
+    try:
+        price = float(base_price) if base_price is not None else 0.0
+    except (TypeError, ValueError):
+        price = 0.0
 
     # Add extras and add-ons pricing from menu modifiers
     modifiers = MENU.get('modifiers', {})
@@ -955,7 +1289,42 @@ def calculate_price(item: Dict) -> float:
                     price += modifier.get('price', 0.0)
                 break
 
-    return price
+    item['basePrice'] = round(price - sum(
+        get_modifier_price(addon, 'mandi_addons', item_id) for addon in item.get('addons', [])
+    ) - sum(
+        get_modifier_price(extra, 'extras', item_id) for extra in item.get('extras', [])
+    ), 2)
+
+    return round(price, 2)
+
+
+def get_modifier_price(name: str, group: str = 'extras', item_id: Optional[str] = None) -> float:
+    """Look up modifier pricing from menu data"""
+    modifiers = MENU.get('modifiers', {}).get(group, [])
+    target = normalize_text(name)
+    for modifier in modifiers:
+        canonical = normalize_text(modifier.get('name', ''))
+        if not canonical:
+            continue
+        if canonical != target:
+            continue
+        applies_to = modifier.get('applies_to', [])
+        if applies_to and item_id and item_id not in applies_to:
+            continue
+        try:
+            return float(modifier.get('price', 0.0))
+        except (TypeError, ValueError):
+            return 0.0
+    return 0.0
+
+
+def list_modifier_names(group: str) -> List[str]:
+    modifiers = MENU.get('modifiers', {}).get(group, [])
+    names: List[str] = []
+    for modifier in modifiers:
+        if modifier.get('name'):
+            names.append(modifier['name'])
+    return names
 
 def format_cart_item(item: Dict, index: int) -> str:
     """Format a cart item for natural order review - Stuffed Lamb version."""
@@ -991,29 +1360,156 @@ def format_cart_item(item: Dict, index: int) -> str:
     line = f"{index}. {qty_prefix}{', '.join(segments)} - ${price:.2f}"
     return line.strip()
 
+
+EXTRA_TRIGGER_WORDS: Tuple[str, ...] = ("extra", "more", "add", "another")
+
+
+def _text_mentions_modifier(text: str, canonical_name: str) -> bool:
+    normalized_text = normalize_text(text)
+    variants = MODIFIER_VARIANTS.get(normalize_text(canonical_name), set())
+    for variant in variants:
+        if variant and variant in normalized_text:
+            return True
+    if FUZZY_MATCHING_AVAILABLE and variants:
+        match = fuzzy_match(normalized_text, list(variants), threshold=85)
+        return match is not None
+    return False
+
+
+def _match_item_from_description(description: str) -> Optional[str]:
+    normalized_description = normalize_text(description)
+    if not normalized_description:
+        return None
+
+    for variant, item_id in ITEM_VARIANT_LOOKUP.items():
+        if variant and variant in normalized_description:
+            return item_id
+
+    if FUZZY_MATCHING_AVAILABLE and ITEM_VARIANT_LOOKUP:
+        match = fuzzy_match(normalized_description, list(ITEM_VARIANT_LOOKUP.keys()), threshold=78)
+        if match:
+            return ITEM_VARIANT_LOOKUP.get(match)
+    return None
+
+
+def _detect_drink_brand(description: str, drink_item: Dict) -> Optional[str]:
+    brands = drink_item.get('brands', [])
+    normalized_description = normalize_text(description)
+    for brand in brands or []:
+        brand_normalized = normalize_text(brand)
+        if brand_normalized in normalized_description:
+            return brand
+    return None
+
+
+def _detect_item_addons(item_id: Optional[str], description: str) -> List[str]:
+    addons: List[str] = []
+    if item_id not in {'LAMB_MANDI', 'CHICKEN_MANDI'}:
+        return addons
+
+    for addon_name in list_modifier_names('mandi_addons'):
+        if _text_mentions_modifier(description, addon_name):
+            addons.append(addon_name)
+    return list(dict.fromkeys(addons))
+
+
+def _detect_item_extras(item_id: Optional[str], description: str) -> List[str]:
+    extras: List[str] = []
+    normalized_description = normalize_text(description)
+    triggers_present = any(trigger in normalized_description for trigger in EXTRA_TRIGGER_WORDS)
+
+    for extra_name in sorted(list_modifier_names('extras'), key=lambda name: len(normalize_text(name)), reverse=True):
+        if not triggers_present and not _text_mentions_modifier(description, extra_name):
+            continue
+        modifiers = MENU.get('modifiers', {}).get('extras', [])
+        for modifier in modifiers:
+            canonical_extra = normalize_text(extra_name)
+            if normalize_text(modifier.get('name', '')) != canonical_extra:
+                continue
+            applies_to = modifier.get('applies_to', [])
+            if applies_to and item_id and item_id not in applies_to:
+                continue
+            # Avoid stacking generic and specific rice extras together
+            is_redundant = any(
+                canonical_extra in normalize_text(existing) and len(normalize_text(existing)) > len(canonical_extra)
+                for existing in extras
+            )
+            if is_redundant:
+                continue
+            extras.append(extra_name)
+    return list(dict.fromkeys(extras))
+
 # ==================== TOOL IMPLEMENTATIONS ====================
+
+_DAY_NAMES = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+
+def _minutes_since_midnight(dt: datetime) -> int:
+    return dt.hour * 60 + dt.minute
+
+
+def _get_hours_for_day(index: int) -> Any:
+    day_key = _DAY_NAMES[index]
+    return BUSINESS_HOURS.get(day_key, [])
+
+
+def _find_next_open_day(start_index: int) -> Optional[Tuple[str, str]]:
+    for offset in range(1, 8):
+        idx = (start_index + offset) % 7
+        hours = _get_hours_for_day(idx)
+        if isinstance(hours, list) and hours:
+            first_block = hours[0]
+            return _DAY_NAMES[idx], first_block.get('open')
+    return None
+
 
 # Tool 1: checkOpen
 def tool_check_open(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Check if shop is currently open (timezone-aware)"""
+    """Check if shop is currently open using hours.json"""
     try:
         now = get_current_time()
-        day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
+        current_minutes = _minutes_since_midnight(now)
+        day_index = now.weekday()
+        day_hours = _get_hours_for_day(day_index)
         current_time = now.strftime("%H:%M")
 
-        # Shop hours (example)
-        # Monday-Thursday: 11:00-22:00
-        # Friday-Saturday: 11:00-23:00
-        # Sunday: 11:00-21:00
+        if isinstance(day_hours, str) and day_hours.lower() == 'closed':
+            next_open = _find_next_open_day(day_index)
+            message = "We're closed today."
+            if next_open:
+                message += f" Back on {next_open[0].title()} from {next_open[1]}."
+            return {
+                "ok": True,
+                "isOpen": False,
+                "currentTime": current_time,
+                "openTime": None,
+                "closeTime": None,
+                "message": message,
+            }
 
-        if day_of_week in [0, 1, 2, 3]:  # Mon-Thu
-            open_time, close_time = "11:00", "22:00"
-        elif day_of_week in [4, 5]:  # Fri-Sat
-            open_time, close_time = "11:00", "23:00"
-        else:  # Sunday
-            open_time, close_time = "11:00", "21:00"
+        is_open = False
+        open_time = None
+        close_time = None
+        if isinstance(day_hours, list):
+            for block in day_hours:
+                start = block.get('open')
+                end = block.get('close')
+                if not start or not end:
+                    continue
+                start_minutes = int(start.split(':')[0]) * 60 + int(start.split(':')[1])
+                end_minutes = int(end.split(':')[0]) * 60 + int(end.split(':')[1])
+                if start_minutes <= current_minutes < end_minutes:
+                    is_open = True
+                    open_time = start
+                    close_time = end
+                    break
+            if not open_time and day_hours:
+                open_time = day_hours[0].get('open')
+                close_time = day_hours[-1].get('close')
 
-        is_open = open_time <= current_time < close_time
+        message = "We're open!" if is_open else "We're closed right now but can take a preorder."
+        if open_time and close_time:
+            message += f" Hours today: {open_time}-{close_time}."
 
         return {
             "ok": True,
@@ -1021,7 +1517,7 @@ def tool_check_open(params: Dict[str, Any]) -> Dict[str, Any]:
             "currentTime": current_time,
             "openTime": open_time,
             "closeTime": close_time,
-            "message": f"We're {'open' if is_open else 'closed'}. Hours today: {open_time}-{close_time}"
+            "message": message
         }
     except Exception as e:
         logger.error(f"Error checking open status: {e}")
@@ -1112,131 +1608,72 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     try:
         description = params.get('description', '').strip()
+        record_metric('quick_add_requests_total')
 
         if not description:
+            record_metric('quick_add_failure_total')
             return {"ok": False, "error": "description is required"}
 
-        logger.info(f"QuickAddItem: parsing '{description}'")
+        logger.info(f"QuickAddItem parsing", extra={'tool': 'quickAddItem'})
 
-        # Parse quantity
         quantity = parse_quantity(description)
+        desc_lower = normalize_text(re.sub(r'^\d+\s*', '', description))
 
-        # Normalize description
-        desc_lower = normalize_text(description)
+        item_id = _match_item_from_description(desc_lower)
+        if not item_id:
+            record_metric('quick_add_failure_total')
+            record_metric('menu_miss_total')
+            logger.warning(f"QuickAddItem unmatched description: {description}")
+            return {"ok": False, "error": f"I didn't catch that. Could you describe the dish again using names like 'Mansaf' or 'Lamb Mandi'?"}
 
-        # Try to match menu items using synonyms
-        matched_item = None
-        item_id = None
-
-        # Check for main dishes
-        if any(word in desc_lower for word in ['mansaf', 'mensaf', 'mansaaf', 'jordanian']):
-            item_id = 'MANSAF'
-            matched_item = _find_menu_item_by_id('MANSAF')
-        elif any(word in desc_lower for word in ['lamb mandi', 'lamb mandy', 'lam mandi']):
-            item_id = 'LAMB_MANDI'
-            matched_item = _find_menu_item_by_id('LAMB_MANDI')
-        elif any(word in desc_lower for word in ['chicken mandi', 'chicken mandy', 'chook mandi']):
-            item_id = 'CHICKEN_MANDI'
-            matched_item = _find_menu_item_by_id('CHICKEN_MANDI')
-        elif any(word in desc_lower for word in ['soup']):
-            item_id = 'SOUP_DAY'
-            matched_item = _find_menu_item_by_id('SOUP_DAY')
-        elif any(word in desc_lower for word in ['coke', 'sprite', 'fanta', 'l&p', 'soft drink', 'soda']):
-            item_id = 'SOFT_DRINK'
-            matched_item = _find_menu_item_by_id('SOFT_DRINK')
-            # Determine specific brand
-            matched_item = matched_item.copy() if matched_item else {'id': 'SOFT_DRINK', 'name': 'Soft Drink', 'price': 3.00}
-            if 'coke' in desc_lower and 'no sugar' not in desc_lower:
-                matched_item['name'] = 'Soft Drink (Coke)'
-            elif 'coke no sugar' in desc_lower or 'diet coke' in desc_lower:
-                matched_item['name'] = 'Soft Drink (Coke No Sugar)'
-            elif 'sprite' in desc_lower:
-                matched_item['name'] = 'Soft Drink (Sprite)'
-            elif 'fanta' in desc_lower:
-                matched_item['name'] = 'Soft Drink (Fanta)'
-            elif 'l&p' in desc_lower or 'lemon' in desc_lower:
-                matched_item['name'] = 'Soft Drink (L&P)'
-        elif any(word in desc_lower for word in ['water', 'h2o']):
-            item_id = 'WATER'
-            matched_item = _find_menu_item_by_id('WATER')
-        else:
-            return {
-                "ok": False,
-                "error": f"I didn't understand '{description}'. Try something like 'lamb mandi', 'chicken mandi', 'mansaf', 'soup', or 'coke'."
-            }
-
+        matched_item = _find_menu_item_by_id(item_id)
         if not matched_item:
-            return {"ok": False, "error": f"Sorry, I couldn't find that item in our menu."}
+            record_metric('quick_add_failure_total')
+            logger.error(f"Item ID {item_id} not found in menu")
+            return {"ok": False, "error": "Sorry, that item isn't available right now."}
 
-        # Parse add-ons for Mandi dishes
-        addons = []
-        if item_id in ['LAMB_MANDI', 'CHICKEN_MANDI']:
-            if any(word in desc_lower for word in ['nuts', 'nut']):
-                addons.append('nuts')
-            if any(word in desc_lower for word in ['sultanas', 'sultana', 'raisins', 'raisin']):
-                addons.append('sultanas')
+        addons = _detect_item_addons(item_id, desc_lower)
+        extras = _detect_item_extras(item_id, desc_lower)
 
-        # Parse extras
-        extras = []
-        if item_id == 'MANSAF':
-            if any(word in desc_lower for word in ['extra jameed', 'more jameed', 'extra sauce']):
-                extras.append('extra jameed')
-            if any(word in desc_lower for word in ['extra rice', 'more rice']):
-                extras.append('extra rice mansaf')
+        drink_brand = None
+        if item_id == 'SOFT_DRINK':
+            drink_brand = _detect_drink_brand(desc_lower, matched_item)
+            if drink_brand:
+                matched_item = matched_item.copy()
+                matched_item['name'] = f"Soft Drink ({drink_brand})"
 
-        if item_id in ['LAMB_MANDI', 'CHICKEN_MANDI']:
-            if any(word in desc_lower for word in ['extra rice on plate', 'rice on plate', 'more rice']):
-                extras.append('extra rice on plate')
-            if any(word in desc_lower for word in ['extra green chilli', 'extra chilli', 'more chilli']):
-                extras.append('green chilli')
-            if any(word in desc_lower for word in ['extra potato', 'more potato']):
-                extras.append('potato')
-            if any(word in desc_lower for word in ['extra tzatziki', 'more tzatziki']):
-                extras.append('tzatziki')
-            if any(word in desc_lower for word in ['extra chilli sauce', 'more chilli sauce']):
-                extras.append('chilli mandi sauce')
+        base_price = float(matched_item.get('price', 0.0))
+        total_price = base_price
+        for addon in addons:
+            total_price += get_modifier_price(addon, 'mandi_addons', item_id)
+        for extra in extras:
+            total_price += get_modifier_price(extra, 'extras', item_id)
+        total_price = round(total_price, 2)
 
-        # Build item
         item = {
             "id": item_id,
             "name": matched_item['name'],
-            "price": matched_item.get('price', 0.0),
+            "price": total_price,
             "quantity": quantity,
             "addons": addons,
             "extras": extras,
-            "category": matched_item.get('category', 'unknown')
+            "category": matched_item.get('category', 'unknown'),
+            "basePrice": base_price,
         }
 
-        # Calculate total price
-        total_price = matched_item.get('price', 0.0)
+        if drink_brand:
+            item['brand'] = drink_brand
 
-        # Add addon prices (nuts/sultanas for Mandi)
-        for addon in addons:
-            if addon in ['nuts', 'sultanas']:
-                total_price += 2.00  # $2 each for Mandi add-ons
+        item['total_price'] = round(total_price * quantity, 2)
 
-        # Add extra prices
-        for extra in extras:
-            if extra == 'extra jameed':
-                total_price += 8.40
-            elif extra == 'extra rice mansaf':
-                total_price += 8.40
-            elif extra == 'extra rice on plate':
-                total_price += 5.00
-            elif extra in ['green chilli', 'potato', 'tzatziki', 'chilli mandi sauce']:
-                total_price += 1.00
-
-        item['total_price'] = total_price * quantity
-
-        # Add to cart
         cart = session_get('cart', [])
         cart.append(item)
         session_set('cart', cart)
         session_set('cart_priced', False)
 
-        logger.info(f"Added to cart: {item}")
+        record_metric('quick_add_success_total')
+        logger.info(f"Added to cart", extra={'tool': 'quickAddItem', 'item_id': item_id})
 
-        # Build response message
         addons_text = f" with {' and '.join(addons)}" if addons else ""
         extras_text = f" plus {', '.join(extras)}" if extras else ""
 
@@ -1248,6 +1685,7 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
         }
 
     except Exception as e:
+        record_metric('quick_add_failure_total')
         logger.error(f"Error in quickAddItem: {e}", exc_info=True)
         return {"ok": False, "error": str(e)}
 
@@ -1922,7 +2360,7 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
         session_set('last_customer_phone', customer_phone)
 
         try:
-            _send_order_notifications(
+            _enqueue_notification_job(
                 display_order,
                 customer_name,
                 customer_phone,
@@ -1932,7 +2370,7 @@ def tool_create_order(params: Dict[str, Any]) -> Dict[str, Any]:
                 send_sms_flag,
             )
         except Exception as notification_error:  # pragma: no cover - safety net
-            logger.error(f"Failed to send SMS notifications: {notification_error}")
+            logger.error(f"Failed to queue notifications: {notification_error}")
 
         session_set('cart', [])
         session_set('cart_priced', False)
@@ -2112,7 +2550,37 @@ def health_check():
         "version": "2.0"
     })
 
+
+@app.get("/metrics")
+def metrics_endpoint():
+    """Expose Prometheus-style counters"""
+    lines: List[str] = []
+    for name, description in METRIC_DESCRIPTIONS.items():
+        value = METRICS.get(name, 0)
+        lines.append(f"# HELP {name} {description}")
+        lines.append(f"# TYPE {name} counter")
+        lines.append(f"{name} {value}")
+    body = "\n".join(lines) + "\n"
+    return body, 200, {"Content-Type": "text/plain; version=0.0.4"}
+
+
+def require_webhook_auth(func):
+    """Decorator enforcing shared-secret webhook authentication"""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if WEBHOOK_SHARED_SECRET:
+            provided = request.headers.get('X-Stuffed-Lamb-Signature') or request.headers.get('X-Webhook-Secret')
+            if not provided or not hmac.compare_digest(provided, WEBHOOK_SHARED_SECRET):
+                record_metric('webhook_auth_failures_total')
+                return jsonify({"error": "Unauthorized"}), 401
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 @app.post("/webhook")
+@require_webhook_auth
 def webhook():
     """Main webhook endpoint for VAPI"""
     try:

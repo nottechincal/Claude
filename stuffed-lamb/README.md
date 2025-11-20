@@ -118,11 +118,17 @@ Run the comprehensive test suite:
 # Run all tests
 pytest tests/test_stuffed_lamb_system.py -v
 
+# Run webhook/tool smoke test that exercises every tool via /webhook
+pytest tests/test_tool_smoke.py -v
+
 # Run specific test class
 pytest tests/test_stuffed_lamb_system.py::TestMainDishes -v
 
 # Run with coverage
 pytest tests/test_stuffed_lamb_system.py --cov=stuffed_lamb --cov-report=html
+
+# Run curated voice-like transcript checks without deploying
+python scripts/run_voice_samples.py
 ```
 
 ### Test Coverage

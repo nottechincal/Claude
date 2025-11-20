@@ -7,6 +7,7 @@ import sys
 import os
 import json
 import copy
+from pathlib import Path
 import pytest
 from datetime import datetime
 from typing import Dict
@@ -170,6 +171,51 @@ class TestPricingCalculations:
             extra_rice['price']
         )
         assert total_with_all_extras == 36.00
+
+
+class TestVoicePronunciationSamples:
+    """Validate that voice-like transcripts map to the right menu items and prices."""
+
+    VOICE_SAMPLES = Path(__file__).resolve().parent.parent / "data" / "voice_samples.json"
+
+    def test_voice_samples_cover_pronunciations(self):
+        assert self.VOICE_SAMPLES.exists(), "voice_samples.json is missing"
+
+        with self.VOICE_SAMPLES.open() as f:
+            samples = json.load(f)
+
+        for idx, sample in enumerate(samples):
+            description = sample["description"]
+            expected = sample["expected"]
+            phone = f"+6141234{idx:04d}"
+            payload = {
+                "message": {
+                    "call": {"id": f"voice-{idx}", "customer": {"number": phone}}
+                }
+            }
+
+            with app.test_request_context(json=payload):
+                server_module.session_clear(phone)
+                result = server_module.tool_quick_add_item({"description": description})
+
+            assert result["ok"] is True
+            item = result["item"]
+
+            assert item["id"] == expected["item_id"]
+            assert set(item.get("addons", [])) == set(expected.get("addons", []))
+            assert set(item.get("extras", [])) == set(expected.get("extras", []))
+
+            qty = expected.get("quantity", item.get("quantity", 1))
+            assert item.get("quantity", 1) == qty
+            base_price = item.get("basePrice", 0.0)
+            addons_total = sum(get_modifier_price(a, 'mandi_addons', item["id"]) for a in expected.get("addons", []))
+            extras_total = sum(get_modifier_price(e, 'extras', item["id"]) for e in expected.get("extras", []))
+            expected_total = round((base_price + addons_total + extras_total) * qty, 2)
+
+            assert item.get("total_price") == expected_total
+
+            # Clean up between iterations to isolate cart state
+            server_module.session_clear(phone)
 
     def test_chicken_mandi_full_customization(self):
         """Test Chicken Mandi with all addons and extras"""

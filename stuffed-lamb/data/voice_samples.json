@@ -1,0 +1,35 @@
+[
+  {
+    "description": "lam mandi with nutz and rice on top",
+    "expected": {
+      "item_id": "LAMB_MANDI",
+      "addons": ["nuts"],
+      "extras": ["extra rice on plate"]
+    }
+  },
+  {
+    "description": "chikin mandi with raisens and green chili",
+    "expected": {
+      "item_id": "CHICKEN_MANDI",
+      "addons": ["sultanas"],
+      "extras": ["green chilli"]
+    }
+  },
+  {
+    "description": "man saff with extra jameet and more rice",
+    "expected": {
+      "item_id": "MANSAF",
+      "addons": [],
+      "extras": ["extra jameed", "extra rice mansaf"]
+    }
+  },
+  {
+    "description": "two coka soft drinks",
+    "expected": {
+      "item_id": "SOFT_DRINK",
+      "addons": [],
+      "extras": [],
+      "quantity": 2
+    }
+  }
+]

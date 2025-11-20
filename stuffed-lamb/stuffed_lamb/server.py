@@ -455,11 +455,18 @@ def build_menu_indexes() -> None:
             if not item_id or not canonical_name:
                 continue
             item_name_to_id[canonical_name] = item_id
+            normalized_item_id = normalize_text(item_id.replace('_', ' '))
+            item_name_to_id[normalized_item_id] = item_id
             _register_item_variant(item_id, canonical_name)
 
     for variant, canonical in synonyms.items():
         canonical_name = normalize_text(str(canonical))
         item_id = item_name_to_id.get(canonical_name)
+        if not item_id:
+            for key, value in item_name_to_id.items():
+                if canonical_name in key or key in canonical_name:
+                    item_id = value
+                    break
         if item_id:
             _register_item_variant(item_id, variant)
 
@@ -1381,9 +1388,15 @@ def _match_item_from_description(description: str) -> Optional[str]:
     if not normalized_description:
         return None
 
+    best_match: Optional[Tuple[str, str]] = None
     for variant, item_id in ITEM_VARIANT_LOOKUP.items():
-        if variant and variant in normalized_description:
-            return item_id
+        if not variant or variant not in normalized_description:
+            continue
+        if not best_match or len(variant) > len(best_match[0]):
+            best_match = (variant, item_id)
+
+    if best_match:
+        return best_match[1]
 
     if FUZZY_MATCHING_AVAILABLE and ITEM_VARIANT_LOOKUP:
         match = fuzzy_match(normalized_description, list(ITEM_VARIANT_LOOKUP.keys()), threshold=78)
@@ -1413,13 +1426,14 @@ def _detect_item_addons(item_id: Optional[str], description: str) -> List[str]:
     return list(dict.fromkeys(addons))
 
 
-def _detect_item_extras(item_id: Optional[str], description: str) -> List[str]:
+def _detect_item_extras(item_id: Optional[str], description: str, existing_addons: Optional[Iterable[str]] = None) -> List[str]:
     extras: List[str] = []
-    normalized_description = normalize_text(description)
-    triggers_present = any(trigger in normalized_description for trigger in EXTRA_TRIGGER_WORDS)
+    addon_blocklist: Set[str] = set()
+    if existing_addons:
+        addon_blocklist = {normalize_text(addon) for addon in existing_addons}
 
     for extra_name in sorted(list_modifier_names('extras'), key=lambda name: len(normalize_text(name)), reverse=True):
-        if not triggers_present and not _text_mentions_modifier(description, extra_name):
+        if not _text_mentions_modifier(description, extra_name):
             continue
         modifiers = MENU.get('modifiers', {}).get('extras', [])
         for modifier in modifiers:
@@ -1429,6 +1443,10 @@ def _detect_item_extras(item_id: Optional[str], description: str) -> List[str]:
             applies_to = modifier.get('applies_to', [])
             if applies_to and item_id and item_id not in applies_to:
                 continue
+            # Avoid double-charging when a modifier appears as both an add-on and an extra
+            if item_id in {'LAMB_MANDI', 'CHICKEN_MANDI'} and canonical_extra in {'nuts', 'sultanas'}:
+                if canonical_extra in addon_blocklist:
+                    continue
             # Avoid stacking generic and specific rice extras together
             is_redundant = any(
                 canonical_extra in normalize_text(existing) and len(normalize_text(existing)) > len(canonical_extra)
@@ -1633,7 +1651,7 @@ def tool_quick_add_item(params: Dict[str, Any]) -> Dict[str, Any]:
             return {"ok": False, "error": "Sorry, that item isn't available right now."}
 
         addons = _detect_item_addons(item_id, desc_lower)
-        extras = _detect_item_extras(item_id, desc_lower)
+        extras = _detect_item_extras(item_id, desc_lower, addons)
 
         drink_brand = None
         if item_id == 'SOFT_DRINK':

@@ -397,7 +397,35 @@ crontab -e
 
 - **Systemd**: `journalctl -u stuffed-lamb -f`
 - **Docker**: `docker-compose logs -f stuffed-lamb`
-- **Application**: `logs/stuffed_lamb.log` (if configured)
+- **Application**: `logs/stuffed_lamb.log` (JSON structured logs)
+- Logs are emitted in JSON, so forward them to your log aggregation stack (Datadog, ELK, etc.) for searching on `tool`, `correlation_id`, or `session_id` fields.
+
+### Metrics & Telemetry
+
+- The server exposes Prometheus-compatible counters at `GET /metrics`.
+- Scrape endpoint example (Prometheus):
+
+```yaml
+scrape_configs:
+  - job_name: stuffed-lamb
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['localhost:8000']
+```
+
+- Key metrics:
+  - `quick_add_requests_total`, `quick_add_success_total`, `quick_add_failure_total`
+  - `menu_miss_total` – watch for spikes caused by new accents or menu items
+  - `sms_success_total`, `sms_failure_total`, `notification_queue_retries_total`
+  - `webhook_auth_failures_total` – indicates unauthorized traffic hitting `/webhook`
+- Alert if failures increase or if metrics endpoint becomes unavailable.
+
+### Accent & Pronunciation Dictionary
+
+- Accent variants live in `data/pronunciations.json`.
+- When the menu changes or new modifiers are introduced, add phonetic spellings under the appropriate `items` or `modifiers` entry.
+- After editing `pronunciations.json`, restart the service so `build_menu_indexes()` reloads the new variants.
+- Keep this file under version control so the NLP pipeline evolves with your callers.
 
 ### Database Backups
 

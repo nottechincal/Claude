@@ -1,0 +1,68 @@
+{
+  "items": {
+    "mansaf": [
+      "man saff",
+      "mun saf",
+      "jordanian lamb"
+    ],
+    "lamb mandi": [
+      "lam mandi",
+      "lamb mondi",
+      "lamb mandy"
+    ],
+    "chicken mandi": [
+      "chikin mandi",
+      "chook mandi",
+      "chicken mondy"
+    ],
+    "soft drink": [
+      "sof drink",
+      "soda",
+      "coka"
+    ],
+    "bottle of water": [
+      "bottled water",
+      "water bottle",
+      "wodder"
+    ]
+  },
+  "modifiers": {
+    "nuts": [
+      "nutz",
+      "mixed nuts"
+    ],
+    "sultanas": [
+      "raisins",
+      "raisens"
+    ],
+    "extra rice on plate": [
+      "rice on the plate",
+      "rice on top"
+    ],
+    "extra rice mansaf": [
+      "extra rice",
+      "more rice"
+    ],
+    "extra jameed": [
+      "extra jameet",
+      "extra sauce"
+    ],
+    "green chilli": [
+      "green chili",
+      "green chile",
+      "chilli"
+    ],
+    "potato": [
+      "patata",
+      "potatoe"
+    ],
+    "tzatziki": [
+      "garlic yogurt",
+      "tzaziki"
+    ],
+    "chilli mandi sauce": [
+      "chili mandy sauce",
+      "hot mandi sauce"
+    ]
+  }
+}

@@ -6,14 +6,19 @@ Tests all menu items, pricing, modifiers, and business logic
 import sys
 import os
 import json
+import copy
 import pytest
 from datetime import datetime
+from typing import Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Ensure webhook auth is enabled during tests
+os.environ.setdefault('WEBHOOK_SHARED_SECRET', 'test-secret')
+
 from stuffed_lamb.server import (
-    app, load_menu, init_database
+    app, load_menu, init_database, tool_check_open, get_modifier_price
 )
 import stuffed_lamb.server as server_module
 
@@ -23,7 +28,16 @@ def setup_test_environment():
     """Load menu before running any tests"""
     load_menu()
     init_database()
+    server_module.WEBHOOK_SHARED_SECRET = os.environ.get('WEBHOOK_SHARED_SECRET')
     yield
+
+
+@pytest.fixture
+def webhook_headers():
+    return {
+        'Content-Type': 'application/json',
+        'X-Stuffed-Lamb-Signature': os.environ.get('WEBHOOK_SHARED_SECRET', 'test-secret')
+    }
 
 
 class TestMenuLoading:
@@ -211,6 +225,44 @@ class TestPricingCalculations:
         assert total == 49.80  # $33.00 + $8.40 + $8.40
 
 
+class TestPricingHelpers:
+    def test_modifier_helper_tracks_menu(self, monkeypatch):
+        extras_copy = copy.deepcopy(server_module.MENU['modifiers']['extras'])
+        mutated = copy.deepcopy(extras_copy)
+        for entry in mutated:
+            if entry['name'] == 'tzatziki':
+                entry['price'] = 1.75
+        monkeypatch.setitem(server_module.MENU['modifiers'], 'extras', mutated)
+        assert get_modifier_price('tzatziki', 'extras') == pytest.approx(1.75)
+        monkeypatch.setitem(server_module.MENU['modifiers'], 'extras', extras_copy)
+
+
+class TestNlpExtras:
+    """NLP should recognize extras even when callers omit the word 'extra'."""
+
+    def test_extra_rice_detected_without_trigger_word(self):
+        call_id = 'extra-rice-call'
+        phone = '+61123456789'
+        description = "lamb mandi rice on top"
+
+        with app.test_request_context(json={
+            "message": {
+                "call": {
+                    "id": call_id,
+                    "customer": {"number": phone}
+                }
+            }
+        }):
+            server_module.session_clear(phone)
+            result = server_module.tool_quick_add_item({"description": description})
+
+        assert result['ok'] is True
+        item = result['item']
+        assert 'extra rice on plate' in item.get('extras', [])
+        assert item['price'] == pytest.approx(33.00)
+        server_module.session_clear(phone)
+
+
 class TestDrinksAndSides:
     """Test drinks and side items"""
 
@@ -369,6 +421,23 @@ class TestBusinessHours:
         assert hours['tuesday'] == 'closed'
 
 
+class TestCheckOpenTool:
+    def test_closed_day_message(self, monkeypatch):
+        closed_day = server_module.SHOP_TIMEZONE.localize(datetime(2024, 1, 1, 12, 0))
+        monkeypatch.setattr(server_module, 'get_current_time', lambda: closed_day)
+        result = tool_check_open({})
+        assert result['isOpen'] is False
+        assert 'closed' in result['message'].lower()
+
+    def test_open_weekend_hours(self, monkeypatch):
+        open_day = server_module.SHOP_TIMEZONE.localize(datetime(2024, 1, 6, 14, 0))
+        monkeypatch.setattr(server_module, 'get_current_time', lambda: open_day)
+        result = tool_check_open({})
+        assert result['isOpen'] is True
+        assert result['openTime'] == '13:00'
+        assert result['closeTime'] == '22:00'
+
+
 class TestBusinessConfiguration:
     """Test business configuration"""
 
@@ -415,6 +484,88 @@ class TestGSTCalculations:
 
         # Should be approximately $5.09
         assert abs(gst_component - 5.09) < 0.01
+
+
+class TestWebhookSecurity:
+    def test_missing_signature_rejected(self):
+        client = app.test_client()
+        payload = {
+            "message": {
+                "type": "tool",
+                "toolCalls": []
+            }
+        }
+        response = client.post('/webhook', json=payload)
+        assert response.status_code == 401
+
+
+class TestWebhookFlow:
+    def _build_payload(self, function_name: str, arguments: Dict, call_id: str, phone: str) -> Dict:
+        return {
+            "message": {
+                "type": "tool",
+                "call": {
+                    "id": call_id,
+                    "customer": {"number": phone}
+                },
+                "toolCalls": [
+                    {
+                        "id": f"{function_name}-call",
+                        "function": {
+                            "name": function_name,
+                            "arguments": arguments
+                        }
+                    }
+                ]
+            }
+        }
+
+    def test_full_order_flow_via_webhook(self, webhook_headers):
+        client = app.test_client()
+        call_id = 'pytest-call'
+        phone = '+61411111111'
+
+        # Quick add
+        payload = self._build_payload('quickAddItem', {"description": "lamb mandi with nuts and sultanas"}, call_id, phone)
+        resp = client.post('/webhook', json=payload, headers=webhook_headers)
+        assert resp.status_code == 200
+        result = resp.get_json()['results'][0]['result']
+        assert result['ok'] is True
+
+        # Price cart
+        payload = self._build_payload('priceCart', {}, call_id, phone)
+        resp = client.post('/webhook', json=payload, headers=webhook_headers)
+        assert resp.status_code == 200
+        assert resp.get_json()['results'][0]['result']['ok'] is True
+
+        # Set pickup time
+        payload = self._build_payload('setPickupTime', {"requestedTime": "in 30 minutes"}, call_id, phone)
+        resp = client.post('/webhook', json=payload, headers=webhook_headers)
+        assert resp.get_json()['results'][0]['result']['ok'] is True
+
+        with server_module.DatabaseConnection() as cursor:
+            cursor.execute('SELECT COUNT(*) FROM orders')
+            before_count = cursor.fetchone()[0]
+
+        # Create order
+        create_args = {
+            "customerName": "Test Caller",
+            "customerPhone": phone,
+            "sendSMS": False
+        }
+        payload = self._build_payload('createOrder', create_args, call_id, phone)
+        resp = client.post('/webhook', json=payload, headers=webhook_headers)
+        result = resp.get_json()['results'][0]['result']
+        assert result['ok'] is True
+        assert result['orderNumber']
+
+        with server_module.DatabaseConnection() as cursor:
+            cursor.execute('SELECT COUNT(*) FROM orders')
+            after_count = cursor.fetchone()[0]
+        assert after_count == before_count + 1
+
+        # Clean up session for other tests
+        server_module.session_clear(phone)
 
 
 if __name__ == '__main__':

@@ -1,0 +1,19 @@
+{
+  "name": "Kebabalab",
+  "phone": "+61-4-0000-0000",
+  "address": "Melbourne",
+  "timezone": "Australia/Melbourne",
+  "hours": [
+    {"day": "Monday", "open": "11:00", "close": "23:00"},
+    {"day": "Tuesday", "open": "11:00", "close": "23:00"},
+    {"day": "Wednesday", "open": "11:00", "close": "23:00"},
+    {"day": "Thursday", "open": "11:00", "close": "23:00"},
+    {"day": "Friday", "open": "11:00", "close": "23:00"},
+    {"day": "Saturday", "open": "11:00", "close": "23:00"},
+    {"day": "Sunday", "open": "11:00", "close": "23:00"}
+  ],
+  "rules": [
+    "Pickup only",
+    "Ask about allergies before final confirmation"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "updated_at": "2024-01-01T00:00:00Z",
+  "items": [
+    {
+      "id": "kebab-classic",
+      "name": "Classic Kebab",
+      "category": "kebabs",
+      "base_price": 12.5,
+      "options": [
+        {"name": "Chicken", "price_delta": 0},
+        {"name": "Lamb", "price_delta": 1.5}
+      ]
+    },
+    {
+      "id": "hsp-regular",
+      "name": "Regular HSP",
+      "category": "hsp",
+      "base_price": 14.0,
+      "options": [
+        {"name": "Beef", "price_delta": 0},
+        {"name": "Mixed", "price_delta": 1.0}
+      ]
+    },
+    {
+      "id": "chips",
+      "name": "Chips",
+      "category": "sides",
+      "base_price": 5.0,
+      "options": []
+    }
+  ]
+}

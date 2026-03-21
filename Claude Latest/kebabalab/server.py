@@ -18,6 +18,13 @@ import logging
 import os
 import sqlite3
 import re
+
+# Load .env file if present (python-dotenv)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
+except ImportError:
+    pass
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import pytz
@@ -951,7 +958,7 @@ def parse_sauces(text: str) -> List[str]:
     # Order matters - check compound names BEFORE single words to avoid substring matches
     sauce_map_ordered = [
         ('sweet chilli', ['sweet chilli', 'sweet chili', 'sweet chilly']),
-        ('tomato', ['tomato sauce', 'ketchup', 'tomatoe', 'tomato']),
+        ('tomato', ['tomato sauce', 'ketchup', 'tomatoe']),
         ('chilli', ['chili', 'chilli', 'chilly', 'chili sauce']),  # After sweet chilli
         ('garlic', ['garlic', 'garlek', 'galic', 'garlick']),
         ('bbq', ['bbq', 'barbeque', 'barbecue']),
@@ -2622,6 +2629,10 @@ def webhook():
         return jsonify({"error": str(e)}), 500
 
 # ==================== STARTUP ====================
+
+# Load menu at import time so tools work correctly when module is imported by tests
+load_menu()
+
 
 def main() -> None:
     logger.info("="*50)

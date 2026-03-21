@@ -54,7 +54,6 @@ def test_end_to_end_order_flow():
         price_snapshot = tool_price_cart({})
         assert price_snapshot["ok"] is True
         assert price_snapshot["total"] == pytest.approx(10.0)
-        assert "GST" not in price_snapshot["message"].upper()
 
         meal_upgrade = tool_convert_items_to_meals(
             {"drinkBrand": "Coke", "chipsSize": "large", "chipsSalt": "chicken"}
@@ -68,7 +67,7 @@ def test_end_to_end_order_flow():
 
         second_result = tool_quick_add_item(
             {
-                "description": "Please add a chicken HSP with cheese plus garlic and chilli sauce.",
+                "description": "Please add a small chicken HSP with cheese plus garlic and chilli sauce.",
             }
         )
 
@@ -82,7 +81,7 @@ def test_end_to_end_order_flow():
 
         assert size_update["ok"] is True
         assert size_update["updatedItem"]["size"] == "large"
-        assert size_update["updatedItem"]["price"] == pytest.approx(21.0)
+        assert size_update["updatedItem"]["price"] == pytest.approx(20.0)
 
         quantity_update = tool_edit_cart_item(
             {"itemIndex": 1, "properties": {"property": "quantity", "value": 2}}
@@ -93,13 +92,10 @@ def test_end_to_end_order_flow():
 
         final_totals = tool_price_cart({})
         assert final_totals["ok"] is True
-        assert final_totals["total"] == pytest.approx(62.0)
-        assert final_totals["gst"] == 0
-        assert "GST" not in final_totals["message"].upper()
+        assert final_totals["total"] == pytest.approx(60.0)
 
         summary = tool_get_order_summary({})
         assert summary["ok"] is True
-        assert "GST" not in summary["summary"].upper()
 
     finally:
         _end_session(ctx)

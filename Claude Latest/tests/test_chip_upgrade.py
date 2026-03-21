@@ -63,7 +63,7 @@ def test_chip_upgrade():
     # Step 1: Add a chicken kebab using quickAddItem
     print("1. Adding chicken kebab...")
     result = mock_webhook_call("quickAddItem", {
-        "description": "chicken kebab with lettuce, tomato, garlic, chili"
+        "description": "small chicken kebab with lettuce, tomato, garlic, chili"
     })
     print(f"   Result: {result.get('message', result)}")
     assert result.get('ok'), f"Failed to add kebab: {result}"
@@ -110,7 +110,7 @@ def test_chip_upgrade():
 
     updated_item = result.get('updatedItem', {})
     assert updated_item.get('chips_size') == 'large', f"Chips size not updated: {updated_item}"
-    assert updated_item.get('price') == 25.0, f"Price should be $25, got ${updated_item.get('price')}"
+    assert updated_item.get('price') == 20.0, f"Price should be $20 (small kebab + large chips), got ${updated_item.get('price')}"
 
     print(f"   ✓ Chips upgraded from small to large")
     print(f"   ✓ Price updated to ${updated_item.get('price')}")
@@ -128,7 +128,7 @@ def test_chip_upgrade():
     print(f"   Price: ${final_meal.get('price')}")
 
     assert final_meal.get('chips_size') == 'large', "Final chips size should be large"
-    assert final_meal.get('price') == 25.0, "Final price should be $25"
+    assert final_meal.get('price') == 20.0, "Final price should be $20 (small kebab + large chips)"
     print()
 
     print("="*60)

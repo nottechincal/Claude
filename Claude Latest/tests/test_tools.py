@@ -185,60 +185,45 @@ def test_all_tools():
     print("="*60)
 
 def test_scenario_small_kebab_meal():
-    """Test the exact scenario from the transcript"""
+    """Test the small chicken kebab → meal upgrade scenario using the new simplified tools."""
 
     print("\n" + "="*60)
-    print("SCENARIO TEST: Small Chicken Kebab Meal")
+    print("SCENARIO TEST: Small Chicken Kebab → Meal (new tools)")
     print("="*60)
 
-    # Customer says: "Small chicken kebab"
-    print("\n>>> Customer: Small chicken kebab")
+    # Clear any existing cart first
+    call_tool("clearCart")
 
-    call_tool("startItemConfiguration", {"category": "kebabs"})
-    call_tool("setItemProperty", {"field": "size", "value": "small"})
-    call_tool("setItemProperty", {"field": "protein", "value": "chicken"})
-
-    print("\n>>> Assistant: What salads?")
-    print(">>> Customer: Lettuce, tomato, onion")
-
-    call_tool("setItemProperty", {"field": "salads", "value": ["lettuce", "tomato", "onion"]})
-
-    print("\n>>> Assistant: Which sauces?")
-    print(">>> Customer: Garlic, chilli")
-
-    call_tool("setItemProperty", {"field": "sauces", "value": ["garlic", "chilli"]})
-    call_tool("addItemToCart")
-
-    print("\n>>> Assistant: Got it! Anything else?")
-    print(">>> Customer: Make it a meal with a Coke")
-
-    # Add chips
-    call_tool("startItemConfiguration", {"category": "chips"})
-    call_tool("setItemProperty", {"field": "size", "value": "small"})
-    call_tool("addItemToCart")
-
-    # Add drink - should trigger combo!
-    call_tool("startItemConfiguration", {"category": "drinks"})
-    call_tool("setItemProperty", {"field": "brand", "value": "coca-cola"})
-    result = call_tool("addItemToCart")
-
-    # Check combo
+    # Customer: "Small chicken kebab with lettuce, tomato, garlic, chilli"
+    print("\n>>> Customer: small chicken kebab with lettuce, tomato, garlic, chilli")
+    result = call_tool("quickAddItem", {
+        "description": "small chicken kebab with lettuce, tomato, garlic, chilli"
+    })
     if result and "results" in result:
         tool_result = result["results"][0]["result"]
-        if tool_result.get("comboDetected"):
-            print(f"\n✓ CORRECT: Combo detected - {tool_result['comboInfo']['name']}")
-        else:
-            print(f"\n✗ ERROR: Combo should have been detected!")
+        assert tool_result.get("ok"), f"quickAddItem failed: {tool_result}"
+        print(f"\n✓ CORRECT: {tool_result.get('message')}")
 
-    # Price and finish
+    # Customer: "Make it a meal with a Coke"
+    print("\n>>> Customer: Make it a meal with a Coke")
+    result = call_tool("convertItemsToMeals", {
+        "drinkBrand": "coke",
+        "chipsSize": "small",
+        "chipsSalt": "chicken"
+    })
+    if result and "results" in result:
+        tool_result = result["results"][0]["result"]
+        assert tool_result.get("ok"), f"convertItemsToMeals failed: {tool_result}"
+        print(f"\n✓ CORRECT: {tool_result.get('message')}")
+
+    # Price the cart
     price_result = call_tool("priceCart")
     if price_result and "results" in price_result:
-        total = price_result["results"][0]["result"]["totals"]["grand_total"]
+        pr = price_result["results"][0]["result"]
+        total = pr.get("total", 0.0)
         print(f"\n>>> Assistant: Your total is ${total}")
-        if total == 17.0:
-            print("✓ CORRECT: Price is $17 for Small Kebab Meal")
-        else:
-            print(f"✗ ERROR: Expected $17, got ${total}")
+        assert total == 17.0, f"Expected $17.00 for Small Kebab Meal, got ${total}"
+        print("✓ CORRECT: Price is $17 for Small Kebab Meal")
 
 def test_performance():
     """Test tool performance"""

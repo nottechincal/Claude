@@ -18,6 +18,13 @@ import logging
 import os
 import sqlite3
 import re
+
+# Load .env file if present (python-dotenv)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
+except ImportError:
+    pass
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import pytz

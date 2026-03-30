@@ -34,6 +34,21 @@ SESSION_KEY = "session:{session_id}:messages"
 CART_KEY = "cart:{session_id}"
 
 
+def _serialize_content(content) -> list:
+    """Convert Anthropic SDK content blocks to plain dicts for JSON storage."""
+    if isinstance(content, list):
+        result = []
+        for block in content:
+            if hasattr(block, "model_dump"):
+                result.append(block.model_dump())
+            elif isinstance(block, dict):
+                result.append(block)
+            else:
+                result.append({"type": "text", "text": str(block)})
+        return result
+    return content
+
+
 async def get_session_messages(session_id: str) -> list:
     data = await redis_get(SESSION_KEY.format(session_id=session_id))
     return data if data else []
@@ -96,11 +111,10 @@ class OrderingAgent:
                 system=system,
                 tools=ORDERING_TOOLS,
                 messages=messages,
-                thinking={"type": "adaptive"},
             )
 
-            # Append assistant response to history
-            messages.append({"role": "assistant", "content": response.content})
+            # Append assistant response to history (serialize SDK objects for Redis)
+            messages.append({"role": "assistant", "content": _serialize_content(response.content)})
 
             if response.stop_reason == "end_turn":
                 # Extract text response
@@ -174,8 +188,8 @@ class OrderingAgent:
 
                 final_message = await stream.get_final_message()
 
-            # Build the assistant content for history
-            messages.append({"role": "assistant", "content": final_message.content})
+            # Build the assistant content for history (serialize SDK objects for Redis)
+            messages.append({"role": "assistant", "content": _serialize_content(final_message.content)})
 
             if final_message.stop_reason == "end_turn":
                 break

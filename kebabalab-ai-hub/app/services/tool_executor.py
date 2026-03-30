@@ -52,7 +52,7 @@ async def execute_tool(
                         {
                             "name": item["name"],
                             "category": item.get("category"),
-                            "prices": item.get("prices", {}),
+                            "sizes": item.get("sizes", {}),
                             "price": item.get("price"),
                             "description": item.get("description", ""),
                         }
@@ -167,37 +167,50 @@ async def _check_shop_open() -> dict:
     now = datetime.now(TZ)
     day_name = now.strftime("%A").lower()
 
-    day_hours = hours_data.get(day_name, {})
+    # hours.json stores each day as a list of time windows: [{"open": "11:00", "close": "23:00"}]
+    day_windows = hours_data.get(day_name, [])
 
-    if not day_hours.get("open", False):
+    if not day_windows:
         return {
             "is_open": False,
             "message": f"Sorry, we're closed today ({now.strftime('%A')}). Check our hours!",
         }
 
-    open_time = day_hours.get("opens", "11:00")
-    close_time = day_hours.get("closes", "21:00")
-
-    # Parse times
-    open_h, open_m = map(int, open_time.split(":"))
-    close_h, close_m = map(int, close_time.split(":"))
-
     now_minutes = now.hour * 60 + now.minute
-    open_minutes = open_h * 60 + open_m
-    close_minutes = close_h * 60 + close_m
 
-    is_open = open_minutes <= now_minutes < close_minutes
+    for window in day_windows:
+        open_time = window.get("open", "11:00")
+        close_time = window.get("close", "23:00")
 
+        open_h, open_m = map(int, open_time.split(":"))
+        close_h, close_m = map(int, close_time.split(":"))
+
+        open_minutes = open_h * 60 + open_m
+        close_minutes = close_h * 60 + close_m
+
+        # Handle midnight crossover (e.g. Friday closes at 02:00 next day)
+        if close_minutes < open_minutes:
+            is_open = now_minutes >= open_minutes or now_minutes < close_minutes
+        else:
+            is_open = open_minutes <= now_minutes < close_minutes
+
+        if is_open:
+            return {
+                "is_open": True,
+                "current_time": now.strftime("%-I:%M %p"),
+                "opens": open_time,
+                "closes": close_time,
+                "message": f"We're open! Kitchen closes at {close_time}.",
+            }
+
+    # Not in any open window
+    first_window = day_windows[0]
     return {
-        "is_open": is_open,
+        "is_open": False,
         "current_time": now.strftime("%-I:%M %p"),
-        "opens": open_time,
-        "closes": close_time,
-        "message": (
-            f"We're open! Kitchen closes at {close_time}."
-            if is_open
-            else f"We're currently closed. We open at {open_time}."
-        ),
+        "opens": first_window.get("open", "11:00"),
+        "closes": first_window.get("close", "23:00"),
+        "message": f"We're currently closed. We open at {first_window.get('open', '11:00')}.",
     }
 
 

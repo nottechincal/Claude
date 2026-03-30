@@ -1,0 +1,19 @@
+{
+  "business_details": {
+    "name": "Cranny Boys Pizza",
+    "address": "Shop 8/21 Strathlea Dr, Cranbourne West VIC 3977",
+    "phone": "(03) 9770 4755",
+    "timezone": "Australia/Melbourne",
+    "cuisine": "Italian/Pizza",
+    "tagline": "Fresh pizzas, pastas & more"
+  },
+  "ordering": {
+    "default_lead_minutes": 22,
+    "busy_lead_minutes": 35,
+    "currency": "AUD",
+    "pickup_time_minutes": 22
+  },
+  "contact": {
+    "notification_phone": "+61423680596"
+  }
+}

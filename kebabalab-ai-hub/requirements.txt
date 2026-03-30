@@ -1,0 +1,37 @@
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+websockets==14.1
+
+# Claude AI
+anthropic==0.40.0
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Redis
+redis[asyncio]==5.2.1
+
+# Twilio (voice, SMS, WhatsApp)
+twilio==9.3.7
+
+# HTTP client
+httpx==0.28.1
+
+# Config & env
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-dotenv==1.0.1
+
+# NLP
+rapidfuzz==3.10.1
+
+# Timezone
+pytz==2024.2
+
+# Utils
+orjson==3.10.12
+structlog==24.4.0

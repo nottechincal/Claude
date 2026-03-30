@@ -6,7 +6,7 @@ import logging
 from typing import Optional
 
 from app.redis_client import redis_delete, redis_get, redis_set
-from app.services.menu import calculate_item_price, get_item_by_name, format_cart_for_display
+from app.services.menu import calculate_extras_price, calculate_item_price, get_item_by_name, format_cart_for_display
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,8 @@ async def add_items_to_cart(session_id: str, items: list[dict]) -> dict:
             continue
 
         size = item_request.get("size") or _default_size(menu_item)
-        price = calculate_item_price(menu_item, size)
+        extras = item_request.get("extras") or []
+        price = calculate_item_price(menu_item, size) + calculate_extras_price(extras)
 
         cart_item = {
             "name": menu_item["name"],
@@ -55,7 +56,7 @@ async def add_items_to_cart(session_id: str, items: list[dict]) -> dict:
             "protein": item_request.get("protein") or _default_protein(menu_item),
             "salads": item_request.get("salads") or [],
             "sauces": item_request.get("sauces") or [],
-            "extras": item_request.get("extras") or [],
+            "extras": extras,
             "quantity": max(1, int(item_request.get("quantity", 1))),
             "price": price,
             "notes": item_request.get("notes"),
@@ -88,11 +89,14 @@ async def edit_cart_item(session_id: str, item_index: int, changes: dict) -> dic
         if key in ("size", "protein", "salads", "sauces", "extras", "quantity", "notes"):
             item[key] = value
 
-    # Recalculate price if size changed
-    if "size" in changes:
+    # Recalculate price if size or extras changed
+    if "size" in changes or "extras" in changes:
         menu_item = get_item_by_name(item["name"])
         if menu_item:
-            item["price"] = calculate_item_price(menu_item, item["size"])
+            item["price"] = (
+                calculate_item_price(menu_item, item["size"])
+                + calculate_extras_price(item.get("extras") or [])
+            )
 
     cart[item_index] = item
     await save_cart(session_id, cart)

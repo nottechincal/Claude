@@ -109,7 +109,7 @@ def get_item_by_name(name: str) -> Optional[dict]:
 
 
 def calculate_item_price(item: dict, size: Optional[str] = None) -> float:
-    """Calculate price for an item with given size."""
+    """Calculate base price for an item with given size (excluding extras)."""
     # Menu uses 'sizes' for multi-size items (kebabs, HSP, combos) and 'price' for fixed-price items
     sizes = item.get("sizes", {})
     if size and size in sizes:
@@ -119,6 +119,21 @@ def calculate_item_price(item: dict, size: Optional[str] = None) -> float:
     if "price" in item:
         return float(item["price"])
     return 0.0
+
+
+def calculate_extras_price(extras: list) -> float:
+    """Calculate total price of extras/modifiers (cheese, haloumi, jalapeños, etc.)."""
+    if not extras:
+        return 0.0
+    menu = load_menu()
+    modifier_prices = {
+        m["name"].lower(): float(m.get("price", 0.0))
+        for m in menu.get("modifiers", {}).get("extras", [])
+    }
+    total = 0.0
+    for extra in extras:
+        total += modifier_prices.get(extra.lower(), 0.0)
+    return total
 
 
 def format_cart_for_display(cart: list) -> str:

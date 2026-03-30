@@ -110,14 +110,14 @@ def get_item_by_name(name: str) -> Optional[dict]:
 
 def calculate_item_price(item: dict, size: Optional[str] = None) -> float:
     """Calculate price for an item with given size."""
-    prices = item.get("prices", {})
-    if size and size in prices:
-        return float(prices[size])
+    # Menu uses 'sizes' for multi-size items (kebabs, HSP, combos) and 'price' for fixed-price items
+    sizes = item.get("sizes", {})
+    if size and size in sizes:
+        return float(sizes[size])
+    if sizes:
+        return float(next(iter(sizes.values())))
     if "price" in item:
         return float(item["price"])
-    # Default to first price
-    if prices:
-        return float(next(iter(prices.values())))
     return 0.0
 
 

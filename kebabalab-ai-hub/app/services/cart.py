@@ -127,9 +127,11 @@ async def get_cart_summary(session_id: str) -> dict:
 
 def _default_size(menu_item: dict) -> Optional[str]:
     """Return sensible default size for a menu item."""
-    prices = menu_item.get("prices", {})
-    if "small" in prices:
+    sizes = menu_item.get("sizes", {})
+    if "small" in sizes:
         return "small"
+    if sizes:
+        return next(iter(sizes))
     return None
 
 

@@ -96,7 +96,6 @@ class OrderingAgent:
                 system=system,
                 tools=ORDERING_TOOLS,
                 messages=messages,
-                thinking={"type": "adaptive"},
             )
 
             # Append assistant response to history

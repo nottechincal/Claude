@@ -2,17 +2,21 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import JSON, DateTime, Enum, Integer, Numeric, String, Text, func
+from sqlalchemy import JSON, DateTime, Enum, Integer, Numeric, Sequence, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
+
+_order_number_seq = Sequence("orders_order_number_seq", start=1)
 
 
 class Order(Base):
     __tablename__ = "orders"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    order_number: Mapped[int] = mapped_column(Integer, autoincrement=True, unique=True, index=True)
+    order_number: Mapped[int] = mapped_column(
+        Integer, _order_number_seq, server_default=_order_number_seq.next_value(), unique=True, index=True
+    )
 
     # Customer
     customer_phone: Mapped[str] = mapped_column(String(20), index=True)
